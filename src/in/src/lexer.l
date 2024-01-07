@@ -1,13 +1,15 @@
 %{
+#include "ast/ast.h"
 #include "parser.h"
 
-void yyerror(yyscan_t scanner, int* result, const char * s, ...);
+void yyerror(yyscan_t scanner, struct ASTNode** ast, const char * s, ...);
 %}
 
 %option 8bit noyywrap noinput nounput
 %option yylineno
 %option warn nodefault
 %option reentrant bison-bridge
+/* %option bison-locations */
 
 %%
 "+" |
@@ -23,6 +25,6 @@ void yyerror(yyscan_t scanner, int* result, const char * s, ...);
 "//".*\n    { /* ignore comments */ }
 \n          { return END; }
 [ \t]       { /* ignore whitespace */ }
-.           { yyerror(yyscanner, NULL, "Mystery character %c\n", *yytext); }
+.           { yyerror(yyscanner, NULL, NULL, "Mystery character %c\n", *yytext); }
 <<EOF>>     { return END; }
 %%
