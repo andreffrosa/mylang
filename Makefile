@@ -17,7 +17,7 @@ debug:
 	cmake --build build --clean-first
 
 run:
-	./build/src/cli/calc
+	./build/src/cli/mylang $(ARGS)
 
 test:
 #	cmake -S . -B build -DBUILD_TESTS=ON
