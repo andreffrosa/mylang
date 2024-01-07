@@ -26,3 +26,7 @@ test:
 
 clean:
 	rm -rf build*
+
+build-win:
+	cmake -S . -B build-win -DCMAKE_TOOLCHAIN_FILE=.toolchains/win-x64-static.cmake
+	cmake --build build-win --clean-first
