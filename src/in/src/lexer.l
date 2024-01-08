@@ -27,7 +27,7 @@ void yyerror(yyscan_t scanner, struct ASTNode** ast, const char * s, ...);
 "^"         { return BITWISE_XOR; }
 "~"         { return BITWISE_NOT; }
 "<<"        { return L_SHIFT; }
-"<<"        { return R_SHIFT; }
+">>"        { return R_SHIFT; }
 "+|"        { return SET_POSITIVE; }
 "-|"        { return SET_NEGATIVE; }
 
