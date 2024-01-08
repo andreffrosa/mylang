@@ -1,8 +1,7 @@
-#include "out.h"
-
 #include <string.h>
 #include <ctype.h>
 
+#include "out.h"
 
 static const char* PRE = ""
 "    public static void main(String[] args) {\n"
