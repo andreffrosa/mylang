@@ -51,6 +51,7 @@ endfunction()
 # Add sub-modules
 add_subdirectory(src/ast)
 add_subdirectory(src/in)
+add_subdirectory(src/out)
 add_subdirectory(src/cli)
 
 #set(CPACK_PROJECT_NAME ${PROJECT_NAME})
