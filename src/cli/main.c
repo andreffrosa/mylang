@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
             status = inParse(ctx, &ast);
             result = evalAST(ast);
 
-            deleteASTNode(ast);
+            deleteASTNode(&ast);
 
             printf("= %d (%s)\n", result, status ? "OK" : "ERR");
         } while (true);
@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
 
             if (!status) {
                 fprintf(stderr, "Error parsing the file %s\n", argv[i]);
-                deleteASTNode(ast);
+                deleteASTNode(&ast);
                 return 1;
             }
 
@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
             result = evalAST(ast);
             printf("= %d (%s)\n", result, status ? "OK" : "ERR");
 
-            deleteASTNode(ast);
+            deleteASTNode(&ast);
         }
     }
 

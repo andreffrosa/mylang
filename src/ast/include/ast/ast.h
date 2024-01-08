@@ -10,6 +10,12 @@ typedef enum ASTNodeType {
     AST_MOD,
     AST_USUB,
     AST_UADD,
+    AST_BITWISE_OR,
+    AST_BITWISE_AND,
+    AST_BITWISE_XOR,
+    AST_BITWISE_NOT,
+    AST_L_SHIFT,
+    AST_R_SHIFT,
     AST_ABS,
     AST_SET_POSITIVE,
     AST_SET_NEGATIVE,
@@ -31,7 +37,7 @@ typedef struct ASTNode {
     };
 } ASTNode;
 
-void deleteASTNode(ASTNode* node);
+void deleteASTNode(ASTNode** node);
 
 ASTNode* newASTNumber(int n);
 

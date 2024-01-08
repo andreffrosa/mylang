@@ -26,7 +26,7 @@ ParseContext inInitWithString(const char* string) {
     struct ParseContext_* ctx = newParseContext();
     yylex_init(&ctx->scanner);
     ctx->input_buffer = yy_scan_string(string, ctx->scanner);
-    yyset_lineno(1, ctx->scanner);
+    //yyset_lineno(1, ctx->scanner);
     return ctx;
 }
 

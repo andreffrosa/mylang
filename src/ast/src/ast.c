@@ -21,6 +21,12 @@ ASTOpType typeMappings[] = {
     [AST_MOD] = BINARY_OP,
     [AST_USUB] = UNARY_OP,
     [AST_UADD] = UNARY_OP,
+    [AST_BITWISE_OR] = BINARY_OP,
+    [AST_BITWISE_AND] = BINARY_OP,
+    [AST_BITWISE_XOR] = BINARY_OP,
+    [AST_BITWISE_NOT] = UNARY_OP,
+    [AST_L_SHIFT] = BINARY_OP,
+    [AST_R_SHIFT] = BINARY_OP,
     [AST_ABS] = UNARY_OP,
     [AST_SET_POSITIVE] = UNARY_OP,
     [AST_SET_NEGATIVE] = UNARY_OP,
@@ -75,28 +81,48 @@ int evalAST(ASTNode* node) {
             return - evalAST(node->child);
         case AST_UADD:
             return + evalAST(node->child);
-        default:
+        case AST_BITWISE_OR:
+            return evalAST(node->left) | evalAST(node->right);
+        case AST_BITWISE_AND:
+            return evalAST(node->left) & evalAST(node->right);
+        case AST_BITWISE_XOR:
+            return evalAST(node->left) ^ evalAST(node->right);
+        case AST_BITWISE_NOT:
+            return ~ evalAST(node->child);
+        case AST_L_SHIFT:
+            return evalAST(node->left) << evalAST(node->right);
+        case AST_R_SHIFT:
+            return evalAST(node->left) >> evalAST(node->right);
+        case AST_ABS: {
+            int v = evalAST(node->child);
+            return v >= 0 ? v : - v;
+        } case AST_SET_POSITIVE: {
+            int v = evalAST(node->child);
+            return (v < 0)*(~(v)+1) + (1 - (v < 0))*v;
+        } case AST_SET_NEGATIVE: {
+            int v = evalAST(node->child);
+            return (1 - (v < 0))*(~(v)+1) + (v < 0)*v;
+        } default:
             assert(false);
     }
 }
 
-void deleteASTNode(ASTNode* node) {
+void deleteASTNode(ASTNode** node) {
     assert(node != NULL);
-    switch(getNodeOpType(node->type)) {
+    switch(getNodeOpType((*node)->type)) {
         case NUMBER_OP:
-            free(node);
-            return;
+            break;
         case BINARY_OP:
-            deleteASTNode(node->left);
-            deleteASTNode(node->right);
-            free(node);
-            return;
+            deleteASTNode(&((*node)->left));
+            deleteASTNode(&((*node)->right));
+            break;
         case UNARY_OP:
-            deleteASTNode(node->child);
-            free(node);
-            return;
+            deleteASTNode(&((*node)->child));
+            break;
         default:
-            free(node);
             assert(false);
     }
+
+    free(*node);
+    *node = NULL;
 }

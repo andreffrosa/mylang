@@ -34,9 +34,57 @@ void scanTokensWithSpaces() {
     inDelete(&ctx);
 }
 
+void scanAbs() {
+    ParseContext ctx = inInitWithString("(|1|)");
+
+    YYSTYPE yylval_param;
+    int tok;
+
+    tok = inLex(ctx, &yylval_param);
+    TEST_ASSERT_TRUE(tok > 0);
+    TEST_ASSERT_EQUAL_INT(OPEN_ABS, tok);
+
+    tok = inLex(ctx, &yylval_param);
+    TEST_ASSERT_TRUE(tok > 0);
+    TEST_ASSERT_EQUAL_INT(NUMBER, tok);
+    TEST_ASSERT_EQUAL_INT(1, yylval_param.ival);
+
+    tok = inLex(ctx, &yylval_param);
+    TEST_ASSERT_TRUE(tok > 0);
+    TEST_ASSERT_EQUAL_INT(CLOSE_ABS, tok);
+
+    tok = inLex(ctx, &yylval_param);
+    TEST_ASSERT_FALSE(tok > 0);
+
+    inDelete(&ctx);
+}
+
+void scanSetPositive() {
+    ParseContext ctx = inInitWithString("+|1");
+
+    YYSTYPE yylval_param;
+    int tok;
+
+    tok = inLex(ctx, &yylval_param);
+    TEST_ASSERT_TRUE(tok > 0);
+    TEST_ASSERT_EQUAL_INT(SET_POSITIVE, tok);
+
+    tok = inLex(ctx, &yylval_param);
+    TEST_ASSERT_TRUE(tok > 0);
+    TEST_ASSERT_EQUAL_INT(NUMBER, tok);
+    TEST_ASSERT_EQUAL_INT(1, yylval_param.ival);
+
+    tok = inLex(ctx, &yylval_param);
+    TEST_ASSERT_FALSE(tok > 0);
+
+    inDelete(&ctx);
+}
+
 int main(int argc, char** argv) {
   UNITY_BEGIN();
   RUN_TEST(scanTokensWithSpaces);
+  RUN_TEST(scanAbs);
+  RUN_TEST(scanSetPositive);
   return UNITY_END();
 }
 
