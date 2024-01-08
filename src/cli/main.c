@@ -4,11 +4,16 @@
 #include "in/in.h"
 #include "out/out.h"
 
+#if defined(_WIN32) || defined(_WIN64)
+#define PATH_SEPARATOR '\\'
+#else
+#define PATH_SEPARATOR '/'
+#endif
+
 #define OPEN_FILE_ERR_MSG "Could not open the file %s\n"
 #define NO_FILE_ERR_MSG "No file provided!\n"
 
-void compile(const char* input_file_name, ASTNode* ast, const char* ext, int (*compile_to)(ASTNode* ast, FILE* out_file));
-int getOutFilePath(const char* input_file_path, size_t len, const char* ext, char* out_file_path);
+void compile(const char* input_file_name, ASTNode* ast, const char* ext, int (*compile_to)(ASTNode* ast, const char* file_name, FILE* out_file));
 
 int main(int argc, char *argv[]) {
     int result = 0;
@@ -56,6 +61,7 @@ int main(int argc, char *argv[]) {
             printf("= %d (%s)\n", result, status ? "OK" : "ERR");
 
             compile(argv[i], ast, ".c", &outCompileToC);
+            compile(argv[i], ast, ".java", &outCompileToJava);
 
             deleteASTNode(&ast);
         }
@@ -64,10 +70,42 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-void compile(const char* input_file_name, ASTNode* ast, const char* ext, int (*compile_to)(ASTNode* ast, FILE* out_file)) {
-    size_t len = strlen(input_file_name);
-    char out_file_path[len+1];
-    getOutFilePath(input_file_name, len, ext, out_file_path);
+void getFileNameWithoutExt(char* file_name, const char* file_path, const char* last_dot, size_t len) {
+    const char* last_slash = strrchr(file_path, PATH_SEPARATOR);
+    const char* filename_start = (last_slash != NULL) ? (last_slash + 1) : file_path;
+
+    if (last_dot != NULL) {
+        strncpy(file_name, filename_start, last_dot - filename_start);
+        file_name[last_dot - filename_start] = '\0';
+    } else {
+        strncpy(file_name, filename_start, len);
+    }
+}
+
+void getOutFilePath(char* out_file_path, const char* input_file_path, size_t len, const char* last_dot, const char* ext, size_t ext_len) {
+    char* ext_start = NULL;
+    if (last_dot != NULL) {
+        strncpy(out_file_path, input_file_path, last_dot - input_file_path);
+        ext_start = out_file_path + (last_dot - input_file_path);
+    } else {
+        strncpy(out_file_path, input_file_path, len);
+        ext_start = out_file_path + len;
+    }
+    strncpy(ext_start, ext, ext_len);
+    *(ext_start + ext_len) = '\0';
+}
+
+
+void compile(const char* input_file_path, ASTNode* ast, const char* ext, int (*compile_to)(ASTNode* ast, const char* fname, FILE* out_file)) {
+    const char* last_dot = strrchr(input_file_path, '.');
+    size_t len = strlen(input_file_path);
+
+    char file_name[len + 1];
+    getFileNameWithoutExt(file_name, input_file_path, last_dot, len);
+
+    size_t ext_len = strlen(ext);
+    char out_file_path[len + ext_len + 1];
+    getOutFilePath(out_file_path, input_file_path, len, last_dot, ext, ext_len);
 
     FILE* out_file = fopen(out_file_path, "w+");
     if(out_file == NULL) {
@@ -75,20 +113,12 @@ void compile(const char* input_file_name, ASTNode* ast, const char* ext, int (*c
         return;
     }
 
-    bool status = compile_to(ast, out_file);
+    bool status = compile_to(ast, file_name, out_file);
     fclose(out_file);
     if(!status) {
-        fprintf(stderr, "Error compiling the file %s\n", input_file_name);
+        fprintf(stderr, "Error compiling the file %s\n", input_file_path);
         return;
     }
 
     printf("Compiled file %s\n", out_file_path);
-}
-
-int getOutFilePath(const char* input_file_path, size_t len, const char* ext, char* out_file_path) {
-    strncpy(out_file_path, input_file_path, len+1);
-    char* ptr = out_file_path + len;
-    while (*ptr != '.') { ptr--;}
-    strncpy(ptr, ext, strlen(ext)+1);
-    return len;
 }

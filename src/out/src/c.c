@@ -13,7 +13,7 @@ static const char* POS = ""
 "    return 0;\n"
 "}\n";
 
-int outCompileToC(ASTNode* ast, FILE* out_file) {
+int outCompileToC(ASTNode* ast, const char* file_name, FILE* out_file) {
     fprintf(out_file, "%s", PRE);
 
     outCompileExpression(ast, out_file);

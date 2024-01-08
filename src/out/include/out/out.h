@@ -7,8 +7,8 @@
 
 int outCompileExpression(ASTNode* ast, FILE* out_file);
 
-int outCompileToC(ASTNode* ast, FILE* out_file);
+int outCompileToC(ASTNode* ast, const char* file_name, FILE* out_file);
 
-int outCompileToJava(ASTNode* ast, FILE* out_file);
+int outCompileToJava(ASTNode* ast, const char* file_name, FILE* out_file);
 
 #endif
