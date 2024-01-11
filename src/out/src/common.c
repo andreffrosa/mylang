@@ -113,7 +113,26 @@ int outCompileExpression(ASTNode* node, FILE* out_file) {
             outCompileExpression(node->child, out_file);
             fprintf(out_file, ")");
             break;
-        } default:
+        } case AST_BITWISE_AND:
+            compileBinaryOP(node, "&", out_file);
+            break;
+        case AST_BITWISE_OR:
+            compileBinaryOP(node, "|", out_file);
+            break;
+        case AST_BITWISE_XOR:
+            compileBinaryOP(node, "^", out_file);
+            break;
+        case AST_BITWISE_NOT:
+            fprintf(out_file, "~");
+            outCompileExpression(node->child, out_file);
+            break;
+        case AST_L_SHIFT:
+            compileBinaryOP(node, " << ", out_file);
+            break;
+        case AST_R_SHIFT:
+            compileBinaryOP(node, " >> ", out_file);
+            break;
+        default:
             assert(false);
     }
 }

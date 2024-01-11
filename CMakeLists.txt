@@ -18,21 +18,17 @@ include_directories(${INCLUDE_DIRECTORIES})
 # Option to enable/disable tests
 option(BUILD_TESTS "Enable building tests" ON)
 if(BUILD_TESTS)
-  message("Building tests!")
   include(CTest)
   enable_testing()
-
-  set(UNITY_SOURCE_DIR "dependencies/Unity/src")
-  add_library(Unity STATIC ${UNITY_SOURCE_DIR}/unity.c)
-  target_include_directories(Unity PUBLIC ${UNITY_SOURCE_DIR})
+  message("Tests Enabled!")
 else()
-  message("Skipping tests!")
+  message("Tests Disabled!")
 endif()
 
 # Function to include tests of a module
 function(include_tests)
   if(BUILD_TESTS)
-    message("Building tests for module ${MODULE_NAME}")
+    message("Setting-up tests for module ${MODULE_NAME}")
     set(TEST_DIR "./test")
     file(GLOB TEST_SOURCES "${TEST_DIR}/*.c")
     foreach(test_file ${TEST_SOURCES})
@@ -48,7 +44,8 @@ function(include_tests)
   endif()
 endfunction()
 
-# Add sub-modules
+# Include sub-modules
+add_subdirectory(dependencies)
 add_subdirectory(src/ast)
 add_subdirectory(src/in)
 add_subdirectory(src/out)
