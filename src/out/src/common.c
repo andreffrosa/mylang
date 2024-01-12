@@ -54,83 +54,83 @@ static inline bool needParentheses(ASTNodeType current_type, ASTNodeType child_t
 }
 
 
-static inline void compileBinaryOP(ASTNode* node, const char* symbol, FILE* out_file) {
+static inline void compileBinaryOP(ASTNode* node, const char* symbol, IOStream* stream) {
     bool need_parentheses = needParentheses(node->type, node->left->type, true);
-    if(need_parentheses) {fprintf(out_file, "(");}
-    outCompileExpression(node->left, out_file);
-    if(need_parentheses) {fprintf(out_file, ")");}
+    if(need_parentheses) {IOStreamWritef(stream, "(");}
+    outCompileExpression(node->left, stream);
+    if(need_parentheses) {IOStreamWritef(stream, ")");}
 
-    fprintf(out_file, symbol);
+    IOStreamWritef(stream, symbol);
 
     need_parentheses = needParentheses(node->type, node->right->type, false);
-    if(need_parentheses) {fprintf(out_file, "(");}
-    outCompileExpression(node->right, out_file);
-    if(need_parentheses) {fprintf(out_file, ")");}
+    if(need_parentheses) {IOStreamWritef(stream, "(");}
+    outCompileExpression(node->right, stream);
+    if(need_parentheses) {IOStreamWritef(stream, ")");}
 }
 
-int outCompileExpression(ASTNode* node, FILE* out_file) {
+int outCompileExpression(ASTNode* node, IOStream* stream) {
     assert(node != NULL);
 
     switch (node->type) {
         case AST_NUMBER:
-            fprintf(out_file, "%d", node->n);
+            IOStreamWritef(stream, "%d", node->n);
             break;
         case AST_ADD:
-            compileBinaryOP(node, " + ", out_file);
+            compileBinaryOP(node, " + ", stream);
             break;
         case AST_SUB:
-            compileBinaryOP(node, " - ", out_file);
+            compileBinaryOP(node, " - ", stream);
             break;
         case AST_MUL:
-            compileBinaryOP(node, "*", out_file);
+            compileBinaryOP(node, "*", stream);
             break;
         case AST_DIV:
-            compileBinaryOP(node, "/", out_file);
+            compileBinaryOP(node, "/", stream);
             break;
         case AST_MOD:
-            compileBinaryOP(node, "%%", out_file);
+            compileBinaryOP(node, "%%", stream);
             break;
         case AST_USUB:
-            fprintf(out_file, "-");
-            outCompileExpression(node->child, out_file);
+            IOStreamWritef(stream, "-");
+            outCompileExpression(node->child, stream);
             break;
         case AST_UADD:
-            fprintf(out_file, "+");
-            outCompileExpression(node->child, out_file);
+            IOStreamWritef(stream, "+");
+            outCompileExpression(node->child, stream);
             break;
         case AST_ABS: {
-            fprintf(out_file, "abs(");
-            outCompileExpression(node->child, out_file);
-            fprintf(out_file, ")");
+            IOStreamWritef(stream, "abs(");
+            outCompileExpression(node->child, stream);
+            IOStreamWritef(stream, ")");
             break;
         } case AST_SET_POSITIVE: {
-            fprintf(out_file, "abs(");
-            outCompileExpression(node->child, out_file);
-            fprintf(out_file, ")");
+            IOStreamWritef(stream, "abs(");
+            outCompileExpression(node->child, stream);
+            IOStreamWritef(stream, ")");
             break;
         } case AST_SET_NEGATIVE: {
-            fprintf(out_file, "-abs(");
-            outCompileExpression(node->child, out_file);
-            fprintf(out_file, ")");
+            IOStreamWritef(stream, "-abs(");
+            outCompileExpression(node->child, stream);
+            IOStreamWritef(stream, ")");
             break;
         } case AST_BITWISE_AND:
-            compileBinaryOP(node, "&", out_file);
+            compileBinaryOP(node, "&", stream);
             break;
         case AST_BITWISE_OR:
-            compileBinaryOP(node, "|", out_file);
+            compileBinaryOP(node, "|", stream);
             break;
         case AST_BITWISE_XOR:
-            compileBinaryOP(node, "^", out_file);
+            compileBinaryOP(node, "^", stream);
             break;
         case AST_BITWISE_NOT:
-            fprintf(out_file, "~");
-            outCompileExpression(node->child, out_file);
+            IOStreamWritef(stream, "~");
+            outCompileExpression(node->child, stream);
             break;
         case AST_L_SHIFT:
-            compileBinaryOP(node, " << ", out_file);
+            compileBinaryOP(node, " << ", stream);
             break;
         case AST_R_SHIFT:
-            compileBinaryOP(node, " >> ", out_file);
+            compileBinaryOP(node, " >> ", stream);
             break;
         default:
             assert(false);

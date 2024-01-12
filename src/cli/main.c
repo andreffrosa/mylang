@@ -13,7 +13,7 @@
 #define OPEN_FILE_ERR_MSG "Could not open the file %s\n"
 #define NO_FILE_ERR_MSG "No file provided!\n"
 
-void compile(const char* input_file_name, ASTNode* ast, const char* ext, int (*compile_to)(ASTNode* ast, const char* file_name, FILE* out_file));
+void compile(const char* input_file_name, ASTNode* ast, const char* ext, int (*compile_to)(ASTNode* ast, const char* file_name, IOStream* stream));
 
 int main(int argc, char *argv[]) {
     int result = 0;
@@ -96,7 +96,7 @@ void getOutFilePath(char* out_file_path, const char* input_file_path, size_t len
 }
 
 
-void compile(const char* input_file_path, ASTNode* ast, const char* ext, int (*compile_to)(ASTNode* ast, const char* fname, FILE* out_file)) {
+void compile(const char* input_file_path, ASTNode* ast, const char* ext, int (*compile_to)(ASTNode* ast, const char* fname, IOStream* stream)) {
     const char* last_dot = strrchr(input_file_path, '.');
     size_t len = strlen(input_file_path);
 
@@ -113,8 +113,11 @@ void compile(const char* input_file_path, ASTNode* ast, const char* ext, int (*c
         return;
     }
 
-    bool status = compile_to(ast, file_name, out_file);
-    fclose(out_file);
+    IOStream* stream = openIOStreamFromFile(out_file);
+
+    bool status = compile_to(ast, file_name, stream);
+    //fclose(out_file);
+    IOStreamClose(&stream);
     if(!status) {
         fprintf(stderr, "Error compiling the file %s\n", input_file_path);
         return;

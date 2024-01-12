@@ -12,16 +12,16 @@ static const char* POS = ""
 "    }\n"
 "}\n";
 
-int outCompileToJava(ASTNode* ast, const char* file_name, FILE* out_file) {
+int outCompileToJava(ASTNode* ast, const char* file_name, IOStream* stream) {
     char class_name[strlen(file_name)];
     strcpy(class_name, file_name);
     *class_name = toupper((unsigned char)*class_name);
 
-    fprintf(out_file, "class %s {\n", class_name);
-    fprintf(out_file, "%s", PRE);
+    IOStreamWritef(stream, "class %s {\n", class_name);
+    IOStreamWritef(stream, "%s", PRE);
 
-    outCompileExpression(ast, out_file);
-    fprintf(out_file, ";\n");
+    outCompileExpression(ast, stream);
+    IOStreamWritef(stream, ";\n");
 
-    fprintf(out_file, "%s", POS);
+    IOStreamWritef(stream, "%s", POS);
 }

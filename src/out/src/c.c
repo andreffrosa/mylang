@@ -13,11 +13,11 @@ static const char* POS = ""
 "    return 0;\n"
 "}\n";
 
-int outCompileToC(ASTNode* ast, const char* file_name, FILE* out_file) {
-    fprintf(out_file, "%s", PRE);
+int outCompileToC(ASTNode* ast, const char* file_name, IOStream* stream) {
+    IOStreamWritef(stream, "%s", PRE);
 
-    outCompileExpression(ast, out_file);
-    fprintf(out_file, ";\n");
+    outCompileExpression(ast, stream);
+    IOStreamWritef(stream, ";\n");
 
-    fprintf(out_file, "%s", POS);
+    IOStreamWritef(stream, "%s", POS);
 }

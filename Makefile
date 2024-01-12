@@ -24,6 +24,11 @@ test:
 #	cmake --build build --clean-first
 	ctest --test-dir build --output-on-failure
 
+valgrind:
+	cmake -S . -B build -DCMAKE_BUILD_TYPE:STRING=Debug
+	cmake --build build --clean-first
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --verbose --log-file=valgrind-out.txt $(ARGS)
+
 clean:
 	rm -rf build*
 
