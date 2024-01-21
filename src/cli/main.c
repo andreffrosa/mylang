@@ -12,100 +12,112 @@
 
 #define OPEN_FILE_ERR_MSG "Could not open the file %s\n"
 #define NO_FILE_ERR_MSG "No file provided!\n"
+#define PARSE_AST_ERR_MSG "Error parsing the file %s\n"
+#define COMPILE_AST_ERR "Error compiling the file %s\n"
+#define COMPILED_MSG "Compiled file %s\n"
 
-void compile(const char* input_file_name, ASTNode* ast, const char* ext, int (*compile_to)(ASTNode* ast, const char* file_name, IOStream* stream));
+void compile(const char* out_file_path_no_ext, size_t len, const char* file_name, const ASTNode* ast, const SymbolTable* st, const char* ext, int (*compile_to)(const ASTNode* ast, const SymbolTable* st, const char* fname, const IOStream* stream));
+bool intrepert(InContext ctx);
+static inline void compileFile(const char* file_path);
 
 int main(int argc, char *argv[]) {
-    int result = 0;
-    bool status = false;
-
     if (argc == 1) {
-        ParseContext ctx = inInitWithStdin();
-        do {
-            printf("> ");
-
-            ASTNode *ast = NULL;
-            status = inParse(ctx, &ast);
-            result = evalAST(ast);
-
-            deleteASTNode(&ast);
-
-            printf("= %d (%s)\n", result, status ? "OK" : "ERR");
-        } while (true);
-
+        InContext ctx = inInitWithStdin();
+        while( !(intrepert(ctx)) );
         inDelete(&ctx);
     } else {
         for (int i = 1; i < argc; i++) {
-            FILE *in_file = fopen(argv[i], "r");
-            if (in_file == NULL) {
-                fprintf(stderr, OPEN_FILE_ERR_MSG, argv[i]);
-                return 1;
-            }
-
-            ParseContext ctx = inInitWithFile(in_file);
-            ASTNode *ast = NULL;
-            status = inParse(ctx, &ast);
-
-            inDelete(&ctx);
-            fclose(in_file);
-
-            if (!status) {
-                fprintf(stderr, "Error parsing the file %s\n", argv[i]);
-                deleteASTNode(&ast);
-                return 1;
-            }
-
-            printf("Parsed file %s: %d AST nodes.\n", argv[i], ast->size);
-
-            result = evalAST(ast);
-            printf("= %d (%s)\n", result, status ? "OK" : "ERR");
-
-            compile(argv[i], ast, ".c", &outCompileToC);
-            compile(argv[i], ast, ".java", &outCompileToJava);
-
-            deleteASTNode(&ast);
+            compileFile(argv[i]);
         }
     }
-
     return 0;
 }
 
-void getFileNameWithoutExt(char* file_name, const char* file_path, const char* last_dot, size_t len) {
-    const char* last_slash = strrchr(file_path, PATH_SEPARATOR);
-    const char* filename_start = (last_slash != NULL) ? (last_slash + 1) : file_path;
+bool intrepert(InContext ctx) {
+    printf("> ");
 
-    if (last_dot != NULL) {
-        strncpy(file_name, filename_start, last_dot - filename_start);
-        file_name[last_dot - filename_start] = '\0';
-    } else {
-        strncpy(file_name, filename_start, len);
+    ASTNode* ast = NULL;
+    SymbolTable* st = NULL;
+    bool status = inParse(ctx, (ParseContext){&ast, &st});
+
+    if(ast == NULL) {
+        printf("\n");
+        return true;
     }
+
+    Frame* frame = executeAST(ast, st);
+
+    printf("Parsed stdin: %d AST nodes.", ast->size);
+
+    IOStream* stream = openIOStreamFromStdout();
+    printSymbolTable(st, frame, stream);
+    IOStreamClose(&stream);
+
+    deleteFrame(&frame);
+    deleteASTNode(&ast);
+    deleteSymbolTable(&st);
+
+    return feof(stdin) != 0;
 }
 
-void getOutFilePath(char* out_file_path, const char* input_file_path, size_t len, const char* last_dot, const char* ext, size_t ext_len) {
-    char* ext_start = NULL;
-    if (last_dot != NULL) {
-        strncpy(out_file_path, input_file_path, last_dot - input_file_path);
-        ext_start = out_file_path + (last_dot - input_file_path);
-    } else {
-        strncpy(out_file_path, input_file_path, len);
-        ext_start = out_file_path + len;
+void getOutputInfo(const char* file_path, size_t len, char* out_file_path_no_ext, size_t* len_no_ext, const char** file_name) {
+    const char* last_dot = strrchr(file_path, '.');
+    if(last_dot == file_path) {
+        last_dot = NULL;
     }
-    strncpy(ext_start, ext, ext_len);
-    *(ext_start + ext_len) = '\0';
+
+    size_t chars_to_copy = last_dot != NULL ? last_dot - file_path : len;
+    strncpy(out_file_path_no_ext, file_path, chars_to_copy);
+    out_file_path_no_ext[chars_to_copy] = '\0';
+
+    const char* last_slash = strrchr(out_file_path_no_ext, PATH_SEPARATOR);
+    *file_name = (last_slash != NULL) ? (last_slash + 1) : file_path;
+    *len_no_ext = chars_to_copy;
 }
 
+static inline void compileFile(const char* file_path) {
+    FILE *in_file = fopen(file_path, "r");
+    if (in_file == NULL) {
+        fprintf(stderr, OPEN_FILE_ERR_MSG, file_path);
+        return;
+    }
 
-void compile(const char* input_file_path, ASTNode* ast, const char* ext, int (*compile_to)(ASTNode* ast, const char* fname, IOStream* stream)) {
-    const char* last_dot = strrchr(input_file_path, '.');
-    size_t len = strlen(input_file_path);
+    InContext ctx = inInitWithFile(in_file);
 
-    char file_name[len + 1];
-    getFileNameWithoutExt(file_name, input_file_path, last_dot, len);
+    ASTNode *ast = NULL;
+    SymbolTable* st = NULL;
+    bool status = inParse(ctx, (ParseContext){&ast, &st});
 
+    inDelete(&ctx);
+    fclose(in_file);
+
+    if (!status) {
+        fprintf(stderr, PARSE_AST_ERR_MSG, file_path);
+        deleteASTNode(&ast);
+        return;
+    }
+
+    printf("Parsed file %s: %d AST nodes.\n", file_path, ast->size);
+
+    size_t len = strlen(file_path);
+    char out_file_path_no_ext[len + 1];
+    size_t len_no_ext = 0;
+    const char* file_name = NULL;
+    getOutputInfo(file_path, len, out_file_path_no_ext, &len_no_ext, &file_name);
+
+    compile(out_file_path_no_ext, len_no_ext, file_name, ast, st, ".c", &outCompileToC);
+    compile(out_file_path_no_ext, len_no_ext, file_name, ast, st, ".java", &outCompileToJava);
+
+    deleteASTNode(&ast);
+    deleteSymbolTable(&st);
+}
+
+void compile(const char* out_file_path_no_ext, size_t len, const char* file_name, const ASTNode* ast, const SymbolTable* st, const char* ext, int (*compile_to)(const ASTNode* ast, const SymbolTable* st, const char* fname, const IOStream* stream)) {
     size_t ext_len = strlen(ext);
     char out_file_path[len + ext_len + 1];
-    getOutFilePath(out_file_path, input_file_path, len, last_dot, ext, ext_len);
+    strncpy(out_file_path, out_file_path_no_ext, len);
+    strncpy(out_file_path + len, ext, ext_len);
+    out_file_path[len + ext_len] = '\0';
 
     FILE* out_file = fopen(out_file_path, "w+");
     if(out_file == NULL) {
@@ -115,13 +127,12 @@ void compile(const char* input_file_path, ASTNode* ast, const char* ext, int (*c
 
     IOStream* stream = openIOStreamFromFile(out_file);
 
-    bool status = compile_to(ast, file_name, stream);
-    //fclose(out_file);
+    bool status = compile_to(ast, st, file_name, stream);
     IOStreamClose(&stream);
     if(!status) {
-        fprintf(stderr, "Error compiling the file %s\n", input_file_path);
+        fprintf(stderr, COMPILE_AST_ERR, out_file_path);
         return;
     }
 
-    printf("Compiled file %s\n", out_file_path);
+    printf(COMPILED_MSG, out_file_path);
 }

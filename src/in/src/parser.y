@@ -3,16 +3,21 @@
 
 %define api.pure full
 //%locations
-%parse-param {yyscan_t scanner} {struct ASTNode** ast}
+%parse-param {yyscan_t scanner} {ParseContext ctx}
 %lex-param {yyscan_t scanner}
 
 %code requires {
   typedef void * yyscan_t;
-  typedef struct ASTNode ASTNode;
+
+  #include "parse_ctx.h"
 }
 
 %code provides {
-  void yyerror(yyscan_t scanner, struct ASTNode** ast, const char * s, ...);
+  void yyerror(yyscan_t scanner, ParseContext ctx, const char * s, ...);
+
+  /*#define YY_DECL \
+       int yylex(YYSTYPE* yylval_param, yyscan_t yyscanner, ASTNode** ast)
+   YY_DECL;*/
 }
 
 %{
@@ -22,15 +27,20 @@
 #include "parser.h"
 #include "lexer.h"
 
-#include "ast/ast.h"
+#include "actions.h"
 %}
 
 %union {
-    int ival;
-    ASTNode* ast_node;
+  int ival;
+  char sval[MAX_ID_SIZE];
+  ASTNode* ast_node;
 }
 
 %token <ival> NUMBER
+%token <sval> ID
+
+//%right '=' // TODO: rethink
+%token '='
 
 %left L_SHIFT R_SHIFT
 %left BITWISE_OR BITWISE_AND BITWISE_XOR
@@ -41,41 +51,59 @@
 
 %token OPEN_ABS CLOSE_ABS
 
+%token VAR
+
 %token END 0
 
-%type <ast_node> exp
+%type <ast_node> exp stmt stmt_seq
+
+%start program
 
 %%
 
-program: %empty
- | program exp END { *ast = $2; YYACCEPT; }
- ;
+program: stmt_seq END       { *(ctx.ast) = $1; YYACCEPT; }
+   | program error END      { yyerrok; }
+   ;
 
-exp: NUMBER { $$ = newASTNumber($1); }
-   | exp '+' exp { $$ = newASTBinaryOP(AST_ADD, $1, $3); }
-   | exp '-' exp { $$ = newASTBinaryOP(AST_SUB, $1, $3); }
-   | exp '*' exp { $$ = newASTBinaryOP(AST_MUL, $1, $3); }
-   | exp '/' exp { $$ = newASTBinaryOP(AST_DIV, $1, $3); }
-   | exp '%' exp { $$ = newASTBinaryOP(AST_MOD, $1, $3); }
-   | '(' exp ')' { $$ = $2; }
-   | '-' exp %prec UMINUS { $$ = newASTUnaryOP(AST_USUB, $2); }
-   | '+' exp %prec UPLUS { $$ = newASTUnaryOP(AST_UADD, $2); }
-   | exp BITWISE_OR exp { $$ = newASTBinaryOP(AST_BITWISE_OR, $1, $3); }
-   | exp BITWISE_AND exp { $$ = newASTBinaryOP(AST_BITWISE_AND, $1, $3); }
-   | exp BITWISE_XOR exp { $$ = newASTBinaryOP(AST_BITWISE_XOR, $1, $3); }
-   | exp L_SHIFT exp { $$ = newASTBinaryOP(AST_L_SHIFT, $1, $3); }
-   | exp R_SHIFT exp { $$ = newASTBinaryOP(AST_R_SHIFT, $1, $3); }
-   | BITWISE_NOT exp { $$ = newASTUnaryOP(AST_BITWISE_NOT, $2); }
-   | OPEN_ABS exp CLOSE_ABS { $$ = newASTUnaryOP(AST_ABS, $2); }
-   | SET_POSITIVE exp { $$ = newASTUnaryOP(AST_SET_POSITIVE, $2); }
-   | SET_NEGATIVE exp { $$ = newASTUnaryOP(AST_SET_NEGATIVE, $2); }
+stmt_seq: %empty            { $$ = NULL; }
+   | stmt                   { $$ = $1; } // If the program is a single statement, it does not require a trailling ';'
+   | stmt ';' stmt_seq      { $$ = newASTStatementList($1, $3); }
+   ;
+
+stmt: exp                   { $$ = $1; }
+   | VAR ID                 { TRY( $$ = declaration($2, CTX(), LINE()) ); }
+   | VAR ID '=' exp         { TRY( $$ = declarationAssignment($2, $4, CTX(), LINE()) ); }
+   | ID '=' exp             { TRY( $$ = assignment($1, $3, CTX(), LINE()) ); }
+   ;
+
+exp: NUMBER                 { $$ = newASTNumber($1); }
+   | ID                     { TRY( $$ = idReference($1, CTX(), LINE()) ); }
+   | exp '+' exp            { $$ = newASTAdd($1, $3); }
+   | exp '-' exp            { $$ = newASTSub($1, $3); }
+   | exp '*' exp            { $$ = newASTMul($1, $3); }
+   | exp '/' exp            { $$ = newASTDiv($1, $3); }
+   | exp '%' exp            { $$ = newASTMod($1, $3); }
+   | '(' exp ')'            { $$ = $2; }
+   | '-' exp %prec UMINUS   { $$ = newASTUSub($2); }
+   | '+' exp %prec UPLUS    { $$ = newASTUAdd($2); }
+   | exp BITWISE_AND exp    { $$ = newASTBitwiseAnd($1, $3); }
+   | exp BITWISE_OR exp     { $$ = newASTBitwiseOr($1, $3); }
+   | exp BITWISE_XOR exp    { $$ = newASTBitwiseXor($1, $3); }
+   | BITWISE_NOT exp        { $$ = newASTBitwiseNot($2); }
+   | exp L_SHIFT exp        { $$ = newASTLeftShift($1, $3); }
+   | exp R_SHIFT exp        { $$ = newASTRightShift($1, $3); }
+   | OPEN_ABS exp CLOSE_ABS { $$ = newASTAbs($2); }
+   | SET_POSITIVE exp       { $$ = newASTSetPositive($2); }
+   | SET_NEGATIVE exp       { $$ = newASTSetNegative($2); }
    ;
 
 %%
 
-void yyerror(yyscan_t scanner, struct ASTNode** ast, const char * s, ...) {
+void yyerror(yyscan_t scanner, ParseContext ctx, const char * s, ...) {
   va_list ap;
   va_start(ap, s);
+
+  fflush(stdout);
 
   fprintf(stderr, "(line %d) PARSE ERROR: ", yyget_lineno(scanner));
   vfprintf(stderr, s, ap);

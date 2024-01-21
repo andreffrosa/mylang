@@ -1,19 +1,16 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <assert.h>
+#include <string.h>
 
 #include "ast.h"
 
-typedef enum ASTOpType {
-    NUMBER_OP,
-    UNARY_OP,
-    BINARY_OP,
-    UNKNOWN_OP
-} ASTOpType;
+#define OK(V) (ASTResult){.type = ASTResult_OK, .ast = V}
+#define ERR(T) (ASTResult){.type = ASTResult_ERR_ ## T, .ast = NULL}
 
 // Lookup table
-ASTOpType typeMappings[] = {
-    [AST_NUMBER] = NUMBER_OP,
+ASTOpType ASTOpMap[] = {
+    [AST_NUMBER] = ZEROARY_OP,
     [AST_ADD] = BINARY_OP,
     [AST_SUB] = BINARY_OP,
     [AST_MUL] = BINARY_OP,
@@ -30,87 +27,131 @@ ASTOpType typeMappings[] = {
     [AST_ABS] = UNARY_OP,
     [AST_SET_POSITIVE] = UNARY_OP,
     [AST_SET_NEGATIVE] = UNARY_OP,
+    [AST_ID] = ZEROARY_OP,
+    [AST_ID_DECLARATION] = UNARY_OP,
+    [AST_ID_DECL_ASSIGN] = BINARY_OP,
+    [AST_ID_ASSIGNMENT] = BINARY_OP,
+    [AST_STATEMENT_SEQ] = BINARY_OP,
 };
 
-#define getNodeOpType(nodeType) (nodeType >= AST_NODE_TYPES_COUNT ? UNKNOWN_OP : typeMappings[nodeType])
-
-static inline ASTNode* newASTNode(ASTNodeType type) {
+static inline ASTNode* newASTNode(const ASTNodeType type) {
     ASTNode* node = (ASTNode*) malloc(sizeof(ASTNode));
     node->type = type;
     return node;
 }
 
-ASTNode* newASTNumber(int n) {
+ASTNode* newASTNumber(const int n) {
     ASTNode* node = newASTNode(AST_NUMBER);
-    node->n = n;
+    node->n = (int) n;
     node->size = 1;
     return node;
 }
 
-ASTNode* newASTBinaryOP(ASTNodeType type, ASTNode* left, ASTNode* right) {
+ASTNode* newASTBinaryOP(const ASTNodeType type, const ASTNode* left, const ASTNode* right) {
+    assert(left != NULL && right != NULL);
+
     ASTNode* node = newASTNode(type);
-    node->left = left;
-    node->right = right;
+    node->left = (ASTNode*) left;
+    node->right = (ASTNode*) right;
     node->size = left->size + right->size + 1;
     return node;
 }
 
-ASTNode* newASTUnaryOP(ASTNodeType type, ASTNode* child) {
+ASTNode* newASTUnaryOP(const ASTNodeType type, const ASTNode* child) {
+    assert(child != NULL);
+
     ASTNode* node = newASTNode(type);
-    node->child = child;
+    node->child = (ASTNode*) child;
     node->size = child->size + 1;
     return node;
 }
 
-int evalAST(ASTNode* node) {
-    assert(node != NULL);
-    switch (node->type) {
-        case AST_NUMBER:
-            return node->n;
-        case AST_ADD:
-            return evalAST(node->left) + evalAST(node->right);
-        case AST_SUB:
-            return evalAST(node->left) - evalAST(node->right);
-        case AST_MUL:
-            return evalAST(node->left) * evalAST(node->right);
-        case AST_DIV:
-            return evalAST(node->left) / evalAST(node->right);
-        case AST_MOD:
-            return evalAST(node->left) % evalAST(node->right);
-        case AST_USUB:
-            return - evalAST(node->child);
-        case AST_UADD:
-            return + evalAST(node->child);
-        case AST_BITWISE_OR:
-            return evalAST(node->left) | evalAST(node->right);
-        case AST_BITWISE_AND:
-            return evalAST(node->left) & evalAST(node->right);
-        case AST_BITWISE_XOR:
-            return evalAST(node->left) ^ evalAST(node->right);
-        case AST_BITWISE_NOT:
-            return ~ evalAST(node->child);
-        case AST_L_SHIFT:
-            return evalAST(node->left) << evalAST(node->right);
-        case AST_R_SHIFT:
-            return evalAST(node->left) >> evalAST(node->right);
-        case AST_ABS: {
-            int v = evalAST(node->child);
-            return v >= 0 ? v : - v;
-        } case AST_SET_POSITIVE: {
-            int v = evalAST(node->child);
-            return (v < 0)*(~(v)+1) + (1 - (v < 0))*v;
-        } case AST_SET_NEGATIVE: {
-            int v = evalAST(node->child);
-            return (1 - (v < 0))*(~(v)+1) + (v < 0)*v;
-        } default:
-            assert(false);
+ASTNode* newASTID(const Symbol* id) {
+    assert(id != NULL);
+
+    ASTNode* node = newASTNode(AST_ID);
+    node->id = (Symbol*) id;
+    node->size = 1;
+    return node;
+}
+
+ASTResult newASTIDDefinition(const char* id, SymbolTable* st) {
+    assert(id != NULL && st != NULL);
+
+    if(!checkIDWasNotDeclared(id, st)) {
+        return ERR(ID_ALREADY_DEFINED);
     }
+    Symbol* var = insertVar(st, id);
+    return OK(newASTID(var));
+}
+
+ASTResult newASTIDReference(const char* id, SymbolTable* st) {
+    assert(id != NULL && st != NULL);
+
+    Symbol* var = lookupVar(st, id);
+    if(var == NULL) {
+        return ERR(ID_NOT_DEFINED);
+    }
+
+    if(!isVarInitialized(var)) {
+        return ERR(ID_NOT_INIT);
+    }
+
+    return OK(newASTID(var));
+}
+
+ASTResult newASTIDLeftReference(const char* id, SymbolTable* st) {
+    assert(id != NULL && st != NULL);
+
+    Symbol* var = lookupVar(st, id);
+    if(var == NULL) {
+        return ERR(ID_NOT_DEFINED);
+    }
+    return OK(newASTID(var));
+}
+
+ASTResult newASTIDDeclaration(const char* id, SymbolTable* st) {
+    assert(id != NULL && st != NULL);
+
+    ASTResult res = newASTIDDefinition(id, st);
+    if(isERR(res)) {
+        return res;
+    }
+    return OK(newASTUnaryOP(AST_ID_DECLARATION, res.ast));
+}
+
+ASTResult newASTIDDeclarationAssignment(const char* id, const ASTNode* value, SymbolTable* st) {
+    assert(id != NULL && value != NULL && st != NULL);
+
+    ASTResult res = newASTIDDefinition(id, st);
+    if(isERR(res)) {
+        return res;
+    }
+
+    Symbol* var = res.ast->id;
+    setVarInitialized(var);
+
+    return OK(newASTBinaryOP(AST_ID_DECL_ASSIGN, res.ast, value));
+}
+
+ASTResult newASTAssignment(const char* id, const ASTNode* value, SymbolTable* st) {
+    assert(id != NULL && value != NULL && st != NULL);
+
+    ASTResult res = newASTIDLeftReference(id, st);
+    if(isERR(res)) {
+        return res;
+    }
+
+    Symbol* var = res.ast->id;
+    setVarInitialized(var);
+
+    return OK(newASTBinaryOP(AST_ID_ASSIGNMENT, res.ast, value));
 }
 
 void deleteASTNode(ASTNode** node) {
     assert(node != NULL);
     switch(getNodeOpType((*node)->type)) {
-        case NUMBER_OP:
+        case ZEROARY_OP:
             break;
         case BINARY_OP:
             deleteASTNode(&((*node)->left));
@@ -125,4 +166,50 @@ void deleteASTNode(ASTNode** node) {
 
     free(*node);
     *node = NULL;
+}
+
+bool equalAST(const ASTNode* ast1, const ASTNode* ast2) {
+    assert(ast1 != NULL && ast2 != NULL);
+
+    if(ast1 == ast2) {
+        return true;
+    }
+
+    if(ast1->size != ast2->size || ast1->type != ast2->type) {
+        return false;
+    }
+
+    switch(getNodeOpType(ast1->type)) {
+        case ZEROARY_OP: {
+            switch (ast1->type) {
+                case AST_NUMBER:
+                    return ast1->n == ast2->n;
+                case AST_ID:
+                    return strncmp(getVarId(ast1->id), getVarId(ast2->id), MAX_ID_SIZE) == 0;
+                default:
+                    assert(false);
+            }
+        } case UNARY_OP:
+            return equalAST(ast1->child, ast2->child);
+        case BINARY_OP:
+            return equalAST(ast1->left, ast2->left) && equalAST(ast1->right, ast2->right);
+        default:
+            assert(false);
+    }
+}
+
+bool isStmt(const ASTNode* ast) {
+    switch (ast->type) {
+    case AST_ID_DECLARATION:
+    case AST_ID_DECL_ASSIGN:
+    case AST_ID_ASSIGNMENT:
+    case AST_STATEMENT_SEQ:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool isExp(const ASTNode* ast) {
+    return !isStmt(ast);
 }

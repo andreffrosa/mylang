@@ -1,8 +1,8 @@
 %{
 #include "ast/ast.h"
+
 #include "parser.h"
 
-void yyerror(yyscan_t scanner, struct ASTNode** ast, const char * s, ...);
 %}
 
 %option 8bit noyywrap noinput nounput
@@ -18,7 +18,9 @@ void yyerror(yyscan_t scanner, struct ASTNode** ast, const char * s, ...);
 "/" |
 "%" |
 "(" |
-")"         { return yytext[0]; }
+")" |
+"=" |
+";"         { return yytext[0]; }
 
 "(|"        { return OPEN_ABS; }
 "|)"        { return CLOSE_ABS; }
@@ -31,12 +33,23 @@ void yyerror(yyscan_t scanner, struct ASTNode** ast, const char * s, ...);
 "+|"        { return SET_POSITIVE; }
 "-|"        { return SET_NEGATIVE; }
 
+%{/**** KEYWORDS ****/%}
+"var"       { return VAR; }
+
+%{/**** NUMBERS ****/%}
 [0-9]+      { yylval_param->ival = atoi(yytext); return NUMBER; }
 0x[a-f0-9]+ { yylval_param->ival = strtol(yytext, NULL, 16); return NUMBER; } // Hexadecimal
 
+%{/**** NAME ****/ %}
+[a-zA-Z][a-zA-Z0-9_]*  { strncpy(yylval_param->sval, yytext, MAX_ID_SIZE); return ID; } // Identifier
+
 "//".*\n    { /* ignore comments */ }
-\n          { return END; }
+\\\n        { /* ignore line continuation */ }
+\n          { /*return END;*/ }
 [ \t]       { /* ignore whitespace */ }
-.           { yyerror(yyscanner, NULL, NULL, "Mystery character %c\n", *yytext); }
+
+".end\n"    { return END; }
+
+.           { yyerror(yyscanner, (ParseContext){NULL, NULL}, "Mystery character %c\n", *yytext); }
 <<EOF>>     { return END; }
 %%

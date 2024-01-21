@@ -2,15 +2,27 @@
 #define _OUT_H_
 
 #include <stdio.h>
+#include <stdbool.h>
 
-#include "iostream.h"
+#include "utils/iostream.h"
 
 #include "ast/ast.h"
+#include "ast/symbol.h"
 
-int outCompileExpression(ASTNode* ast, IOStream* stream);
+#include "frame.h"
 
-int outCompileToC(ASTNode* ast, const char* file_name, IOStream* stream);
+Frame* executeAST(const ASTNode* ast, const SymbolTable* st);
 
-int outCompileToJava(ASTNode* ast, const char* file_name, IOStream* stream);
+void executeASTStatements(const ASTNode* ast, const SymbolTable* st, Frame* frame);
+
+int evalASTExpression(const ASTNode* node, const SymbolTable* st, const Frame* frame);
+
+int outCompileExpression(const ASTNode* ast, const SymbolTable* st, const IOStream* stream);
+
+void compileASTStatements(const ASTNode* ast, const SymbolTable* st, const IOStream* stream, unsigned int indentation_level);
+
+int outCompileToC(const ASTNode* ast, const SymbolTable* st, const char* file_name, const IOStream* stream);
+
+int outCompileToJava(const ASTNode *ast, const SymbolTable *st, const char *file_name, const IOStream *stream);
 
 #endif

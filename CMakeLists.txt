@@ -34,6 +34,7 @@ function(include_tests)
     foreach(test_file ${TEST_SOURCES})
       get_filename_component(test_name ${test_file} NAME_WE)
       set(test_target "test_${MODULE_NAME}_${test_name}")
+      message("Including test: ${test_target}")
 
       add_executable(${test_target} ${test_file})
       set_target_properties(${test_target} PROPERTIES OUTPUT_NAME ${test_target})
@@ -44,8 +45,30 @@ function(include_tests)
   endif()
 endfunction()
 
+function(include_test file)
+  if(BUILD_TESTS)
+    set(TEST_DIR "./test")
+    set(test_file "${TEST_DIR}/${file}")
+    get_filename_component(test_name ${test_file} NAME_WE)
+    set(test_target "test_${MODULE_NAME}_${test_name}")
+    message("Including test: ${test_target}")
+
+    if(${ARGC} GREATER 1)
+      list(TRANSFORM ARGV1 PREPEND "${TEST_DIR}/")
+    endif()
+
+    add_executable(${test_target} ${test_file} ${ARGV1})
+    set_target_properties(${test_target} PROPERTIES OUTPUT_NAME ${test_target})
+    target_link_libraries(${test_target} Unity ${MODULE_NAME})
+    target_include_directories(${test_target} PRIVATE ${SRC_DIR} ${PUBLIC_HEADERS} ${OUT_DIR})
+    add_test(NAME ${test_target} COMMAND ${test_target})
+  endif()
+endfunction()
+
+
 # Include sub-modules
 add_subdirectory(dependencies)
+add_subdirectory(src/utils)
 add_subdirectory(src/ast)
 add_subdirectory(src/in)
 add_subdirectory(src/out)

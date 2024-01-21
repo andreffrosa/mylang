@@ -6,20 +6,22 @@
 
 #include "ast/ast.h"
 
-typedef void* ParseContext;
+#include "parse_ctx.h"
 
-ParseContext inInitWithFile(FILE* file);
+typedef void* InContext;
 
-ParseContext inInitWithString(const char* string);
+InContext inInitWithFile(FILE* file);
 
-ParseContext inInitWithStdin();
+InContext inInitWithString(const char* string);
 
-void inDelete(ParseContext* ctx);
+InContext inInitWithStdin();
 
-bool inParse(ParseContext ctx, ASTNode** ast);
+void inDelete(InContext* in_ctx);
 
-int inLex(ParseContext ctx, void* yylval_param);
+bool inParse(InContext in_ctx, ParseContext parse_ctx);
 
-unsigned int inGetLineNumber(ParseContext ctx);
+int inLex(InContext in_ctx, void* yylval_param);
+
+unsigned int inGetLineNumber(InContext in_ctx);
 
 #endif

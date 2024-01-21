@@ -16,15 +16,12 @@ set(SRC_DIR "./src")
 file(GLOB SRC_FILES "${SRC_DIR}/*.c")
 list(APPEND SRC_FILES "${OUT_DIR}/lexer.c" "${OUT_DIR}/parser.c")
 
-#message("Source files: ${SRC_FILES}")
-
 # Gather Header Files
 set(PUBLIC_HEADERS "./include/${MODULE_NAME}")
-file(GLOB PRIVATE_HEADERS "${SRC_DIR}/*.h")
-list(APPEND PRIVATE_HEADERS "${OUT_DIR}/lexer.h" "${OUT_DIR}/parser.h")
+list(APPEND PRIVATE_HEADERS ${SRC_DIR} ${OUT_DIR})
 
-add_library(${MODULE_NAME} STATIC ${SRC_FILES} ${PRIVATE_HEADERS})
-target_include_directories(${MODULE_NAME} PRIVATE ${OUT_DIR} PUBLIC ${PUBLIC_HEADERS})
+add_library(${MODULE_NAME} STATIC ${SRC_FILES})
+target_include_directories(${MODULE_NAME} PRIVATE ${PRIVATE_HEADERS} PUBLIC ${PUBLIC_HEADERS})
 target_link_libraries(${MODULE_NAME} PRIVATE ast)
 
 # Include Unit Tests

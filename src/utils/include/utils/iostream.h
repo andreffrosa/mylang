@@ -8,9 +8,11 @@ typedef void IOStream;
 
 IOStream* openIOStreamFromMemmory(char** ptr, size_t* size);
 
-IOStream* openIOStreamFromFile(FILE* fp);
+IOStream* openIOStreamFromFile(const FILE* fp);
 
-int IOStreamWritef(IOStream* s, const char* format, ...);
+IOStream* openIOStreamFromStdout();
+
+int IOStreamWritef(const IOStream* s, const char* format, ...);
 
 int IOStreamClose(IOStream** s);
 

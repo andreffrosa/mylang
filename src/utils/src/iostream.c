@@ -68,18 +68,18 @@ int MemBufferClose(struct MemBuffer* mb) {
     free(mb);
 }
 
-typedef int (*IOStreamWritter)(void* handler, const char* format, va_list args);
+typedef int (*IOStreamWritter)(const void* handler, const char* format, va_list args);
 
-typedef int (*IOStreamCloser)(void* handler);
+typedef int (*IOStreamCloser)(const void* handler);
 
 struct IOStream {
-    void* state;
+    const void* state;
     IOStreamWritter write;
     IOStreamCloser close;
 };
 
 
-IOStream* newIOStream(void* state, IOStreamWritter write, IOStreamCloser close) {
+IOStream* newIOStream(const void* state, const IOStreamWritter write, const IOStreamCloser close) {
     struct IOStream* s = malloc(sizeof(struct IOStream));
     s->state = state;
     s->write = write;
@@ -92,11 +92,11 @@ IOStream* openIOStreamFromMemmory(char** ptr, size_t* size) {
     return newIOStream(mb, (IOStreamWritter)&MemBufferWritef, (IOStreamCloser)&MemBufferClose);
 }
 
-IOStream* openIOStreamFromFile(FILE* fp) {
+IOStream* openIOStreamFromFile(const FILE* fp) {
     return newIOStream(fp, (IOStreamWritter)&vfprintf, (IOStreamCloser)&fclose);
 }
 
-int IOStreamWritef(IOStream* stream, const char* format, ...) {
+int IOStreamWritef(const IOStream* stream, const char* format, ...) {
     va_list args;
     va_start(args, format);
 
@@ -109,11 +109,18 @@ int IOStreamWritef(IOStream* stream, const char* format, ...) {
 
 int IOStreamClose(IOStream** stream) {
     struct IOStream* s = (struct IOStream*) *stream;
-    int status = s->close(s->state);
+    int status = 0;
+    if(s->close != NULL) {
+        status = s->close(s->state);
+    }
     s->state = NULL;
     s->write = NULL;
     s->close = NULL;
     free(s);
     *stream = NULL;
     return status;
+}
+
+IOStream* openIOStreamFromStdout() {
+    return newIOStream(stdout, (IOStreamWritter)&vfprintf, NULL);
 }
