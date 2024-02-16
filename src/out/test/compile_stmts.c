@@ -70,71 +70,71 @@ const char* compilePrint(const ASTNode* ast, void (*print)(const IOStream*, cons
 }
 
 void testVarDeclaration() {
-    ASTNode* ast = newASTIDDeclaration("n", st).ast;
+    ASTNode* ast = newASTIDDeclaration(AST_TYPE_INT, "n", st).result_value;
     ASSERT_COMPILE_STMT_EQUALS(ast, "int n;\n");
 }
 
 void testVarDeclarationAssignment() {
-    ASTNode* ast = newASTIDDeclarationAssignment("n", newASTNumber(100), st).ast;
+    ASTNode* ast = newASTIDDeclarationAssignment(AST_TYPE_INT, "n", newASTInt(100), st).result_value;
     ASSERT_COMPILE_STMT_EQUALS(ast, "int n = 100;\n");
 }
 
 void testAssignment() {
-    Symbol* var = insertVar(st, "n");
-    ASTNode* ast = newASTAssignment("n", newASTNumber(100), st).ast;
+    insertVar(st, AST_TYPE_INT, "n");
+    ASTNode* ast = newASTAssignment("n", newASTInt(100), st).result_value;
     ASSERT_COMPILE_STMT_EQUALS(ast, "n = 100;\n");
 }
 
 void testIDReference() {
-    Symbol* var = insertVar(st, "n");
+    Symbol* var = insertVar(st, AST_TYPE_INT, "n");
     setVarInitialized(var);
-    ASTNode* id_node = newASTIDReference("n", st).ast;
-    ASTNode* ast = newASTAdd(id_node, newASTNumber(1));
+    ASTNode* id_node = newASTIDReference("n", st).result_value;
+    ASTNode* ast = newASTAdd(id_node, newASTInt(1)).result_value;
     ASSERT_COMPILE_EXP_EQUALS(ast, "n + 1");
 }
 
 void testStatementSequence() {
-    ASTNode* stmt1 = newASTIDDeclaration("n", st).ast;
-    ASTNode* stmt2 = newASTAssignment("n", newASTNumber(100), st).ast;
+    ASTNode* stmt1 = newASTIDDeclaration(AST_TYPE_INT, "n", st).result_value;
+    ASTNode* stmt2 = newASTAssignment("n", newASTInt(100), st).result_value;
     ASTNode* ast = newASTStatementList(stmt1, stmt2);
     ASSERT_COMPILE_STMT_EQUALS(ast, "int n;\nn = 100;\n");
 }
 
 void testPrintC() {
-    ASTNode* ast = newASTPrint(newASTNumber(100));
+    ASTNode* ast = newASTPrint(newASTInt(100));
     ASSERT_COMPILE_PRINT_EQUALS(ast, &printC, "printf(\"%d\\n\", 100);\n");
 
-    ast = newASTAdd(newASTNumber(1), newASTNumber(1));
+    ast = newASTAdd(newASTInt(1), newASTInt(1)).result_value;
     ast = newASTPrint(ast);
     ASSERT_COMPILE_PRINT_EQUALS(ast, &printC, "printf(\"%d\\n\", 1 + 1);\n");
 
-    Symbol* var = insertVar(st, "n");
+    Symbol* var = insertVar(st, AST_TYPE_INT, "n");
     setVarInitialized(var);
-    ast = newASTPrint(newASTIDReference("n", st).ast);
+    ast = newASTPrint(newASTIDReference("n", st).result_value);
     ASSERT_COMPILE_PRINT_EQUALS(ast, &printC, "printf(\"%d\\n\", n);\n");
 
-    ast = newASTPrintVar(newASTIDReference("n", st).ast);
+    ast = newASTPrintVar(newASTIDReference("n", st).result_value);
     ASSERT_COMPILE_PRINT_EQUALS(ast, &printC, "printf(\"n = %d\\n\", n);\n");
 }
 
 void testPrintJava() {
-    ASTNode* ast = newASTPrint(newASTNumber(100));
+    ASTNode* ast = newASTPrint(newASTInt(100));
     ASSERT_COMPILE_PRINT_EQUALS(ast, &printJava, "System.out.println(100);\n");
 
-    ast = newASTAdd(newASTNumber(1), newASTNumber(1));
+    ast = newASTAdd(newASTInt(1), newASTInt(1)).result_value;
     ast = newASTPrint(ast);
     ASSERT_COMPILE_PRINT_EQUALS(ast, &printJava, "System.out.println(1 + 1);\n");
 
-    Symbol* var = insertVar(st, "n");
+    Symbol* var = insertVar(st, AST_TYPE_INT, "n");
     setVarInitialized(var);
-    ast = newASTPrint(newASTIDReference("n", st).ast);
+    ast = newASTPrint(newASTIDReference("n", st).result_value);
     ASSERT_COMPILE_PRINT_EQUALS(ast, &printJava, "System.out.println(n);\n");
 
-    ast = newASTPrintVar(newASTIDReference("n", st).ast);
+    ast = newASTPrintVar(newASTIDReference("n", st).result_value);
     ASSERT_COMPILE_PRINT_EQUALS(ast, &printJava, "System.out.println(\"n = \" + n);\n");
 }
 
-int main(int argc, char** argv) {
+int main() {
     UNITY_BEGIN();
     RUN_TEST(testVarDeclaration);
     RUN_TEST(testVarDeclarationAssignment);

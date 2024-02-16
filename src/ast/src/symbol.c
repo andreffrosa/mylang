@@ -15,6 +15,7 @@ typedef struct Symbol {
     char id[MAX_ID_SIZE];
     unsigned int index;
     bool is_init:1;
+    ASTType type;
 } Symbol;
 
 SymbolTable* newSymbolTable(unsigned int initial_capacity) {
@@ -30,15 +31,15 @@ SymbolTable* newSymbolTableDefault() {
     return newSymbolTable(DEFAULT_INITIAL_CAPACITY);
 }
 
-SymbolTable* newSymbolTableClone(const SymbolTable* st) {
-    assert(st != NULL);
+SymbolTable* newSymbolTableClone(const SymbolTable* src_st) {
+    assert(src_st != NULL);
     SymbolTable* st_clone = malloc(sizeof(SymbolTable));
-    st_clone->variables = malloc(st->capacity * sizeof(Symbol*));
-    st_clone->capacity = st->capacity;
-    st_clone->size = st->size;
-    for(int i = 0; i < st->size; i++) {
+    st_clone->variables = malloc(src_st->capacity * sizeof(Symbol*));
+    st_clone->capacity = src_st->capacity;
+    st_clone->size = src_st->size;
+    for(unsigned int i = 0; i < src_st->size; i++) {
         st_clone->variables[i] = malloc(sizeof(Symbol));
-        memcpy(st_clone->variables[i], st->variables[i], sizeof(Symbol));
+        memcpy(st_clone->variables[i], src_st->variables[i], sizeof(Symbol));
     }
     return st_clone;
 }
@@ -46,7 +47,7 @@ SymbolTable* newSymbolTableClone(const SymbolTable* st) {
 void deleteSymbolTable(SymbolTable** st) {
     assert(st != NULL && *st != NULL);
     if((*st)->variables != NULL) {
-        for(int i = 0; i < (*st)->size; i++){
+        for(unsigned int i = 0; i < (*st)->size; i++){
             free((*st)->variables[i]);
         }
         free((*st)->variables);
@@ -75,28 +76,31 @@ unsigned int getSymbolTableCapacity(const SymbolTable* st) {
 
 #define newSymbol() malloc(sizeof(Symbol))
 
-static inline Symbol* initSymbol(Symbol* var, const char* id, unsigned int index, const bool is_init) {
+static inline Symbol* initSymbol(Symbol* var, const ASTType type, const char* id, unsigned int index, const bool is_init) {
     assert(var != NULL);
+    var->type = type;
     strncpy(var->id, id, MAX_ID_SIZE);
     var->index = index;
-    var->is_init = false;
+    var->is_init = is_init;
     return var;
 }
 
-Symbol* insertVar(SymbolTable* st, const char* id) {
+Symbol* insertVar(SymbolTable* st, const ASTType type, const char* id) {
     assert(st != NULL && id != NULL);
+
+    assert(type != AST_TYPE_VOID);
 
     resizeTableIfNeeded(st);
 
     int index = st->size++;
-    st->variables[index] = initSymbol(newSymbol(), id, index, false);
+    st->variables[index] = initSymbol(newSymbol(), type, id, index, false);
     return st->variables[index];
 }
 
 Symbol* lookupVar(const SymbolTable* st, const char* id) {
     assert(st != NULL && id != NULL);
 
-    for(int i = 0; i < st->size; i++) {
+    for(unsigned int i = 0; i < st->size; i++) {
         Symbol* var = st->variables[i];
         if(strncmp(var->id, id, MAX_ID_SIZE) == 0) {
             return var;
@@ -114,6 +118,11 @@ unsigned int getVarIndex(const SymbolTable* st, const Symbol* var) {
 const char* getVarId(const Symbol* var) {
     assert(var != NULL);
     return var->id;
+}
+
+ASTType getVarType(const Symbol* var) {
+    assert(var != NULL);
+    return var->type;
 }
 
 bool isVarInitialized(const Symbol* var) {

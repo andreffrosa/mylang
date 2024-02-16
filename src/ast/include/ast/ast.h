@@ -3,10 +3,12 @@
 
 #include <stdbool.h>
 
+#include "error.h"
 #include "symbol.h"
+#include "type.h"
 
 typedef enum ASTNodeType {
-    AST_NUMBER,
+    AST_INT,
     AST_ADD,
     AST_SUB,
     AST_MUL,
@@ -30,6 +32,7 @@ typedef enum ASTNodeType {
     AST_STATEMENT_SEQ,
     AST_PRINT,
     AST_PRINT_VAR,
+    AST_NO_OP,
     AST_NODE_TYPES_COUNT  // Count of AST node types
 } ASTNodeType;
 
@@ -40,57 +43,40 @@ typedef enum ASTOpType {
     UNKNOWN_OP
 } ASTOpType;
 
-extern ASTOpType ASTOpMap[];
-
-#define getNodeOpType(nodeType) (nodeType >= AST_NODE_TYPES_COUNT ? UNKNOWN_OP : ASTOpMap[nodeType])
-
 typedef struct ASTNode {
-    ASTNodeType type;
+    ASTNodeType node_type;
+    ASTType value_type;
     unsigned int size;
     union {
-        int n; // AST_NUMBER
+        int n;      // AST_INT
         Symbol* id; // AST_ID
-        struct { // BINARY_OP
+        struct {    // BINARY_OP
             struct ASTNode* left;
             struct ASTNode* right;
         };
-        struct { // UNARY_OP
+        struct {    // UNARY_OP
             struct ASTNode* child;
         };
     };
 } ASTNode;
 
-typedef enum ASTResultType {
-    ASTResult_OK = 0,
-    ASTResult_ERR_ID_ALREADY_DEFINED,
-    ASTResult_ERR_ID_NOT_DEFINED,
-    ASTResult_ERR_ID_NOT_INIT,
-    ASTResult_TYPE_COUNT
-} ASTResultType;
-
-typedef struct ASTResult {
-    ASTResultType type;
-    union {
-        ASTNode* ast;
-    };
-} ASTResult;
-
-#define isOK(res) (res.type == ASTResult_OK && res.ast != NULL)
-#define isERR(res) !isOK(res)
-
 void deleteASTNode(ASTNode** node);
 
-ASTNode* newASTNumber(const int n);
+ASTNode* newASTInt(const int n);
 
-ASTNode* newASTBinaryOP(const ASTNodeType type, const ASTNode* left, const ASTNode* right);
+ASTResult newASTBinaryOP(const ASTNodeType type, const ASTNode* left, const ASTNode* right);
 
-ASTNode* newASTUnaryOP(const ASTNodeType type, const ASTNode* child);
+ASTResult newASTUnaryOP(const ASTNodeType type, const ASTNode* child);
+
+ASTNode* newASTNoOp();
 
 bool equalAST(const ASTNode* ast1, const ASTNode* ast2);
 
 bool isStmt(const ASTNode* ast);
 
 bool isExp(const ASTNode* ast);
+
+ASTOpType getNodeOpType(const ASTNodeType node_type);
 
 #define newASTAdd(l, r) newASTBinaryOP(AST_ADD, l, r)
 #define newASTSub(l, r) newASTBinaryOP(AST_SUB, l, r)
@@ -112,14 +98,14 @@ bool isExp(const ASTNode* ast);
 #define newASTSetPositive(e) newASTUnaryOP(AST_SET_POSITIVE, e)
 #define newASTSetNegative(e) newASTUnaryOP(AST_SET_NEGATIVE, e)
 
-#define newASTStatementList(stmt, list) (list == NULL ? stmt : newASTBinaryOP(AST_STATEMENT_SEQ, stmt, list))
+#define newASTStatementList(stmt, list) (list == NULL ? stmt : newASTBinaryOP(AST_STATEMENT_SEQ, stmt, list).result_value)
 
 ASTResult newASTIDReference(const char* id, SymbolTable* st);
-ASTResult newASTIDDeclaration(const char* id, SymbolTable* st);
-ASTResult newASTIDDeclarationAssignment(const char* id, const ASTNode* value, SymbolTable* st);
+ASTResult newASTIDDeclaration(const ASTType type, const char* id, SymbolTable* st);
+ASTResult newASTIDDeclarationAssignment(const ASTType type, const char* id, const ASTNode* value, SymbolTable* st);
 ASTResult newASTAssignment(const char* id, const ASTNode* value, SymbolTable* st);
 
-#define newASTPrint(e) newASTUnaryOP(AST_PRINT, e)
-#define newASTPrintVar(e) newASTUnaryOP(AST_PRINT_VAR, e)
+#define newASTPrint(e) newASTUnaryOP(AST_PRINT, e).result_value
+#define newASTPrintVar(e) newASTUnaryOP(AST_PRINT_VAR, e).result_value
 
 #endif

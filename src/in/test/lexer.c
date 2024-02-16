@@ -18,7 +18,7 @@ void tearDown (void) {}
 #define ASSERT_TOKEN_IS_INT(val) do {\
     GET_NEXT_TOKEN(ctx);\
     TEST_ASSERT_TRUE(tok > 0);\
-    TEST_ASSERT_EQUAL_INT(NUMBER, tok);\
+    TEST_ASSERT_EQUAL_INT(INT_LITERAL, tok);\
     TEST_ASSERT_EQUAL_INT(val, yylval_param.ival);\
 } while(0)
 
@@ -106,7 +106,7 @@ void scanIDWithUnderscore() {
     ASSERT_NO_MORE_TOKENS();
 }
 
-int main(int argc, char** argv) {
+int main() {
     UNITY_BEGIN();
     RUN_TEST(scanTokensWithSpaces);
     RUN_TEST(scanAbs);

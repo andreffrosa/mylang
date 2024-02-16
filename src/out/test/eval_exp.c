@@ -9,8 +9,8 @@ void setUp (void) {}
 void tearDown (void) {}
 
 void testAdditionSequence() {
-    ASTNode* ast = newASTBinaryOP(AST_ADD, newASTNumber(1), newASTNumber(2));
-    ast = newASTBinaryOP(AST_ADD, ast, newASTNumber(3));
+    ASTNode* ast = newASTAdd(newASTInt(1), newASTInt(2)).result_value;
+    ast = newASTAdd(ast, newASTInt(3)).result_value;
 
     int result = evalASTExpression(ast, NULL, NULL);
     deleteASTNode(&ast);
@@ -19,8 +19,8 @@ void testAdditionSequence() {
 }
 
 void testSubtractionSequence() {
-    ASTNode* ast = newASTBinaryOP(AST_SUB, newASTNumber(10), newASTNumber(2));
-    ast = newASTBinaryOP(AST_SUB, ast, newASTNumber(3));
+    ASTNode* ast = newASTSub(newASTInt(10), newASTInt(2)).result_value;
+    ast = newASTSub(ast, newASTInt(3)).result_value;
 
     int result = evalASTExpression(ast, NULL, NULL);
     deleteASTNode(&ast);
@@ -29,8 +29,8 @@ void testSubtractionSequence() {
 }
 
 void testAdditionSubtraction() {
-    ASTNode* ast = newASTBinaryOP(AST_ADD, newASTNumber(1), newASTNumber(2));
-    ast = newASTBinaryOP(AST_SUB, newASTNumber(5), ast);
+    ASTNode* ast = newASTAdd(newASTInt(1), newASTInt(2)).result_value;
+    ast = newASTSub(newASTInt(5), ast).result_value;
 
     int result = evalASTExpression(ast, NULL, NULL);
     deleteASTNode(&ast);
@@ -39,8 +39,8 @@ void testAdditionSubtraction() {
 }
 
 void testMultiplicationSequence() {
-    ASTNode* ast = newASTBinaryOP(AST_MUL, newASTNumber(2), newASTNumber(3));
-    ast = newASTBinaryOP(AST_MUL, ast, newASTNumber(4));
+    ASTNode* ast = newASTMul(newASTInt(2), newASTInt(3)).result_value;
+    ast = newASTMul(ast, newASTInt(4)).result_value;
 
     int result = evalASTExpression(ast, NULL, NULL);
     deleteASTNode(&ast);
@@ -49,8 +49,8 @@ void testMultiplicationSequence() {
 }
 
 void testMultiplicationAddition() {
-    ASTNode* ast = newASTBinaryOP(AST_MUL, newASTNumber(2), newASTNumber(3));
-    ast = newASTBinaryOP(AST_ADD, newASTNumber(1), ast);
+    ASTNode* ast = newASTMul(newASTInt(2), newASTInt(3)).result_value;
+    ast = newASTAdd(newASTInt(1), ast).result_value;
 
     int result = evalASTExpression(ast, NULL, NULL);
     deleteASTNode(&ast);
@@ -59,22 +59,22 @@ void testMultiplicationAddition() {
 }
 
 void testDivision() {
-    ASTNode* ast = newASTBinaryOP(AST_DIV, newASTNumber(8), newASTNumber(2));
+    ASTNode* ast = newASTDiv(newASTInt(8), newASTInt(2)).result_value;
     int result = evalASTExpression(ast, NULL, NULL);
     deleteASTNode(&ast);
     TEST_ASSERT_EQUAL_INT(4, result);
 }
 
 void testModulo() {
-    ASTNode* ast = newASTBinaryOP(AST_MOD, newASTNumber(10), newASTNumber(3));
+    ASTNode* ast = newASTMod(newASTInt(10), newASTInt(3)).result_value;
     int result = evalASTExpression(ast, NULL, NULL);
     deleteASTNode(&ast);
     TEST_ASSERT_EQUAL_INT(1, result);
 }
 
 void testComplexExpression() {
-    ASTNode* ast =  newASTBinaryOP(AST_MUL, newASTNumber(2), newASTNumber(3));
-    ast = newASTBinaryOP(AST_ADD, ast, newASTBinaryOP(AST_DIV, newASTNumber(10), newASTNumber(2)));
+    ASTNode* ast = newASTMul(newASTInt(2), newASTInt(3)).result_value;
+    ast = newASTAdd(ast, newASTDiv(newASTInt(10), newASTInt(2)).result_value).result_value;
 
     int result = evalASTExpression(ast, NULL, NULL);
     deleteASTNode(&ast);
@@ -83,70 +83,70 @@ void testComplexExpression() {
 }
 
 void testAbsPositiveValue() {
-    ASTNode* ast = newASTUnaryOP(AST_ABS, newASTNumber(5));
+    ASTNode* ast = newASTAbs(newASTInt(5)).result_value;
     int result = evalASTExpression(ast, NULL, NULL);
     deleteASTNode(&ast);
     TEST_ASSERT_EQUAL_INT(5, result);
 }
 
 void testAbsNegativeValue() {
-    ASTNode* ast = newASTUnaryOP(AST_ABS, newASTNumber(-3));
+    ASTNode* ast = newASTAbs(newASTInt(-3)).result_value;
     int result = evalASTExpression(ast, NULL, NULL);
     deleteASTNode(&ast);
     TEST_ASSERT_EQUAL_INT(3, result);
 }
 
 void testSetPositivePositiveValue() {
-    ASTNode* ast = newASTUnaryOP(AST_SET_POSITIVE, newASTNumber(5));
+    ASTNode* ast = newASTSetPositive(newASTInt(5)).result_value;
     int result = evalASTExpression(ast, NULL, NULL);
     deleteASTNode(&ast);
     TEST_ASSERT_EQUAL_INT(5, result);
 }
 
 void testSetPositiveNegativeValue() {
-    ASTNode* ast = newASTUnaryOP(AST_SET_POSITIVE, newASTNumber(-3));
+    ASTNode* ast = newASTSetPositive(newASTInt(-3)).result_value;
     int result = evalASTExpression(ast, NULL, NULL);
     deleteASTNode(&ast);
     TEST_ASSERT_EQUAL_INT(3, result);
 }
 
 void testSetNegativePositiveValue() {
-    ASTNode* ast = newASTUnaryOP(AST_SET_NEGATIVE, newASTNumber(5));
+    ASTNode* ast = newASTSetNegative(newASTInt(5)).result_value;
     int result = evalASTExpression(ast, NULL, NULL);
     deleteASTNode(&ast);
     TEST_ASSERT_EQUAL_INT(-5, result);
 }
 
 void testSetNegativeNegativeValue() {
-    ASTNode* ast = newASTUnaryOP(AST_SET_NEGATIVE, newASTNumber(-3));
+    ASTNode* ast = newASTSetNegative(newASTInt(-3)).result_value;
     int result = evalASTExpression(ast, NULL, NULL);
     deleteASTNode(&ast);
     TEST_ASSERT_EQUAL_INT(-3, result);
 }
 
 void testBitwiseAND() {
-    ASTNode* ast = newASTBinaryOP(AST_BITWISE_AND, newASTNumber(5), newASTNumber(3));
+    ASTNode* ast = newASTBitwiseAnd(newASTInt(5), newASTInt(3)).result_value;
     int result = evalASTExpression(ast, NULL, NULL);
     deleteASTNode(&ast);
     TEST_ASSERT_EQUAL_INT(1, result);
 }
 
 void testBitwiseOR() {
-    ASTNode* ast = newASTBinaryOP(AST_BITWISE_OR, newASTNumber(5), newASTNumber(3));
+    ASTNode* ast = newASTBitwiseOr(newASTInt(5), newASTInt(3)).result_value;
     int result = evalASTExpression(ast, NULL, NULL);
     deleteASTNode(&ast);
     TEST_ASSERT_EQUAL_INT(7, result);
 }
 
 void testBitwiseXOR() {
-    ASTNode* ast = newASTBinaryOP(AST_BITWISE_XOR, newASTNumber(5), newASTNumber(3));
+    ASTNode* ast = newASTBitwiseXor(newASTInt(5), newASTInt(3)).result_value;
     int result = evalASTExpression(ast, NULL, NULL);
     deleteASTNode(&ast);
     TEST_ASSERT_EQUAL_INT(6, result);
 }
 
 void testBitwiseNot() {
-    ASTNode* ast = newASTUnaryOP(AST_BITWISE_NOT, newASTNumber(5));
+    ASTNode* ast = newASTBitwiseNot(newASTInt(5)).result_value;
 
     int result = evalASTExpression(ast, NULL, NULL);
     deleteASTNode(&ast);
@@ -155,20 +155,20 @@ void testBitwiseNot() {
 }
 
 void testBitwiseShiftLeft() {
-    ASTNode* ast = newASTBinaryOP(AST_L_SHIFT, newASTNumber(1), newASTNumber(2));
+    ASTNode* ast = newASTLeftShift(newASTInt(1), newASTInt(2)).result_value;
     int result = evalASTExpression(ast, NULL, NULL);
     deleteASTNode(&ast);
     TEST_ASSERT_EQUAL_INT(4, result);
 }
 
 void testBitwiseShiftRight() {
-    ASTNode* ast = newASTBinaryOP(AST_R_SHIFT, newASTNumber(8), newASTNumber(2));
+    ASTNode* ast = newASTRightShift(newASTInt(8), newASTInt(2)).result_value;
     int result = evalASTExpression(ast, NULL, NULL);
     deleteASTNode(&ast);
     TEST_ASSERT_EQUAL_INT(2, result);
 }
 
-int main(int argc, char** argv) {
+int main() {
     UNITY_BEGIN();
 
     RUN_TEST(testAdditionSequence);

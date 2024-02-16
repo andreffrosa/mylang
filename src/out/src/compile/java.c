@@ -25,7 +25,7 @@ void setClassName(char* class_name, const char* file_name) {
     *class_name = toupper((unsigned char)*class_name);
 }
 
-int outCompileToJava(const ASTNode* ast, const SymbolTable* st, const char* file_name, const IOStream* stream) {
+bool outCompileToJava(const ASTNode* ast, const SymbolTable* st, const char* file_name, const IOStream* stream) {
     char class_name[strlen(file_name)];
     setClassName(class_name, file_name);
 
@@ -33,4 +33,6 @@ int outCompileToJava(const ASTNode* ast, const SymbolTable* st, const char* file
     IOStreamWritef(stream, "%s", PRE);
     compileASTStatements(ast, st, stream, &printJava, INITIAL_INDENTATION_LEVEL);
     IOStreamWritef(stream, "%s", POS);
+
+    return true;
 }

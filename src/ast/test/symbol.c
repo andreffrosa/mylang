@@ -22,7 +22,7 @@ void testInsertVar() {
     const int capacity = 1;
     SymbolTable* st = newSymbolTable(capacity);
     const char* id = "n";
-    Symbol* var = insertVar(st, id);
+    Symbol* var = insertVar(st, AST_TYPE_INT, id);
     TEST_ASSERT_NOT_NULL(var);
     TEST_ASSERT_EQUAL_STRING(id, getVarId(var));
     TEST_ASSERT_FALSE(isVarInitialized(var));
@@ -34,8 +34,8 @@ void testResize() {
     SymbolTable* st = newSymbolTable(initial_capacity);
     const char* id1 = "n";
     const char* id2 = "m";
-    Symbol* var1 = insertVar(st, id1);
-    Symbol* var2 = insertVar(st, id2);
+    Symbol* var1 = insertVar(st, AST_TYPE_INT, id1);
+    Symbol* var2 = insertVar(st, AST_TYPE_INT, id2);
     TEST_ASSERT_EQUAL_INT(2, getSymbolTableSize(st));
     TEST_ASSERT_GREATER_THAN_INT(initial_capacity, getSymbolTableCapacity(st));
 
@@ -52,7 +52,7 @@ void testLookupVar() {
     const int capacity = 1;
     SymbolTable* st = newSymbolTable(capacity);
     const char* id = "n";
-    Symbol* expected_var = insertVar(st, id);
+    Symbol* expected_var = insertVar(st, AST_TYPE_INT, id);
     Symbol* actual_var = lookupVar(st, id);
     TEST_ASSERT_EQUAL_PTR(expected_var, actual_var);
     deleteSymbolTable(&st);
@@ -61,13 +61,12 @@ void testLookupVar() {
 void testLookupUndefinedVar() {
     const int capacity = 1;
     SymbolTable* st = newSymbolTable(capacity);
-    const char* id = "n";
-    Symbol* actual_var = lookupVar(st, id);
+    Symbol* actual_var = lookupVar(st, "n");
     TEST_ASSERT_EQUAL_PTR(NULL, actual_var);
     deleteSymbolTable(&st);
 }
 
-int main(int argc, char** argv) {
+int main() {
     UNITY_BEGIN();
     RUN_TEST(testNewSymbolTable);
     RUN_TEST(testInsertVar);

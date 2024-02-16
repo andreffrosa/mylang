@@ -15,14 +15,14 @@
 #define ERR_ALLOC_ID "[ERROR]: Couldn't allocate var %s!\n"
 
 static inline void indent(const IOStream* stream, unsigned int indentation_level) {
-    for(int i = 0; i < indentation_level; i++) {
+    for(unsigned int i = 0; i < indentation_level; i++) {
         IOStreamWritef(stream, DEFAULT_IDENTATION);
     }
 }
 
 static inline int getPrecedence(ASTNodeType node_type) {
     switch (node_type) {
-        case AST_NUMBER:
+        case AST_INT:
         case AST_ID:
             return 11;
         case AST_BITWISE_NOT:
@@ -53,24 +53,24 @@ static inline int getPrecedence(ASTNodeType node_type) {
     }
 }
 
-static inline bool needParentheses(ASTNodeType current_type, ASTNodeType child_type, bool is_left_child) {
-    if(current_type == child_type) {
+static inline bool needParentheses(ASTNodeType current_node_type, ASTNodeType child_node_type, bool is_left_child) {
+    if(current_node_type == child_node_type) {
         return false;
     }
 
-    int current_precedence = getPrecedence(current_type);
-    int child_precedence = getPrecedence(child_type);
+    int current_precedence = getPrecedence(current_node_type);
+    int child_precedence = getPrecedence(child_node_type);
     if(child_precedence < current_precedence) {
         return true;
     }
 
-    bool are_not_commutative = (current_type == AST_SUB || current_type == AST_DIV || current_type == AST_MOD);
+    bool are_not_commutative = (current_node_type == AST_SUB || current_node_type == AST_DIV || current_node_type == AST_MOD);
     return child_precedence == current_precedence && !is_left_child && are_not_commutative;
 }
 
 
 static inline void compileBinaryOP(const ASTNode* node, const char* op_symbol, const SymbolTable* st, const IOStream* stream) {
-    bool need_parentheses = needParentheses(node->type, node->left->type, true);
+    bool need_parentheses = needParentheses(node->node_type, node->left->node_type, true);
     if(need_parentheses) {
         IOStreamWritef(stream, "(");
     }
@@ -81,7 +81,7 @@ static inline void compileBinaryOP(const ASTNode* node, const char* op_symbol, c
 
     IOStreamWritef(stream, op_symbol);
 
-    need_parentheses = needParentheses(node->type, node->right->type, false);
+    need_parentheses = needParentheses(node->node_type, node->right->node_type, false);
     if(need_parentheses) {
         IOStreamWritef(stream, "(");
     }
@@ -91,11 +91,11 @@ static inline void compileBinaryOP(const ASTNode* node, const char* op_symbol, c
     }
 }
 
-int outCompileExpression(const ASTNode* node, const SymbolTable* st, const IOStream* stream) {
+void outCompileExpression(const ASTNode* node, const SymbolTable* st, const IOStream* stream) {
     assert(node != NULL);
 
-    switch (node->type) {
-        case AST_NUMBER:
+    switch (node->node_type) {
+        case AST_INT:
             IOStreamWritef(stream, "%d", node->n);
             break;
         case AST_ID:
@@ -177,26 +177,26 @@ void compileIDDeclaration(Symbol* var, const ASTNode* value, const SymbolTable* 
 void compileASTStatements(const ASTNode* ast, const SymbolTable* st, const IOStream* stream, printFunc print, unsigned int indentation_level) {
     assert(ast != NULL && st != NULL);
 
-    if(ast->type == AST_STATEMENT_SEQ) {
+    if(ast->node_type == AST_STATEMENT_SEQ) {
         compileASTStatements(ast->left, st, stream, print, indentation_level);
         compileASTStatements(ast->right, st, stream, print, indentation_level);
         return;
     }
 
     indent(stream, indentation_level);
-    switch (ast->type) {
+    switch (ast->node_type) {
         case AST_ID_DECLARATION: {
-            assert(ast->child->type == AST_ID);
+            assert(ast->child->node_type == AST_ID);
             Symbol* var = ast->child->id;
             compileIDDeclaration(var, NULL, st, stream);
             break;
         } case AST_ID_DECL_ASSIGN: {
-            assert(ast->left->type == AST_ID);
+            assert(ast->left->node_type == AST_ID);
             Symbol* var = ast->left->id;
             compileIDDeclaration(var, ast->right, st, stream);
             break;
         } case AST_ID_ASSIGNMENT: {
-            assert(ast->left->type == AST_ID);
+            assert(ast->left->node_type == AST_ID);
             Symbol* var = ast->left->id;
             IOStreamWritef(stream, "%s = ", getVarId(var));
             outCompileExpression(ast->right, st, stream);
@@ -210,7 +210,7 @@ void compileASTStatements(const ASTNode* ast, const SymbolTable* st, const IOStr
             outCompileExpression(ast->child, st, s);
             IOStreamClose(&s);
 
-            print(stream, ptr, ast->type == AST_PRINT_VAR);
+            print(stream, ptr, ast->node_type == AST_PRINT_VAR);
 
             free(ptr);
             break;

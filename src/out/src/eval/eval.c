@@ -27,13 +27,13 @@ int evalID(const SymbolTable* st, const Symbol* var, const Frame* frame) {
 void executeASTStatements(const ASTNode* ast, const SymbolTable* st, Frame* frame) {
     assert(ast != NULL && st != NULL);
 
-    switch (ast->type) {
+    switch (ast->node_type) {
         case AST_ID_DECLARATION: {
-            assert(ast->child->type == AST_ID);
+            assert(ast->child->node_type == AST_ID);
             assert(ast->child->id != NULL);
             break;
         } case AST_ID_DECL_ASSIGN: {
-            assert(ast->left->type == AST_ID);
+            assert(ast->left->node_type == AST_ID);
             assert(ast->left->id != NULL);
 
             Symbol* var = ast->left->id;
@@ -42,7 +42,7 @@ void executeASTStatements(const ASTNode* ast, const SymbolTable* st, Frame* fram
             setFrameValue(frame, index, value);
             break;
         } case AST_ID_ASSIGNMENT: {
-            assert(ast->left->type == AST_ID);
+            assert(ast->left->node_type == AST_ID);
             assert(ast->left->id != NULL);
 
             Symbol* var = ast->left->id;
@@ -59,7 +59,7 @@ void executeASTStatements(const ASTNode* ast, const SymbolTable* st, Frame* fram
             printf("%d\n", value);
             break;
         } case AST_PRINT_VAR: {
-            assert(ast->child->type == AST_ID);
+            assert(ast->child->node_type == AST_ID);
             int value = evalASTExpression(ast->child, st, frame);
             printf("%s = %d\n", getVarId(ast->child->id), value);
             break;
@@ -75,8 +75,8 @@ void executeASTStatements(const ASTNode* ast, const SymbolTable* st, Frame* fram
 
 int evalASTExpression(const ASTNode* node, const SymbolTable* st, const Frame* frame) {
     assert(node != NULL);
-    switch (node->type) {
-        case AST_NUMBER:
+    switch (node->node_type) {
+        case AST_INT:
             return node->n;
         case AST_ADD:
             return evalASTExpression(node->left, st, frame) + evalASTExpression(node->right, st, frame);

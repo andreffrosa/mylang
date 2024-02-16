@@ -30,34 +30,34 @@ void tearDown (void) {
 } while (0)
 
 void parseIDDeclaration() {
-    ASTNode* ast = newASTIDDeclaration("n", st).ast;
-    ASSERT_MATCH_AST("var n", ast, false);
+    ASTNode* ast = newASTIDDeclaration(AST_TYPE_INT, "n", st).result_value;
+    ASSERT_MATCH_AST("int n", ast, false);
 }
 
 void parseIDDeclarationAssignement() {
-    ASTNode* ast = newASTIDDeclarationAssignment("n", newASTNumber(1), st).ast;
-    ASSERT_MATCH_AST("var n = 1", ast, false);
+    ASTNode* ast = newASTIDDeclarationAssignment(AST_TYPE_INT, "n", newASTInt(1), st).result_value;
+    ASSERT_MATCH_AST("int n = 1", ast, false);
 }
 
 void parseAssignement() {
-    insertVar(st, "n");
-    ASTNode* ast = newASTAssignment("n", newASTNumber(1), st).ast;
+    insertVar(st, AST_TYPE_INT, "n");
+    ASTNode* ast = newASTAssignment("n", newASTInt(1), st).result_value;
     ASSERT_MATCH_AST("n = 1", ast, true);
 }
 
 void parseSingleStatement() {
-    ASTNode* ast = newASTIDDeclarationAssignment("n", newASTNumber(1), st).ast;
-    ASSERT_MATCH_AST("var n = 1;", ast, false);
+    ASTNode* ast = newASTIDDeclarationAssignment(AST_TYPE_INT, "n", newASTInt(1), st).result_value;
+    ASSERT_MATCH_AST("int n = 1;", ast, false);
 }
 
 void parseMultipleStatements() {
-    ASTNode* stmt1 = newASTIDDeclaration("n", st).ast;
-    ASTNode* stmt2 = newASTAssignment("n", newASTNumber(1), st).ast;
+    ASTNode* stmt1 = newASTIDDeclaration(AST_TYPE_INT, "n", st).result_value;
+    ASTNode* stmt2 = newASTAssignment("n", newASTInt(1), st).result_value;
     ASTNode* ast = newASTStatementList(stmt1, stmt2);
-    ASSERT_MATCH_AST("var n; n = 1;", ast, false);
+    ASSERT_MATCH_AST("int n; n = 1;", ast, false);
 }
 
-int main(int argc, char** argv) {
+int main() {
     UNITY_BEGIN();
     RUN_TEST(parseIDDeclaration);
     RUN_TEST(parseIDDeclarationAssignement);

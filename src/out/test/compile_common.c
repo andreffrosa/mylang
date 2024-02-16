@@ -28,255 +28,255 @@ static inline void testCompile(ASTNode* ast, const char* expected) {
 }
 
 void compileAddSequence() {
-    ASTNode* ast = newASTBinaryOP(AST_ADD, newASTNumber(2), newASTNumber(3));
-    ast = newASTBinaryOP(AST_ADD, newASTNumber(1), ast);
+    ASTNode* ast = newASTAdd(newASTInt(2), newASTInt(3)).result_value;
+    ast = newASTAdd(newASTInt(1), ast).result_value;
     testCompile(ast, "1 + 2 + 3");
 }
 
 void compileSubSequence() {
-    ASTNode* ast = newASTBinaryOP(AST_SUB, newASTNumber(2), newASTNumber(3));
-    ast = newASTBinaryOP(AST_SUB, newASTNumber(1), ast);
+    ASTNode* ast = newASTSub(newASTInt(2), newASTInt(3)).result_value;
+    ast = newASTSub(newASTInt(1), ast).result_value;
     testCompile(ast, "1 - 2 - 3");
 }
 
 void compileSubAdd() {
-    ASTNode* ast = newASTBinaryOP(AST_ADD, newASTNumber(2), newASTNumber(3));
-    ast = newASTBinaryOP(AST_SUB, newASTNumber(1), ast);
+    ASTNode* ast = newASTAdd(newASTInt(2), newASTInt(3)).result_value;
+    ast = newASTSub(newASTInt(1), ast).result_value;
     testCompile(ast, "1 - (2 + 3)"); // Parentheses required
 
-    ast = newASTBinaryOP(AST_SUB, newASTNumber(2), newASTNumber(3));
-    ast = newASTBinaryOP(AST_ADD, newASTNumber(1), ast);
+    ast = newASTSub(newASTInt(2), newASTInt(3)).result_value;
+    ast = newASTAdd(newASTInt(1), ast).result_value;
     testCompile(ast, "1 + 2 - 3"); // No parentheses required
 
-    ast = newASTBinaryOP(AST_SUB, newASTNumber(2), newASTNumber(3));
-    ast = newASTBinaryOP(AST_ADD, newASTNumber(1), ast);
-    ast = newASTBinaryOP(AST_ADD, ast, newASTNumber(4));
+    ast = newASTSub(newASTInt(2), newASTInt(3)).result_value;
+    ast = newASTAdd(newASTInt(1), ast).result_value;
+    ast = newASTAdd(ast, newASTInt(4)).result_value;
     testCompile(ast, "1 + 2 - 3 + 4"); // No parentheses required
 
-    ast = newASTBinaryOP(AST_ADD, newASTNumber(1), newASTNumber(2));
-    ast = newASTBinaryOP(AST_SUB, ast, newASTNumber(3));
-    ast = newASTBinaryOP(AST_ADD, ast, newASTNumber(4));
+    ast = newASTAdd(newASTInt(1), newASTInt(2)).result_value;
+    ast = newASTSub(ast, newASTInt(3)).result_value;
+    ast = newASTAdd(ast, newASTInt(4)).result_value;
     testCompile(ast, "1 + 2 - 3 + 4"); // No parentheses required
 
-    ast = newASTBinaryOP(AST_SUB, newASTNumber(1), newASTNumber(2));
-    ast = newASTBinaryOP(AST_ADD, ast, newASTBinaryOP(AST_SUB, newASTNumber(3), newASTNumber(4)));
+    ast = newASTSub(newASTInt(1), newASTInt(2)).result_value;
+    ast = newASTAdd(ast, newASTSub(newASTInt(3), newASTInt(4)).result_value).result_value;
     testCompile(ast, "1 - 2 + 3 - 4"); // No parentheses required
 
-    ast = newASTBinaryOP(AST_ADD, newASTNumber(1), newASTNumber(2));
-    ast = newASTBinaryOP(AST_SUB, ast, newASTBinaryOP(AST_ADD, newASTNumber(3), newASTNumber(4)));
+    ast = newASTAdd(newASTInt(1), newASTInt(2)).result_value;
+    ast = newASTSub(ast, newASTAdd(newASTInt(3), newASTInt(4)).result_value).result_value;
     testCompile(ast, "1 + 2 - (3 + 4)"); // Parentheses required
 }
 
 void compileMulSequence() {
-    ASTNode* ast = newASTBinaryOP(AST_MUL, newASTNumber(2), newASTNumber(3));
-    ast = newASTBinaryOP(AST_MUL, newASTNumber(1), ast);
+    ASTNode* ast = newASTMul(newASTInt(2), newASTInt(3)).result_value;
+    ast = newASTMul(newASTInt(1), ast).result_value;
     testCompile(ast, "1*2*3");
 }
 
 void compileMultAdd() {
-    ASTNode* ast = newASTBinaryOP(AST_MUL, newASTNumber(2), newASTNumber(3));
-    ast = newASTBinaryOP(AST_ADD, newASTNumber(1), ast);
+    ASTNode* ast = newASTMul(newASTInt(2), newASTInt(3)).result_value;
+    ast = newASTAdd(newASTInt(1), ast).result_value;
     testCompile(ast, "1 + 2*3");
 
-    ast = newASTBinaryOP(AST_MUL, newASTNumber(1), newASTNumber(2));
-    ast = newASTBinaryOP(AST_ADD, ast, newASTNumber(3));
+    ast = newASTMul(newASTInt(1), newASTInt(2)).result_value;
+    ast = newASTAdd(ast, newASTInt(3)).result_value;
     testCompile(ast, "1*2 + 3");
 }
 
 void compileMultSub() {
-    ASTNode* ast = newASTBinaryOP(AST_MUL, newASTNumber(2), newASTNumber(3));
-    ast = newASTBinaryOP(AST_SUB, newASTNumber(1), ast);
+    ASTNode* ast = newASTMul(newASTInt(2), newASTInt(3)).result_value;
+    ast = newASTSub(newASTInt(1), ast).result_value;
     testCompile(ast, "1 - 2*3");
 
-    ast = newASTBinaryOP(AST_MUL, newASTNumber(1), newASTNumber(2));
-    ast = newASTBinaryOP(AST_SUB, ast, newASTNumber(3));
+    ast = newASTMul(newASTInt(1), newASTInt(2)).result_value;
+    ast = newASTSub(ast, newASTInt(3)).result_value;
     testCompile(ast, "1*2 - 3");
 
-    ast = newASTBinaryOP(AST_MUL, newASTNumber(2), newASTNumber(3));
-    ast = newASTBinaryOP(AST_SUB, ast, newASTNumber(4));
-    ast = newASTBinaryOP(AST_SUB, newASTNumber(1), ast);
+    ast = newASTMul(newASTInt(2), newASTInt(3)).result_value;
+    ast = newASTSub(ast, newASTInt(4)).result_value;
+    ast = newASTSub(newASTInt(1), ast).result_value;
     testCompile(ast, "1 - 2*3 - 4");
 }
 
 void compileDivAdd() {
-    ASTNode* ast = newASTBinaryOP(AST_DIV, newASTNumber(2), newASTNumber(3));
-    ast = newASTBinaryOP(AST_ADD, newASTNumber(1), ast);
+    ASTNode* ast = newASTDiv(newASTInt(2), newASTInt(3)).result_value;
+    ast = newASTAdd(newASTInt(1), ast).result_value;
     testCompile(ast, "1 + 2/3");
 
-    ast = newASTBinaryOP(AST_DIV, newASTNumber(1), newASTNumber(2));
-    ast = newASTBinaryOP(AST_ADD, ast, newASTNumber(3));
+    ast = newASTDiv(newASTInt(1), newASTInt(2)).result_value;
+    ast = newASTAdd(ast, newASTInt(3)).result_value;
     testCompile(ast, "1/2 + 3");
 }
 
 void compileDivSub() {
-    ASTNode* ast = newASTBinaryOP(AST_DIV, newASTNumber(2), newASTNumber(3));
-    ast = newASTBinaryOP(AST_SUB, newASTNumber(1), ast);
+    ASTNode* ast = newASTDiv(newASTInt(2), newASTInt(3)).result_value;
+    ast = newASTSub(newASTInt(1), ast).result_value;
     testCompile(ast, "1 - 2/3");
 
-    ast = newASTBinaryOP(AST_DIV, newASTNumber(1), newASTNumber(2));
-    ast = newASTBinaryOP(AST_SUB, ast, newASTNumber(3));
+    ast = newASTDiv(newASTInt(1), newASTInt(2)).result_value;
+    ast = newASTSub(ast, newASTInt(3)).result_value;
     testCompile(ast, "1/2 - 3");
 
-    ast = newASTBinaryOP(AST_DIV, newASTNumber(2), newASTNumber(3));
-    ast = newASTBinaryOP(AST_SUB, ast, newASTNumber(4));
-    ast = newASTBinaryOP(AST_SUB, newASTNumber(1), ast);
+    ast = newASTDiv(newASTInt(2), newASTInt(3)).result_value;
+    ast = newASTSub(ast, newASTInt(4)).result_value;
+    ast = newASTSub(newASTInt(1), ast).result_value;
     testCompile(ast, "1 - 2/3 - 4");
 }
 
 void compileMulDiv() {
-    ASTNode* ast = newASTBinaryOP(AST_DIV, newASTNumber(2), newASTNumber(3));
-    ast = newASTBinaryOP(AST_MUL, newASTNumber(1), ast);
+    ASTNode* ast = newASTDiv(newASTInt(2), newASTInt(3)).result_value;
+    ast = newASTMul(newASTInt(1), ast).result_value;
     testCompile(ast, "1*2/3");
 
-    ast = newASTBinaryOP(AST_DIV, newASTNumber(1), newASTNumber(2));
-    ast = newASTBinaryOP(AST_MUL, ast, newASTNumber(3));
+    ast = newASTDiv(newASTInt(1), newASTInt(2)).result_value;
+    ast = newASTMul(ast, newASTInt(3)).result_value;
     testCompile(ast, "1/2*3"); // No parentheses required
 
-    ast = newASTBinaryOP(AST_MUL, newASTNumber(2), newASTNumber(3));
-    ast = newASTBinaryOP(AST_DIV, newASTNumber(1), ast);
+    ast = newASTMul(newASTInt(2), newASTInt(3)).result_value;
+    ast = newASTDiv(newASTInt(1), ast).result_value;
     testCompile(ast, "1/(2*3)"); // Parentheses required
 }
 
 void compileModAdd() {
-    ASTNode* ast = newASTBinaryOP(AST_MOD, newASTNumber(2), newASTNumber(3));
-    ast = newASTBinaryOP(AST_ADD, newASTNumber(1), ast);
+    ASTNode* ast = newASTMod(newASTInt(2), newASTInt(3)).result_value;
+    ast = newASTAdd(newASTInt(1), ast).result_value;
     testCompile(ast, "1 + 2%3");
 
-    ast = newASTBinaryOP(AST_MOD, newASTNumber(1), newASTNumber(2));
-    ast = newASTBinaryOP(AST_ADD, ast, newASTNumber(3));
+    ast = newASTMod(newASTInt(1), newASTInt(2)).result_value;
+    ast = newASTAdd(ast, newASTInt(3)).result_value;
     testCompile(ast, "1%2 + 3");
 }
 
 void compileModSub() {
-    ASTNode* ast = newASTBinaryOP(AST_MOD, newASTNumber(2), newASTNumber(3));
-    ast = newASTBinaryOP(AST_SUB, newASTNumber(1), ast);
+    ASTNode* ast = newASTMod(newASTInt(2), newASTInt(3)).result_value;
+    ast = newASTSub(newASTInt(1), ast).result_value;
     testCompile(ast, "1 - 2%3");
 
-    ast = newASTBinaryOP(AST_MOD, newASTNumber(1), newASTNumber(2));
-    ast = newASTBinaryOP(AST_SUB, ast, newASTNumber(3));
+    ast = newASTMod(newASTInt(1), newASTInt(2)).result_value;
+    ast = newASTSub(ast, newASTInt(3)).result_value;
     testCompile(ast, "1%2 - 3");
 
-    ast = newASTBinaryOP(AST_MOD, newASTNumber(2), newASTNumber(3));
-    ast = newASTBinaryOP(AST_SUB, ast, newASTNumber(4));
-    ast = newASTBinaryOP(AST_SUB, newASTNumber(1), ast);
+    ast = newASTMod(newASTInt(2), newASTInt(3)).result_value;
+    ast = newASTSub(ast, newASTInt(4)).result_value;
+    ast = newASTSub(newASTInt(1), ast).result_value;
     testCompile(ast, "1 - 2%3 - 4");
 }
 
 void compileMulMod() {
-    ASTNode* ast = newASTBinaryOP(AST_MOD, newASTNumber(2), newASTNumber(3));
-    ast = newASTBinaryOP(AST_MUL, newASTNumber(1), ast);
+    ASTNode* ast = newASTMod(newASTInt(2), newASTInt(3)).result_value;
+    ast = newASTMul(newASTInt(1), ast).result_value;
     testCompile(ast, "1*2%3");
 
-    ast = newASTBinaryOP(AST_MOD, newASTNumber(1), newASTNumber(2));
-    ast = newASTBinaryOP(AST_MUL, ast, newASTNumber(3));
+    ast = newASTMod(newASTInt(1), newASTInt(2)).result_value;
+    ast = newASTMul(ast, newASTInt(3)).result_value;
     testCompile(ast, "1%2*3"); // No parentheses required
 
-    ast = newASTBinaryOP(AST_MUL, newASTNumber(2), newASTNumber(3));
-    ast = newASTBinaryOP(AST_MOD, newASTNumber(1), ast);
+    ast = newASTMul(newASTInt(2), newASTInt(3)).result_value;
+    ast = newASTMod(newASTInt(1), ast).result_value;
     testCompile(ast, "1%(2*3)"); // Parentheses required
 }
 
 void compileDivMod() {
-    ASTNode* ast = newASTBinaryOP(AST_DIV, newASTNumber(4), newASTNumber(2));
-    ast = newASTBinaryOP(AST_MOD, ast, newASTNumber(3));
+    ASTNode* ast = newASTDiv(newASTInt(4), newASTInt(2)).result_value;
+    ast = newASTMod(ast, newASTInt(3)).result_value;
     testCompile(ast, "4/2%3"); // No parentheses required
 
-    ast = newASTBinaryOP(AST_MOD, newASTNumber(4), newASTNumber(2));
-    ast = newASTBinaryOP(AST_DIV, ast, newASTNumber(3));
+    ast = newASTMod(newASTInt(4), newASTInt(2)).result_value;
+    ast = newASTDiv(ast, newASTInt(3)).result_value;
     testCompile(ast, "4%2/3"); // No parentheses required
 
-    ast = newASTBinaryOP(AST_DIV, newASTNumber(2), newASTNumber(3));
-    ast = newASTBinaryOP(AST_MOD, newASTNumber(1), ast);
+    ast = newASTDiv(newASTInt(2), newASTInt(3)).result_value;
+    ast = newASTMod(newASTInt(1), ast).result_value;
     testCompile(ast, "1%(2/3)"); // Parentheses required
 
-    ast = newASTBinaryOP(AST_MOD, newASTNumber(2), newASTNumber(3));
-    ast = newASTBinaryOP(AST_DIV, newASTNumber(1), ast);
+    ast = newASTMod(newASTInt(2), newASTInt(3)).result_value;
+    ast = newASTDiv(newASTInt(1), ast).result_value;
     testCompile(ast, "1/(2%3)"); // Parentheses required
 }
 
 void compileBitwiseOperators() {
-    ASTNode* ast = newASTBinaryOP(AST_BITWISE_AND, newASTNumber(1), newASTNumber(2));
-    ast = newASTBinaryOP(AST_BITWISE_OR, ast, newASTNumber(3));
+    ASTNode* ast = newASTBitwiseAnd(newASTInt(1), newASTInt(2)).result_value;
+    ast = newASTBitwiseOr(ast, newASTInt(3)).result_value;
     testCompile(ast, "1&2|3"); // No parentheses required, AND has more precedence
 
-    ast = newASTBinaryOP(AST_BITWISE_OR, newASTNumber(1), newASTNumber(2));
-    ast = newASTBinaryOP(AST_BITWISE_AND, ast, newASTNumber(3));
+    ast = newASTBitwiseOr(newASTInt(1), newASTInt(2)).result_value;
+    ast = newASTBitwiseAnd(ast, newASTInt(3)).result_value;
     testCompile(ast, "(1|2)&3"); // Parentheses required, AND has more precedence
 
-    ast = newASTBinaryOP(AST_BITWISE_AND, newASTNumber(1), newASTNumber(2));
-    ast = newASTBinaryOP(AST_BITWISE_XOR, ast, newASTNumber(3));
+    ast = newASTBitwiseAnd(newASTInt(1), newASTInt(2)).result_value;
+    ast = newASTBitwiseXor(ast, newASTInt(3)).result_value;
     testCompile(ast, "1&2^3"); // No parentheses required, AND has more precedence
 
-    ast = newASTBinaryOP(AST_BITWISE_XOR, newASTNumber(1), newASTNumber(2));
-    ast = newASTBinaryOP(AST_BITWISE_AND, ast, newASTNumber(3));
+    ast = newASTBitwiseXor(newASTInt(1), newASTInt(2)).result_value;
+    ast = newASTBitwiseAnd(ast, newASTInt(3)).result_value;
     testCompile(ast, "(1^2)&3"); // Parentheses required, AND has more precedence
 
-    ast = newASTBinaryOP(AST_BITWISE_XOR, newASTNumber(1), newASTNumber(2));
-    ast = newASTBinaryOP(AST_BITWISE_OR, ast, newASTNumber(3));
+    ast = newASTBitwiseXor(newASTInt(1), newASTInt(2)).result_value;
+    ast = newASTBitwiseOr(ast, newASTInt(3)).result_value;
     testCompile(ast, "1^2|3"); // No parentheses required, XOR has more precedence
 
-    ast = newASTBinaryOP(AST_BITWISE_OR, newASTNumber(1), newASTNumber(2));
-    ast = newASTBinaryOP(AST_BITWISE_XOR, ast, newASTNumber(3));
+    ast = newASTBitwiseOr(newASTInt(1), newASTInt(2)).result_value;
+    ast = newASTBitwiseXor(ast, newASTInt(3)).result_value;
     testCompile(ast, "(1|2)^3"); // Parentheses required, XOR has more precedence
 
-    ast = newASTUnaryOP(AST_BITWISE_NOT, newASTNumber(1));
-    ast = newASTBinaryOP(AST_BITWISE_AND, ast, newASTNumber(2));
+    ast = newASTBitwiseNot(newASTInt(1)).result_value;
+    ast = newASTBitwiseAnd(ast, newASTInt(2)).result_value;
     testCompile(ast, "~1&2"); // No parentheses required
 
-    ast = newASTUnaryOP(AST_BITWISE_NOT, newASTNumber(1));
-    ast = newASTBinaryOP(AST_BITWISE_AND, newASTNumber(2), ast);
+    ast = newASTBitwiseNot(newASTInt(1)).result_value;
+    ast = newASTBitwiseAnd(newASTInt(2), ast).result_value;
     testCompile(ast, "2&~1"); // No parentheses required
 }
 
 void compileShiftOperators() {
-    ASTNode* ast = newASTBinaryOP(AST_ADD, newASTNumber(1), newASTNumber(2));
-    ast = newASTBinaryOP(AST_L_SHIFT, ast, newASTNumber(2));
+    ASTNode* ast = newASTAdd(newASTInt(1), newASTInt(2)).result_value;
+    ast = newASTLeftShift(ast, newASTInt(2)).result_value;
     testCompile(ast, "1 + 2 << 2"); // No parentheses required
 
-    ast = newASTBinaryOP(AST_L_SHIFT, newASTNumber(2), newASTNumber(2));
-    ast = newASTBinaryOP(AST_ADD, newASTNumber(1), ast);
+    ast = newASTLeftShift(newASTInt(2), newASTInt(2)).result_value;
+    ast = newASTAdd(newASTInt(1), ast).result_value;
     testCompile(ast, "1 + (2 << 2)"); // Parentheses required
 
-    ast = newASTBinaryOP(AST_ADD, newASTNumber(1), newASTNumber(1));
-    ast = newASTBinaryOP(AST_L_SHIFT, newASTNumber(3), ast);
+    ast = newASTAdd(newASTInt(1), newASTInt(1)).result_value;
+    ast = newASTLeftShift(newASTInt(3), ast).result_value;
     testCompile(ast, "3 << 1 + 1"); // No parentheses required
 
-    ast = newASTBinaryOP(AST_MUL, newASTNumber(3), newASTNumber(2));
-    ast = newASTBinaryOP(AST_L_SHIFT, ast, newASTNumber(1));
+    ast = newASTMul(newASTInt(3), newASTInt(2)).result_value;
+    ast = newASTLeftShift(ast, newASTInt(1)).result_value;
     testCompile(ast, "3*2 << 1"); // No parentheses required
 
-    ast = newASTBinaryOP(AST_MUL, newASTNumber(1), newASTNumber(2));
-    ast = newASTBinaryOP(AST_L_SHIFT, newASTNumber(3), ast);
+    ast = newASTMul(newASTInt(1), newASTInt(2)).result_value;
+    ast = newASTLeftShift(newASTInt(3), ast).result_value;
     testCompile(ast, "3 << 1*2"); // No parentheses required
 
-    ast = newASTBinaryOP(AST_BITWISE_AND, newASTNumber(2), newASTNumber(3));
-    ast = newASTBinaryOP(AST_L_SHIFT, ast, newASTNumber(2));
+    ast = newASTBitwiseAnd(newASTInt(2), newASTInt(3)).result_value;
+    ast = newASTLeftShift(ast, newASTInt(2)).result_value;
     testCompile(ast, "(2&3) << 2"); // Parentheses required
 
-    ast = newASTBinaryOP(AST_BITWISE_AND, newASTNumber(2), newASTNumber(5));
-    ast = newASTBinaryOP(AST_L_SHIFT, newASTNumber(1), ast);
+    ast = newASTBitwiseAnd(newASTInt(2), newASTInt(5)).result_value;
+    ast = newASTLeftShift(newASTInt(1), ast).result_value;
     testCompile(ast, "1 << (2&5)"); // Parentheses required
 }
 
 void compileMixedExpression() {
-    ASTNode* ast = newASTBinaryOP(AST_ADD, newASTNumber(1), newASTNumber(2));
-    ast = newASTBinaryOP(AST_BITWISE_OR, ast, newASTNumber(1));
+    ASTNode* ast = newASTAdd(newASTInt(1), newASTInt(2)).result_value;
+    ast = newASTBitwiseOr(ast, newASTInt(1)).result_value;
     testCompile(ast, "1 + 2|1"); // No parentheses required, add has precedence
 
-    ast = newASTBinaryOP(AST_ADD, newASTNumber(2), newASTNumber(1));
-    ast = newASTBinaryOP(AST_BITWISE_OR, newASTNumber(1), ast);
+    ast = newASTAdd(newASTInt(2), newASTInt(1)).result_value;
+    ast = newASTBitwiseOr(newASTInt(1), ast).result_value;
     testCompile(ast, "1|2 + 1"); // No parentheses required, add has precedence
 
-    ast = newASTBinaryOP(AST_BITWISE_OR, newASTNumber(2), newASTNumber(1));
-    ast = newASTBinaryOP(AST_ADD, newASTNumber(1), ast);
+    ast = newASTBitwiseOr(newASTInt(2), newASTInt(1)).result_value;
+    ast = newASTAdd(newASTInt(1), ast).result_value;
     testCompile(ast, "1 + (2|1)"); // No parentheses required, add has precedence
 
-    ast = newASTBinaryOP(AST_BITWISE_OR, newASTNumber(1), newASTNumber(2));
-    ast = newASTBinaryOP(AST_ADD, ast, newASTNumber(1));
+    ast = newASTBitwiseOr(newASTInt(1), newASTInt(2)).result_value;
+    ast = newASTAdd(ast, newASTInt(1)).result_value;
     testCompile(ast, "(1|2) + 1"); // Parentheses required
 }
 
-int main(int argc, char** argv) {
+int main() {
     UNITY_BEGIN();
     RUN_TEST(compileAddSequence);
     RUN_TEST(compileSubAdd);

@@ -17,13 +17,13 @@ void executeASTStatements(const ASTNode* ast, const SymbolTable* st, Frame* fram
 
 int evalASTExpression(const ASTNode* node, const SymbolTable* st, const Frame* frame);
 
-int outCompileExpression(const ASTNode* ast, const SymbolTable* st, const IOStream* stream);
+void outCompileExpression(const ASTNode* ast, const SymbolTable* st, const IOStream* stream);
 
 typedef void (*printFunc)(const IOStream* stream, const char* str, bool printvar);
 void compileASTStatements(const ASTNode* ast, const SymbolTable* st, const IOStream* stream, printFunc print, unsigned int indentation_level);
 
-int outCompileToC(const ASTNode* ast, const SymbolTable* st, const char* file_name, const IOStream* stream);
+bool outCompileToC(const ASTNode* ast, const SymbolTable* st, const char* file_name, const IOStream* stream);
 
-int outCompileToJava(const ASTNode *ast, const SymbolTable *st, const char *file_name, const IOStream *stream);
+bool outCompileToJava(const ASTNode *ast, const SymbolTable *st, const char *file_name, const IOStream *stream);
 
 #endif

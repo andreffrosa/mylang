@@ -22,10 +22,15 @@ void printC(const IOStream* stream, const char* str, bool printvar) {
     }
 }
 
-int outCompileToC(const ASTNode* ast, const SymbolTable* st, const char* file_name, const IOStream* stream) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+bool outCompileToC(const ASTNode* ast, const SymbolTable* st, const char* file_name, const IOStream* stream) {
     assert(ast != NULL && stream != NULL);
 
     IOStreamWritef(stream, "%s", PRE);
     compileASTStatements(ast, st, stream, &printC, INITIAL_INDENTATION_LEVEL);
     IOStreamWritef(stream, "%s", POS);
+
+    return true;
 }
+#pragma GCC diagnostic pop

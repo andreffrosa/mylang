@@ -66,6 +66,7 @@ int MemBufferWritef(struct MemBuffer* mb, const char* format, va_list args) {
 int MemBufferClose(struct MemBuffer* mb) {
     *(mb->ptr) = mb->buffer;
     free(mb);
+    return 0;
 }
 
 typedef int (*IOStreamWritter)(const void* handler, const char* format, va_list args);

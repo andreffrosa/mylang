@@ -10,7 +10,7 @@ void tearDown (void) {}
 
 void declarationAssignmentSetsValue() {
     SymbolTable* st = newSymbolTable(1);
-    ASTNode* ast = newASTIDDeclarationAssignment("n", newASTNumber(1), st).ast;
+    ASTNode* ast = newASTIDDeclarationAssignment(AST_TYPE_INT, "n", newASTInt(1), st).result_value;
 
     Frame* frame = executeAST(ast, st);
 
@@ -24,8 +24,8 @@ void declarationAssignmentSetsValue() {
 
 void assignmentSetsValue() {
     SymbolTable* st = newSymbolTable(1);
-    Symbol* var = insertVar(st, "n");
-    ASTNode* ast = newASTAssignment("n", newASTNumber(1), st).ast;
+    Symbol* var = insertVar(st, AST_TYPE_INT, "n");
+    ASTNode* ast = newASTAssignment("n", newASTInt(1), st).result_value;
 
     Frame* frame = executeAST(ast, st);
 
@@ -39,9 +39,9 @@ void assignmentSetsValue() {
 
 void reassignmentChangesValue() {
     SymbolTable* st = newSymbolTable(1);
-    Symbol* var = insertVar(st, "n");
-    ASTNode* stmt1 = newASTAssignment("n", newASTNumber(1), st).ast;
-    ASTNode* stmt2 = newASTAssignment("n", newASTNumber(2), st).ast;
+    Symbol* var = insertVar(st, AST_TYPE_INT, "n");
+    ASTNode* stmt1 = newASTAssignment("n", newASTInt(1), st).result_value;
+    ASTNode* stmt2 = newASTAssignment("n", newASTInt(2), st).result_value;
     ASTNode* ast = newASTStatementList(stmt1, stmt2);
 
     Frame* frame = executeAST(ast, st);
@@ -56,8 +56,8 @@ void reassignmentChangesValue() {
 
 void assignEvalIDGivesSameValue() {
     SymbolTable* st = newSymbolTable(1);
-    ASTNode* stmt1 = newASTIDDeclarationAssignment("n", newASTNumber(1), st).ast;
-    ASTNode* stmt2 = newASTIDDeclarationAssignment("m", newASTIDReference("n", st).ast, st).ast;
+    ASTNode* stmt1 = newASTIDDeclarationAssignment(AST_TYPE_INT, "n", newASTInt(1), st).result_value;
+    ASTNode* stmt2 = newASTIDDeclarationAssignment(AST_TYPE_INT, "m", newASTIDReference("n", st).result_value, st).result_value;
     ASTNode* ast = newASTStatementList(stmt1, stmt2);
 
     Frame* frame = executeAST(ast, st);
@@ -70,8 +70,7 @@ void assignEvalIDGivesSameValue() {
     deleteSymbolTable(&st);
 }
 
-
-int main(int argc, char** argv) {
+int main() {
     UNITY_BEGIN();
 
     RUN_TEST(declarationAssignmentSetsValue);

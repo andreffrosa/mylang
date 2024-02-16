@@ -43,7 +43,7 @@ void testIOStreamFromMemoryMultipleLines() {
     free(ptr);
 }
 
-int main(int argc, char** argv) {
+int main() {
     UNITY_BEGIN();
     RUN_TEST(testIOStreamFromMemorySingleLine);
     RUN_TEST(testIOStreamFromMemoryMultipleLines);

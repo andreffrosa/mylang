@@ -5,15 +5,19 @@
 
 #define TRY(x) if( (x) == NULL ) { YYABORT; }
 
-#define CTX() *(ctx.st)
+#define ST() *(ctx.st)
 #define LINE() yyget_lineno(scanner)
 
-ASTNode* declaration(const char* id, SymbolTable* st, int lineno);
+ASTNode* declaration(const char* type_str, const char* id, SymbolTable* st, int lineno);
 
-ASTNode* declarationAssignment(const char* id, ASTNode* exp, SymbolTable* st, int lineno);
+ASTNode* declarationAssignment(const char* type_str, const char* id, ASTNode* exp, SymbolTable* st, int lineno);
 
 ASTNode* assignment(const char* id, ASTNode* exp, SymbolTable* st, int lineno);
 
 ASTNode* idReference(const char* id, SymbolTable* st, int lineno);
+
+ASTNode* arithmetic(ASTResult res, ASTNode* left, ASTNode* right, int lineno);
+
+ASTNode* uarithmetic(ASTResult res, ASTNode* child, int lineno);
 
 #endif

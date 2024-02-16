@@ -16,7 +16,7 @@
 #define COMPILE_AST_ERR "Error compiling the file %s\n"
 #define COMPILED_MSG "Compiled file %s\n"
 
-void compile(const char* out_file_path_no_ext, size_t len, const char* file_name, const ASTNode* ast, const SymbolTable* st, const char* ext, int (*compile_to)(const ASTNode* ast, const SymbolTable* st, const char* fname, const IOStream* stream));
+void compile(const char* out_file_path_no_ext, size_t len, const char* file_name, const ASTNode* ast, const SymbolTable* st, const char* ext, bool (*compile_to)(const ASTNode* ast, const SymbolTable* st, const char* fname, const IOStream* stream));
 bool intrepert(InContext ctx);
 static inline void compileFile(const char* file_path);
 
@@ -40,14 +40,21 @@ bool intrepert(InContext ctx) {
     SymbolTable* st = NULL;
     bool status = inParse(ctx, (ParseContext){&ast, &st});
 
-    if(ast == NULL) {
-        printf("\n");
-        return true;
+    if (!status) {
+        fprintf(stderr, PARSE_AST_ERR_MSG, "stdin");
+        deleteASTNode(&ast);
+        deleteSymbolTable(&st);
+        return false;
     }
 
-    Frame* frame = executeAST(ast, st);
+    if(ast == NULL) {
+        printf("\n");
+        return true; // Exit shell
+    }
 
     printf("Parsed stdin: %d AST nodes.", ast->size);
+
+    Frame* frame = executeAST(ast, st);
 
     IOStream* stream = openIOStreamFromStdout();
     printSymbolTable(st, frame, stream);
@@ -66,7 +73,7 @@ void getOutputInfo(const char* file_path, size_t len, char* out_file_path_no_ext
         last_dot = NULL;
     }
 
-    size_t chars_to_copy = last_dot != NULL ? last_dot - file_path : len;
+    size_t chars_to_copy = last_dot != NULL ? (size_t)(last_dot - file_path) : len;
     strncpy(out_file_path_no_ext, file_path, chars_to_copy);
     out_file_path_no_ext[chars_to_copy] = '\0';
 
@@ -94,6 +101,12 @@ static inline void compileFile(const char* file_path) {
     if (!status) {
         fprintf(stderr, PARSE_AST_ERR_MSG, file_path);
         deleteASTNode(&ast);
+        deleteSymbolTable(&st);
+        return;
+    }
+
+    if(ast == NULL) {
+        printf("Nothing to compile!\n");
         return;
     }
 
@@ -112,7 +125,7 @@ static inline void compileFile(const char* file_path) {
     deleteSymbolTable(&st);
 }
 
-void compile(const char* out_file_path_no_ext, size_t len, const char* file_name, const ASTNode* ast, const SymbolTable* st, const char* ext, int (*compile_to)(const ASTNode* ast, const SymbolTable* st, const char* fname, const IOStream* stream)) {
+void compile(const char* out_file_path_no_ext, size_t len, const char* file_name, const ASTNode* ast, const SymbolTable* st, const char* ext, bool (*compile_to)(const ASTNode* ast, const SymbolTable* st, const char* fname, const IOStream* stream)) {
     size_t ext_len = strlen(ext);
     char out_file_path[len + ext_len + 1];
     strncpy(out_file_path, out_file_path_no_ext, len);

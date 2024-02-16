@@ -20,17 +20,18 @@ void tearDown (void) {
 void validateNewASTIDReference() {
     ASTResult res = newASTIDReference(ID, st);
     TEST_ASSERT_TRUE(isERR(res));
-    TEST_ASSERT_EQUAL_INT(ASTResult_ERR_ID_NOT_DEFINED, res.type);
+    TEST_ASSERT_EQUAL_INT(AST_RES_ERR_ID_NOT_DEFINED, res.result_type);
 
-    Symbol* var = insertVar(st, ID);
+    Symbol* var = insertVar(st,AST_TYPE_INT,  ID);
     res = newASTIDReference(ID, st);
     TEST_ASSERT_TRUE(isERR(res));
-    TEST_ASSERT_EQUAL_INT(ASTResult_ERR_ID_NOT_INIT, res.type);
+    TEST_ASSERT_EQUAL_INT(AST_RES_ERR_ID_NOT_INIT, res.result_type);
 
     setVarInitialized(var);
     res = newASTIDReference(ID, st);
     TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* ast = res.ast;
+    ASTNode* ast = (ASTNode*) res.result_value;
+
     ASSERT_IS_VALID_AST_NODE(ast, AST_ID, ZEROARY_OP, 1);
     TEST_ASSERT_EQUAL_PTR(var, ast->id);
 
@@ -38,61 +39,61 @@ void validateNewASTIDReference() {
 }
 
 void validateNewASTIDDeclaration() {
-    ASTResult res = newASTIDDeclaration(ID, st);
+    ASTResult res = newASTIDDeclaration(AST_TYPE_INT, ID, st);
     TEST_ASSERT_TRUE(isOK(res));
-
-    ASTNode* ast = res.ast;
+    ASTNode* ast = res.result_value;
     Symbol* var= ast->child->id;
     ASSERT_IS_VALID_AST_NODE(ast, AST_ID_DECLARATION, UNARY_OP, 2);
-    TEST_ASSERT_EQUAL_INT(AST_ID, ast->child->type);
+    TEST_ASSERT_EQUAL_INT(AST_ID, ast->child->node_type);
     TEST_ASSERT_EQUAL_STRING(ID, getVarId(var));
     TEST_ASSERT_FALSE(isVarInitialized(var));
 
     deleteASTNode(&ast);
 
-    res = newASTIDDeclaration(ID, st);
+    res = newASTIDDeclaration(AST_TYPE_INT, ID, st);
     TEST_ASSERT_TRUE(isERR(res));
-    TEST_ASSERT_EQUAL_INT(ASTResult_ERR_ID_ALREADY_DEFINED, res.type);
+    TEST_ASSERT_EQUAL_INT(AST_RES_ERR_ID_ALREADY_DEFINED, res.result_type);
 }
 
 void validateNewASTIDDeclarationAssignment() {
-    ASTResult res = newASTIDDeclarationAssignment(ID, newASTNumber(VALUE), st);
+    ASTResult res = newASTIDDeclarationAssignment(AST_TYPE_INT, ID, newASTInt(VALUE), st);
     TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* ast = res.ast;
+    ASTNode* ast = (ASTNode*) res.result_value;
 
     ASSERT_IS_VALID_AST_NODE(ast, AST_ID_DECL_ASSIGN, BINARY_OP, 3);
-    TEST_ASSERT_EQUAL_INT(AST_ID, ast->left->type);
+    TEST_ASSERT_EQUAL_INT(AST_ID, ast->left->node_type);
     TEST_ASSERT_EQUAL_STRING(ID, getVarId(ast->left->id));
-    TEST_ASSERT_EQUAL_INT(AST_NUMBER, ast->right->type);
+    TEST_ASSERT_EQUAL_INT(AST_INT, ast->right->node_type);
     TEST_ASSERT_EQUAL_INT(VALUE, ast->right->n);
 
     deleteASTNode(&ast);
 
-    ast = newASTNumber(VALUE);
-    res = newASTIDDeclarationAssignment(ID, ast, st);
+    ast = newASTInt(VALUE);
+    res = newASTIDDeclarationAssignment(AST_TYPE_INT, ID, ast, st);
     TEST_ASSERT_TRUE(isERR(res));
-    TEST_ASSERT_EQUAL_INT(ASTResult_ERR_ID_ALREADY_DEFINED, res.type);
+    TEST_ASSERT_EQUAL_INT(AST_RES_ERR_ID_ALREADY_DEFINED, res.result_type);
 
     deleteASTNode(&ast);
 }
 
 void validateNewASTAssignment() {
-    ASTNode* ast = newASTNumber(VALUE);
+    ASTNode* ast = newASTInt(VALUE);
     ASTResult res = newASTAssignment(ID, ast, st);
     TEST_ASSERT_TRUE(isERR(res));
-    TEST_ASSERT_EQUAL_INT(ASTResult_ERR_ID_NOT_DEFINED, res.type);
+    TEST_ASSERT_EQUAL_INT(AST_RES_ERR_ID_NOT_DEFINED, res.result_type);
 
     deleteASTNode(&ast);
 
-    Symbol* s = insertVar(st, ID);
-    res = newASTAssignment(ID, newASTNumber(VALUE), st);
+    Symbol* s = insertVar(st, AST_TYPE_INT, ID);
+    res = newASTAssignment(ID, newASTInt(VALUE), st);
     TEST_ASSERT_TRUE(isOK(res));
-    ast = res.ast;
+    ast = res.result_value;
     Symbol* var = ast->left->id;
+    TEST_ASSERT_EQUAL_PTR(s, var);
     ASSERT_IS_VALID_AST_NODE(ast, AST_ID_ASSIGNMENT, BINARY_OP, 3);
-    TEST_ASSERT_EQUAL_INT(AST_ID, ast->left->type);
+    TEST_ASSERT_EQUAL_INT(AST_ID, ast->left->node_type);
     TEST_ASSERT_EQUAL_STRING(ID, getVarId(var));
-    TEST_ASSERT_EQUAL_INT(AST_NUMBER, ast->right->type);
+    TEST_ASSERT_EQUAL_INT(AST_INT, ast->right->node_type);
     TEST_ASSERT_EQUAL_INT(VALUE, ast->right->n);
     TEST_ASSERT_TRUE(isVarInitialized(var));
 
@@ -100,7 +101,7 @@ void validateNewASTAssignment() {
 }
 
 void newASTStatementListWithNull() {
-    ASTNode* stmt = newASTIDDeclaration(ID, st).ast;
+    ASTNode* stmt = newASTIDDeclaration(AST_TYPE_INT, ID, st).result_value;
     ASTNode* ast = newASTStatementList(stmt, NULL);
 
     TEST_ASSERT_EQUAL_PTR(stmt, ast);
@@ -109,8 +110,8 @@ void newASTStatementListWithNull() {
 }
 
 void newASTStatementListWithAnotherStatement() {
-    ASTNode* stmt1 = newASTIDDeclaration(ID, st).ast;
-    ASTNode* stmt2 = newASTAssignment(ID, newASTNumber(VALUE), st).ast;
+    ASTNode* stmt1 = newASTIDDeclaration(AST_TYPE_INT, ID, st).result_value;
+    ASTNode* stmt2 = newASTAssignment(ID, newASTInt(VALUE), st).result_value;
     ASTNode* ast = newASTStatementList(stmt1, stmt2);
 
     ASSERT_IS_VALID_AST_NODE(ast, AST_STATEMENT_SEQ, BINARY_OP, stmt1->size + stmt2->size + 1);
@@ -121,16 +122,16 @@ void newASTStatementListWithAnotherStatement() {
 }
 
 void newASTStatementListWithStatementList() {
-    ASTNode* stmt1 = newASTIDDeclaration("n", st).ast;
-    ASTNode* stmt2 = newASTAssignment("n", newASTNumber(1), st).ast;
-    ASTNode* stmt3 = newASTIDDeclarationAssignment("m", newASTNumber(2), st).ast;
+    ASTNode* stmt1 = newASTIDDeclaration(AST_TYPE_INT, "n", st).result_value;
+    ASTNode* stmt2 = newASTAssignment("n", newASTInt(1), st).result_value;
+    ASTNode* stmt3 = newASTIDDeclarationAssignment(AST_TYPE_INT, "m", newASTInt(2), st).result_value;
 
     ASTNode* list = newASTStatementList(stmt2, stmt3);
     ASTNode* ast = newASTStatementList(stmt1, list);
 
     ASSERT_IS_VALID_AST_NODE(ast, AST_STATEMENT_SEQ, BINARY_OP, stmt1->size + stmt2->size + stmt3->size + 2);
     TEST_ASSERT_EQUAL_PTR(stmt1, ast->left);
-    TEST_ASSERT_EQUAL_INT(AST_STATEMENT_SEQ, ast->right->type);
+    TEST_ASSERT_EQUAL_INT(AST_STATEMENT_SEQ, ast->right->node_type);
 
     deleteASTNode(&ast);
 }
@@ -138,15 +139,15 @@ void newASTStatementListWithStatementList() {
 extern ASTNode* newASTID(const Symbol* id);
 
 void testEqualASTLeafs() {
-    Symbol* n_var = insertVar(st, "n");
-    Symbol* m_var = insertVar(st, "m");
+    Symbol* n_var = insertVar(st, AST_TYPE_INT, "n");
+    Symbol* m_var = insertVar(st, AST_TYPE_INT, "m");
 
-    ASSERT_NOT_EQUAL_AST(newASTNumber(1), newASTID(n_var));
+    ASSERT_NOT_EQUAL_AST(newASTInt(1), newASTID(n_var));
     ASSERT_EQUAL_AST(newASTID(n_var), newASTID(n_var));
     ASSERT_NOT_EQUAL_AST(newASTID(n_var), newASTID(m_var));
 }
 
-int main(int argc, char** argv) {
+int main() {
     UNITY_BEGIN();
     RUN_TEST(validateNewASTIDReference);
     RUN_TEST(validateNewASTIDDeclaration);

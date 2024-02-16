@@ -36,8 +36,9 @@
   ASTNode* ast_node;
 }
 
-%token <ival> NUMBER
+%token <ival> INT_LITERAL
 %token <sval> ID
+%token <sval> TYPE
 
 //%right '=' // TODO: rethink
 %token '='
@@ -73,32 +74,32 @@ stmt_seq: %empty            { $$ = NULL; }
    ;
 
 stmt: exp                   { $$ = $1; }
-   | VAR ID                 { TRY( $$ = declaration($2, CTX(), LINE()) ); }
-   | VAR ID '=' exp         { TRY( $$ = declarationAssignment($2, $4, CTX(), LINE()) ); }
-   | ID '=' exp             { TRY( $$ = assignment($1, $3, CTX(), LINE()) ); }
+   | TYPE ID                { TRY( $$ = declaration($1, $2, ST(), LINE()) ); }
+   | TYPE ID '=' exp        { TRY( $$ = declarationAssignment($1, $2, $4, ST(), LINE()) ); }
+   | ID '=' exp             { TRY( $$ = assignment($1, $3, ST(), LINE()) ); }
    | PRINT '(' exp ')'      { $$ = newASTPrint($3); }
-   | PRINT_VAR '(' ID ')'   { ASTNode* id; TRY( id = idReference($3, CTX(), LINE()) ); $$ = newASTPrintVar(id); }
+   | PRINT_VAR '(' ID ')'   { ASTNode* id; TRY( id = idReference($3, ST(), LINE()) ); $$ = newASTPrintVar(id); }
    ;
 
-exp: NUMBER                 { $$ = newASTNumber($1); }
-   | ID                     { TRY( $$ = idReference($1, CTX(), LINE()) ); }
-   | exp '+' exp            { $$ = newASTAdd($1, $3); }
-   | exp '-' exp            { $$ = newASTSub($1, $3); }
-   | exp '*' exp            { $$ = newASTMul($1, $3); }
-   | exp '/' exp            { $$ = newASTDiv($1, $3); }
-   | exp '%' exp            { $$ = newASTMod($1, $3); }
+exp: INT_LITERAL            { $$ = newASTInt($1); }
+   | ID                     { TRY( $$ = idReference($1, ST(), LINE()) ); }
+   | exp '+' exp            { TRY( $$ = arithmetic(newASTAdd($1, $3), $1, $3, LINE()) ); }
+   | exp '-' exp            { TRY( $$ = arithmetic(newASTSub($1, $3), $1, $3, LINE()) ); }
+   | exp '*' exp            { TRY( $$ = arithmetic(newASTMul($1, $3), $1, $3, LINE()) ); }
+   | exp '/' exp            { TRY( $$ = arithmetic(newASTDiv($1, $3), $1, $3, LINE()) ); }
+   | exp '%' exp            { TRY( $$ = arithmetic(newASTMod($1, $3), $1, $3, LINE()) ); }
    | '(' exp ')'            { $$ = $2; }
-   | '-' exp %prec UMINUS   { $$ = newASTUSub($2); }
-   | '+' exp %prec UPLUS    { $$ = newASTUAdd($2); }
-   | exp BITWISE_AND exp    { $$ = newASTBitwiseAnd($1, $3); }
-   | exp BITWISE_OR exp     { $$ = newASTBitwiseOr($1, $3); }
-   | exp BITWISE_XOR exp    { $$ = newASTBitwiseXor($1, $3); }
-   | BITWISE_NOT exp        { $$ = newASTBitwiseNot($2); }
-   | exp L_SHIFT exp        { $$ = newASTLeftShift($1, $3); }
-   | exp R_SHIFT exp        { $$ = newASTRightShift($1, $3); }
-   | OPEN_ABS exp CLOSE_ABS { $$ = newASTAbs($2); }
-   | SET_POSITIVE exp       { $$ = newASTSetPositive($2); }
-   | SET_NEGATIVE exp       { $$ = newASTSetNegative($2); }
+   | '-' exp %prec UMINUS   { TRY( $$ = uarithmetic(newASTUSub($2), $2, LINE()) ); }
+   | '+' exp %prec UPLUS    { TRY( $$ = uarithmetic(newASTUAdd($2), $2, LINE()) ); }
+   | exp BITWISE_AND exp    { TRY( $$ = arithmetic(newASTBitwiseAnd($1, $3), $1, $3, LINE()) ); }
+   | exp BITWISE_OR exp     { TRY( $$ = arithmetic(newASTBitwiseOr($1, $3), $1, $3, LINE()) ); }
+   | exp BITWISE_XOR exp    { TRY( $$ = arithmetic(newASTBitwiseXor($1, $3), $1, $3, LINE()) ); }
+   | BITWISE_NOT exp        { TRY( $$ = uarithmetic(newASTBitwiseNot($2), $2, LINE()) ); }
+   | exp L_SHIFT exp        { TRY( $$ = arithmetic(newASTLeftShift($1, $3), $1, $3, LINE()) ); }
+   | exp R_SHIFT exp        { TRY( $$ = arithmetic(newASTRightShift($1, $3), $1, $3, LINE()) ); }
+   | OPEN_ABS exp CLOSE_ABS { TRY( $$ = uarithmetic(newASTAbs($2), $2, LINE()) ); }
+   | SET_POSITIVE exp       { TRY( $$ = uarithmetic(newASTSetPositive($2), $2, LINE()) ); }
+   | SET_NEGATIVE exp       { TRY( $$ = uarithmetic(newASTSetNegative($2), $2, LINE()) ); }
    ;
 
 %%
@@ -112,4 +113,6 @@ void yyerror(yyscan_t scanner, ParseContext ctx, const char * s, ...) {
   fprintf(stderr, "(line %d) PARSE ERROR: ", yyget_lineno(scanner));
   vfprintf(stderr, s, ap);
   fprintf(stderr, "\n");
+
+  va_end(ap);
 }

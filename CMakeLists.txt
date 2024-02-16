@@ -8,8 +8,9 @@ set(CMAKE_MESSAGE_LOG_LEVEL TRACE)
 #set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/")
 
 # Configure GCC warning and error flags
-set(GCC_FLAGS "-Wall -Wextra -Werror -Werror=implicit-int -Werror=implicit-function-declaration -Werror=strict-prototypes")
-set(CMAKE_CXX_FLAGS ${GCC_FLAGS})
+set(GCC_FLAGS "-Wall -Wextra -Werror=implicit-int -Werror=implicit-function-declaration -Wunused-parameter -Wuninitialized -pedantic -Wunused-variable -Wshadow -Wreturn-type")
+#set(CMAKE_CXX_FLAGS ${GCC_FLAGS})
+set(CMAKE_C_FLAGS ${GCC_FLAGS})
 
 # Include directories for header files
 file(GLOB INCLUDE_DIRECTORIES LIST_DIRECTORIES true "${CMAKE_SOURCE_DIR}/src/*/include")
