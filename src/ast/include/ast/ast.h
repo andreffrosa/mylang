@@ -9,6 +9,7 @@
 
 typedef enum ASTNodeType {
     AST_INT,
+    AST_BOOL,
     AST_ADD,
     AST_SUB,
     AST_MUL,
@@ -25,6 +26,9 @@ typedef enum ASTNodeType {
     AST_ABS,
     AST_SET_POSITIVE,
     AST_SET_NEGATIVE,
+    AST_LOGICAL_NOT,
+    AST_LOGICAL_AND,
+    AST_LOGICAL_OR,
     AST_ID,
     AST_ID_DECLARATION,
     AST_ID_DECL_ASSIGN,
@@ -49,6 +53,7 @@ typedef struct ASTNode {
     unsigned int size;
     union {
         int n;      // AST_INT
+        bool z;
         Symbol* id; // AST_ID
         struct {    // BINARY_OP
             struct ASTNode* left;
@@ -63,6 +68,8 @@ typedef struct ASTNode {
 void deleteASTNode(ASTNode** node);
 
 ASTNode* newASTInt(const int n);
+
+ASTNode* newASTBool(const bool z);
 
 ASTResult newASTBinaryOP(const ASTNodeType type, const ASTNode* left, const ASTNode* right);
 
@@ -97,6 +104,10 @@ ASTOpType getNodeOpType(const ASTNodeType node_type);
 #define newASTAbs(e) newASTUnaryOP(AST_ABS, e)
 #define newASTSetPositive(e) newASTUnaryOP(AST_SET_POSITIVE, e)
 #define newASTSetNegative(e) newASTUnaryOP(AST_SET_NEGATIVE, e)
+
+#define newASTLogicalNot(e) newASTUnaryOP(AST_LOGICAL_NOT, e)
+#define newASTLogicalAnd(l, r) newASTBinaryOP(AST_LOGICAL_AND, l, r)
+#define newASTLogicalOr(l, r) newASTBinaryOP(AST_LOGICAL_OR, l, r)
 
 #define newASTStatementList(stmt, list) (list == NULL ? stmt : newASTBinaryOP(AST_STATEMENT_SEQ, stmt, list).result_value)
 

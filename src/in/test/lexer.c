@@ -22,6 +22,13 @@ void tearDown (void) {}
     TEST_ASSERT_EQUAL_INT(val, yylval_param.ival);\
 } while(0)
 
+#define ASSERT_TOKEN_IS_BOOL(val) do {\
+    GET_NEXT_TOKEN(ctx);\
+    TEST_ASSERT_TRUE(tok > 0);\
+    TEST_ASSERT_EQUAL_INT(BOOL_LITERAL, tok);\
+    TEST_ASSERT_EQUAL_INT(val, yylval_param.bval);\
+} while(0)
+
 #define ASSERT_TOKEN_IS_OP(op_type) do {\
     GET_NEXT_TOKEN(ctx);\
     TEST_ASSERT_TRUE(tok > 0);\
@@ -106,6 +113,16 @@ void scanIDWithUnderscore() {
     ASSERT_NO_MORE_TOKENS();
 }
 
+void scanBoolValues() {
+    TOKENIZE("true");
+    ASSERT_TOKEN_IS_BOOL(true);
+    ASSERT_NO_MORE_TOKENS();
+
+    TOKENIZE("false");
+    ASSERT_TOKEN_IS_BOOL(false);
+    ASSERT_NO_MORE_TOKENS();
+}
+
 int main() {
     UNITY_BEGIN();
     RUN_TEST(scanTokensWithSpaces);
@@ -115,6 +132,7 @@ int main() {
     RUN_TEST(scanID);
     RUN_TEST(scanIDWithNumber);
     RUN_TEST(scanIDWithUnderscore);
+    RUN_TEST(scanBoolValues);
     return UNITY_END();
 }
 

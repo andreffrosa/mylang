@@ -103,7 +103,7 @@ ASTNode* idReference(const char* id, SymbolTable* st, int lineno) {
     return ast;
 }
 
-ASTNode* arithmetic(ASTResult res, ASTNode* left, ASTNode* right, int lineno) {
+ASTNode* binaryOp(ASTResult res, ASTNode* left, ASTNode* right, int lineno) {
     if (isERR(res)) {
         if(res.result_type == AST_RES_ERR_INVALID_LEFT_TYPE) {
             printError(lineno, "Invalid left type %s!", ASTTypeToStr(left->value_type));
@@ -119,7 +119,7 @@ ASTNode* arithmetic(ASTResult res, ASTNode* left, ASTNode* right, int lineno) {
     return (ASTNode*) res.result_value;
 }
 
-ASTNode* uarithmetic(ASTResult res, ASTNode* child, int lineno) {
+ASTNode* unaryOp(ASTResult res, ASTNode* child, int lineno) {
     if (isERR(res)) {
         if(res.result_type == AST_RES_ERR_INVALID_CHILD_TYPE) {
             printError(lineno, "Invalid child type %s!", ASTTypeToStr(child->value_type));

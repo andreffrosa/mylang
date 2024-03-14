@@ -12,6 +12,7 @@ const char* ASTTypeMap[] = {
     [AST_TYPE_VOID] = "void",
     [AST_TYPE_TYPE] = "type",
     [AST_TYPE_INT] = "int",
+    [AST_TYPE_BOOL] = "bool",
 };
 
 ASTResult parseASTType(const char* type_str) {
@@ -34,6 +35,9 @@ const char* ASTTypeValueToStr(const ASTType type, const int value, char* buffer)
             return ASTTypeToStr(value);
         case AST_TYPE_INT:
             snprintf(buffer, TYPE_VALUE_BUFFER_SIZE, "%d", value);
+            return buffer;
+        case AST_TYPE_BOOL:
+            snprintf(buffer, TYPE_VALUE_BUFFER_SIZE, "%s", value ? "true" : "false");
             return buffer;
         default:
             assert(false);

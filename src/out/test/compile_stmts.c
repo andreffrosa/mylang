@@ -13,11 +13,11 @@ void tearDown (void) {
     deleteSymbolTable(&st);
 }
 
-const char* compileStmt(const ASTNode* ast) {
+const char* compileStmt(const ASTNode* ast, const OutSerializer* os) {
     char* ptr = NULL;
     size_t size = 0;
     IOStream* stream = openIOStreamFromMemmory(&ptr, &size);
-    compileASTStatements(ast, st, stream, NULL, 0);
+    compileASTStatements(ast, st, stream, os, 0);
     IOStreamClose(&stream);
     return ptr;
 }
@@ -26,27 +26,16 @@ const char* compileExp(const ASTNode* ast) {
     char* ptr = NULL;
     size_t size = 0;
     IOStream* stream = openIOStreamFromMemmory(&ptr, &size);
-    outCompileExpression(ast, st, stream);
+    compileASTExpression(ast, st, stream);
     IOStreamClose(&stream);
     return ptr;
 }
 
-void printC(const IOStream* stream, const char* str, bool printvar);
-void printJava(const IOStream* stream, const char* str, bool printvar);
+extern const OutSerializer cSerializer;
+extern const OutSerializer javaSerializer;
 
-const char* compilePrint(const ASTNode* ast, void (*print)(const IOStream*, const char*, bool)) {
-    char* ptr = NULL;
-    size_t size = 0;
-    IOStream* stream = openIOStreamFromMemmory(&ptr, &size);
-
-    compileASTStatements(ast, st, stream, print, 0);
-
-    IOStreamClose(&stream);
-    return ptr;
-}
-
-#define ASSERT_COMPILE_STMT_EQUALS(ast, str) {\
-    const char* txt = compileStmt(ast);\
+#define ASSERT_COMPILE_STMT_EQUALS(ast, os, str) {\
+    const char* txt = compileStmt(ast, os);\
     TEST_ASSERT_NOT_NULL(txt);\
     TEST_ASSERT_EQUAL_STRING(str, txt);\
     free((void*)txt);\
@@ -61,28 +50,20 @@ const char* compilePrint(const ASTNode* ast, void (*print)(const IOStream*, cons
     deleteASTNode(&ast);\
 }
 
-#define ASSERT_COMPILE_PRINT_EQUALS(ast, print, str) {\
-    const char* txt = compilePrint(ast, print);\
-    TEST_ASSERT_NOT_NULL(txt);\
-    TEST_ASSERT_EQUAL_STRING(str, txt);\
-    free((void*)txt);\
-    deleteASTNode(&ast);\
-}
-
 void testVarDeclaration() {
     ASTNode* ast = newASTIDDeclaration(AST_TYPE_INT, "n", st).result_value;
-    ASSERT_COMPILE_STMT_EQUALS(ast, "int n;\n");
+    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "int n;\n");
 }
 
 void testVarDeclarationAssignment() {
     ASTNode* ast = newASTIDDeclarationAssignment(AST_TYPE_INT, "n", newASTInt(100), st).result_value;
-    ASSERT_COMPILE_STMT_EQUALS(ast, "int n = 100;\n");
+    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "int n = 100;\n");
 }
 
 void testAssignment() {
     insertVar(st, AST_TYPE_INT, "n");
     ASTNode* ast = newASTAssignment("n", newASTInt(100), st).result_value;
-    ASSERT_COMPILE_STMT_EQUALS(ast, "n = 100;\n");
+    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "n = 100;\n");
 }
 
 void testIDReference() {
@@ -97,41 +78,75 @@ void testStatementSequence() {
     ASTNode* stmt1 = newASTIDDeclaration(AST_TYPE_INT, "n", st).result_value;
     ASTNode* stmt2 = newASTAssignment("n", newASTInt(100), st).result_value;
     ASTNode* ast = newASTStatementList(stmt1, stmt2);
-    ASSERT_COMPILE_STMT_EQUALS(ast, "int n;\nn = 100;\n");
+    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "int n;\nn = 100;\n");
 }
 
 void testPrintC() {
     ASTNode* ast = newASTPrint(newASTInt(100));
-    ASSERT_COMPILE_PRINT_EQUALS(ast, &printC, "printf(\"%d\\n\", 100);\n");
+    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "printf(\"%d\\n\", 100);\n");
 
     ast = newASTAdd(newASTInt(1), newASTInt(1)).result_value;
     ast = newASTPrint(ast);
-    ASSERT_COMPILE_PRINT_EQUALS(ast, &printC, "printf(\"%d\\n\", 1 + 1);\n");
+    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "printf(\"%d\\n\", 1 + 1);\n");
 
     Symbol* var = insertVar(st, AST_TYPE_INT, "n");
     setVarInitialized(var);
     ast = newASTPrint(newASTIDReference("n", st).result_value);
-    ASSERT_COMPILE_PRINT_EQUALS(ast, &printC, "printf(\"%d\\n\", n);\n");
+    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "printf(\"%d\\n\", n);\n");
 
     ast = newASTPrintVar(newASTIDReference("n", st).result_value);
-    ASSERT_COMPILE_PRINT_EQUALS(ast, &printC, "printf(\"n = %d\\n\", n);\n");
+    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "printf(\"n = %d\\n\", n);\n");
+}
+
+void testBoolPrintC() {
+    ASTNode* ast = newASTPrint(newASTBool(true));
+    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "printf(\"%s\\n\", (true ? \"true\" : \"false\"));\n");
+
+    ast = newASTLogicalAnd(newASTBool(true), newASTBool(false)).result_value;
+    ast = newASTPrint(ast);
+    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "printf(\"%s\\n\", (true && false ? \"true\" : \"false\"));\n");
+
+    Symbol* var = insertVar(st, AST_TYPE_BOOL, "z");
+    setVarInitialized(var);
+    ast = newASTPrint(newASTIDReference("z", st).result_value);
+    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "printf(\"%s\\n\", (z ? \"true\" : \"false\"));\n");
+
+    ast = newASTPrintVar(newASTIDReference("z", st).result_value);
+    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "printf(\"z = %s\\n\", (z ? \"true\" : \"false\"));\n");
 }
 
 void testPrintJava() {
     ASTNode* ast = newASTPrint(newASTInt(100));
-    ASSERT_COMPILE_PRINT_EQUALS(ast, &printJava, "System.out.println(100);\n");
+    ASSERT_COMPILE_STMT_EQUALS(ast, &javaSerializer, "System.out.println(100);\n");
 
     ast = newASTAdd(newASTInt(1), newASTInt(1)).result_value;
     ast = newASTPrint(ast);
-    ASSERT_COMPILE_PRINT_EQUALS(ast, &printJava, "System.out.println(1 + 1);\n");
+    ASSERT_COMPILE_STMT_EQUALS(ast, &javaSerializer, "System.out.println(1 + 1);\n");
 
     Symbol* var = insertVar(st, AST_TYPE_INT, "n");
     setVarInitialized(var);
     ast = newASTPrint(newASTIDReference("n", st).result_value);
-    ASSERT_COMPILE_PRINT_EQUALS(ast, &printJava, "System.out.println(n);\n");
+    ASSERT_COMPILE_STMT_EQUALS(ast, &javaSerializer, "System.out.println(n);\n");
 
     ast = newASTPrintVar(newASTIDReference("n", st).result_value);
-    ASSERT_COMPILE_PRINT_EQUALS(ast, &printJava, "System.out.println(\"n = \" + n);\n");
+    ASSERT_COMPILE_STMT_EQUALS(ast, &javaSerializer, "System.out.println(\"n = \" + n);\n");
+}
+
+void testBoolPrintJava() {
+    ASTNode* ast = newASTPrint(newASTBool(true));
+    ASSERT_COMPILE_STMT_EQUALS(ast, &javaSerializer, "System.out.println(true);\n");
+
+    ast = newASTLogicalAnd(newASTBool(true), newASTBool(false)).result_value;
+    ast = newASTPrint(ast);
+    ASSERT_COMPILE_STMT_EQUALS(ast, &javaSerializer, "System.out.println(true && false);\n");
+
+    Symbol* var = insertVar(st, AST_TYPE_BOOL, "z");
+    setVarInitialized(var);
+    ast = newASTPrint(newASTIDReference("z", st).result_value);
+    ASSERT_COMPILE_STMT_EQUALS(ast, &javaSerializer, "System.out.println(z);\n");
+
+    ast = newASTPrintVar(newASTIDReference("z", st).result_value);
+    ASSERT_COMPILE_STMT_EQUALS(ast, &javaSerializer, "System.out.println(\"z = \" + z);\n");
 }
 
 void compileRestrainedExpression() {
@@ -140,7 +155,43 @@ void compileRestrainedExpression() {
     ASTNode* stmt2 = newASTIDDeclarationAssignment(AST_TYPE_INT, "m", restr_exp, st).result_value;
     ASTNode* ast = newASTStatementList(stmt1, stmt2);
 
-    ASSERT_COMPILE_STMT_EQUALS(ast, "int n = 0;\nint m = (n = n + 1);\n");
+    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "int n = 0;\nint m = (n = n + 1);\n");
+}
+
+void compileBoolVarsInC() {
+    ASTNode* ast = newASTIDDeclaration(AST_TYPE_BOOL, "z", st).result_value;
+    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "bool z;\n");
+
+    deleteSymbolTable(&st);
+    st = newSymbolTable(1);
+
+    ast = newASTIDDeclarationAssignment(AST_TYPE_BOOL, "z", newASTBool(true), st).result_value;
+    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "bool z = true;\n");
+
+    deleteSymbolTable(&st);
+    st = newSymbolTable(1);
+
+    insertVar(st, AST_TYPE_BOOL, "z");
+    ast = newASTAssignment("z", newASTBool(true), st).result_value;
+    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "z = true;\n");
+}
+
+void compileBoolVarsInJava() {
+    ASTNode* ast = newASTIDDeclaration(AST_TYPE_BOOL, "z", st).result_value;
+    ASSERT_COMPILE_STMT_EQUALS(ast, &javaSerializer, "boolean z;\n");
+
+    deleteSymbolTable(&st);
+    st = newSymbolTable(1);
+
+    ast = newASTIDDeclarationAssignment(AST_TYPE_BOOL, "z", newASTBool(true), st).result_value;
+    ASSERT_COMPILE_STMT_EQUALS(ast, &javaSerializer, "boolean z = true;\n");
+
+    deleteSymbolTable(&st);
+    st = newSymbolTable(1);
+
+    insertVar(st, AST_TYPE_BOOL, "z");
+    ast = newASTAssignment("z", newASTBool(true), st).result_value;
+    ASSERT_COMPILE_STMT_EQUALS(ast, &javaSerializer, "z = true;\n");
 }
 
 int main() {
@@ -151,7 +202,11 @@ int main() {
     RUN_TEST(testIDReference);
     RUN_TEST(testStatementSequence);
     RUN_TEST(testPrintC);
+    RUN_TEST(testBoolPrintC);
     RUN_TEST(testPrintJava);
+    RUN_TEST(testBoolPrintJava);
     RUN_TEST(compileRestrainedExpression);
+    RUN_TEST(compileBoolVarsInC);
+    RUN_TEST(compileBoolVarsInJava);
     return UNITY_END();
 }

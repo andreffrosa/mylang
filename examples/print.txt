@@ -3,3 +3,6 @@ print(2*2);
 int a = 100;
 print(a);
 printvar(a);
+bool b = true;
+print(b);
+printvar(b);

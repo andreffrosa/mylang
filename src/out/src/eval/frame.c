@@ -11,7 +11,9 @@ int printVar(const Symbol* var, const int* value, IOStream* stream) {
         return IOStreamWritef(stream, "%s = -", getVarId(var));
     }
 
-    return IOStreamWritef(stream, "%s = %d", getVarId(var), *value);
+    char buffer[TYPE_VALUE_BUFFER_SIZE];
+    ASTTypeValueToStr(getVarType(var), *value, buffer);
+    return IOStreamWritef(stream, "%s = %s", getVarId(var), buffer);
 }
 
 int printSymbolTable(const SymbolTable* st, const Frame* frame, IOStream* stream) {

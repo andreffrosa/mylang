@@ -61,13 +61,18 @@ void executeASTStatements(const ASTNode* ast, const SymbolTable* st, Frame* fram
             executeASTStatements(ast->right, st, frame);
             break;
         } case AST_PRINT: {
-            int value = evalASTExpression(ast->child, st, frame);
-            printf("%d\n", value);
+            const int value = evalASTExpression(ast->child, st, frame);
+            char buffer[TYPE_VALUE_BUFFER_SIZE];
+            ASTTypeValueToStr(ast->child->value_type, value, buffer);
+            printf("%s\n", buffer);
             break;
         } case AST_PRINT_VAR: {
             assert(ast->child->node_type == AST_ID);
-            int value = evalASTExpression(ast->child, st, frame);
-            printf("%s = %d\n", getVarId(ast->child->id), value);
+            const int value = evalASTExpression(ast->child, st, frame);
+            IOStream* s = openIOStreamFromStdout();
+            printVar(ast->child->id, &value, s);
+            IOStreamWritef(s, "\n");
+            IOStreamClose(&s);
             break;
         } case AST_NO_OP: break;
           default: {
@@ -85,6 +90,8 @@ int evalASTExpression(const ASTNode* node, const SymbolTable* st, Frame* frame) 
     switch (node->node_type) {
         case AST_INT:
             return node->n;
+        case AST_BOOL:
+            return node->z;
         case AST_ADD:
             return evalASTExpression(node->left, st, frame) + evalASTExpression(node->right, st, frame);
         case AST_SUB:
@@ -105,8 +112,10 @@ int evalASTExpression(const ASTNode* node, const SymbolTable* st, Frame* frame) 
             return evalASTExpression(node->left, st, frame) & evalASTExpression(node->right, st, frame);
         case AST_BITWISE_XOR:
             return evalASTExpression(node->left, st, frame) ^ evalASTExpression(node->right, st, frame);
-        case AST_BITWISE_NOT:
-            return ~ evalASTExpression(node->child, st, frame);
+        case AST_BITWISE_NOT: {
+            int result = evalASTExpression(node->child, st, frame);
+            return node->child->value_type == AST_TYPE_BOOL ? !result : ~ result;
+        }
         case AST_L_SHIFT:
             return evalASTExpression(node->left, st, frame) << evalASTExpression(node->right, st, frame);
         case AST_R_SHIFT:
@@ -124,6 +133,20 @@ int evalASTExpression(const ASTNode* node, const SymbolTable* st, Frame* frame) 
             Symbol* var = node->id;
             assert(isVarInitialized(var));
             return evalID(st, var, frame);
+        } case AST_LOGICAL_NOT: {
+            return !evalASTExpression(node->child, st, frame);
+        } case AST_LOGICAL_AND: {
+            bool l = evalASTExpression(node->left, st, frame);
+            if(l) {
+                return evalASTExpression(node->right, st, frame);
+            }
+            return false;
+        } case AST_LOGICAL_OR: {
+            bool l = evalASTExpression(node->left, st, frame);
+            if(!l) {
+                return evalASTExpression(node->right, st, frame);
+            }
+            return true;
         } case AST_ID_ASSIGNMENT: {
             return evalAssignment(node, st, frame);
         } default:

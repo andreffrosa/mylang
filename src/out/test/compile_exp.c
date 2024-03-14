@@ -16,7 +16,7 @@ static inline void testCompile(ASTNode* ast, const char* expected) {
     size_t size = 0;
     IOStream* stream = openIOStreamFromMemmory(&ptr, &size);
 
-    outCompileExpression(ast, NULL, stream);
+    compileASTExpression(ast, NULL, stream);
     IOStreamClose(&stream);
 
     if(PRINT) {printf("%s\n", ptr);}
@@ -276,6 +276,89 @@ void compileMixedExpression() {
     testCompile(ast, "(1|2) + 1"); // Parentheses required
 }
 
+void compileLogicalOperators() {
+    ASTNode* ast = newASTLogicalAnd(newASTBool(true), newASTBool(true)).result_value;
+    ast = newASTLogicalAnd(ast, newASTBool(false)).result_value;
+    testCompile(ast, "true && true && false"); // No parentheses required
+
+    ast = newASTLogicalOr(newASTBool(false), newASTBool(false)).result_value;
+    ast = newASTLogicalOr(ast, newASTBool(true)).result_value;
+    testCompile(ast, "false || false || true"); // No parentheses required
+
+    ast = newASTLogicalAnd(newASTBool(true), newASTBool(true)).result_value;
+    ast = newASTLogicalOr(ast, newASTBool(false)).result_value;
+    testCompile(ast, "true && true || false"); // No parentheses required, && has precedence
+
+    ast = newASTLogicalAnd(newASTBool(true), newASTBool(true)).result_value;
+    ast = newASTLogicalOr(newASTBool(false), ast).result_value;
+    testCompile(ast, "false || true && true"); // No parentheses required, && has precedence
+
+    ast = newASTLogicalOr(newASTBool(true), newASTBool(false)).result_value;
+    ast = newASTLogicalAnd(ast, newASTBool(true)).result_value;
+    testCompile(ast, "(true || false) && true"); // Parentheses required
+
+    ast = newASTLogicalOr(newASTBool(true), newASTBool(false)).result_value;
+    ast = newASTLogicalAnd(newASTBool(true), ast).result_value;
+    testCompile(ast, "true && (true || false)"); // Parentheses required
+
+    ast = newASTLogicalNot(newASTBool(true)).result_value;
+    testCompile(ast, "!true");
+
+    ast = newASTLogicalNot(newASTLogicalNot(newASTBool(true)).result_value).result_value;
+    testCompile(ast, "!!true");
+
+    ast = newASTLogicalNot(newASTBool(true)).result_value;
+    ast = newASTLogicalAnd(newASTBool(true), ast).result_value;
+    ast = newASTLogicalAnd(ast, newASTBool(false)).result_value;
+    testCompile(ast, "true && !true && false"); // No parentheses required
+
+    ast = newASTLogicalNot(newASTBool(true)).result_value;
+    ast = newASTLogicalOr(newASTBool(false), ast).result_value;
+    ast = newASTLogicalOr(ast, newASTBool(true)).result_value;
+    testCompile(ast, "false || !true || true"); // No parentheses required
+}
+
+void compileBitwiseOperatorsOnBools() {
+    ASTResult res = newASTBitwiseAnd(newASTBool(true), newASTBool(true));
+    TEST_ASSERT_TRUE(isOK(res));
+    res = newASTBitwiseAnd(res.result_value, newASTBool(false));
+    testCompile(res.result_value, "true&true&false"); // No parentheses required
+
+    res = newASTBitwiseOr(newASTBool(false), newASTBool(false));
+    TEST_ASSERT_TRUE(isOK(res));
+    res = newASTBitwiseOr(res.result_value, newASTBool(true));
+    testCompile(res.result_value, "false|false|true"); // No parentheses required
+
+    res = newASTBitwiseNot(newASTBool(true));
+    testCompile(res.result_value, "!true"); // Bitwise not on bools is equal to logical not
+}
+
+void compileBitwiseAndLogicalOperatorsPrecedence() {
+    ASTNode* ast = newASTLogicalAnd(newASTBool(true), newASTBool(false)).result_value;
+    ast = newASTBitwiseAnd(ast, newASTBool(true)).result_value;
+    testCompile(ast, "(true && false)&true");
+
+    ast = newASTBitwiseAnd(newASTBool(true), newASTBool(false)).result_value;
+    ast = newASTLogicalAnd(ast, newASTBool(true)).result_value;
+    testCompile(ast, "true&false && true"); // No parentheses required
+
+    ast = newASTLogicalOr(newASTBool(true), newASTBool(false)).result_value;
+    ast = newASTBitwiseOr(ast, newASTBool(true)).result_value;
+    testCompile(ast, "(true || false)|true");
+
+    ast = newASTBitwiseOr(newASTBool(true), newASTBool(false)).result_value;
+    ast = newASTLogicalOr(ast, newASTBool(true)).result_value;
+    testCompile(ast, "true|false || true"); // No parentheses required
+
+    ast = newASTLogicalAnd(newASTBool(true), newASTBool(false)).result_value;
+    ast = newASTBitwiseXor(ast, newASTBool(true)).result_value;
+    testCompile(ast, "(true && false)^true");
+
+    ast = newASTBitwiseXor(newASTBool(true), newASTBool(false)).result_value;
+    ast = newASTLogicalOr(ast, newASTBool(true)).result_value;
+    testCompile(ast, "true^false || true"); // No parentheses required
+}
+
 int main() {
     UNITY_BEGIN();
     RUN_TEST(compileAddSequence);
@@ -293,6 +376,9 @@ int main() {
     RUN_TEST(compileBitwiseOperators);
     RUN_TEST(compileShiftOperators);
     RUN_TEST(compileMixedExpression);
+    RUN_TEST(compileLogicalOperators);
+    RUN_TEST(compileBitwiseOperatorsOnBools);
+    RUN_TEST(compileBitwiseAndLogicalOperatorsPrecedence);
     return UNITY_END();
 }
 

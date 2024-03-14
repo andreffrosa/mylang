@@ -12,13 +12,31 @@ static const char* POS = ""
 
 #define INITIAL_INDENTATION_LEVEL 2
 
-void printJava(const IOStream* stream, const char* str, bool printvar) {
-    if(printvar) {
-        IOStreamWritef(stream, "System.out.println(\"%s = \" + %s)", str, str);
-    } else {
-        IOStreamWritef(stream, "System.out.println(%s)", str);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+static void print(const char* exp_str, const ASTType type, const bool is_printvar, const IOStream* stream) {
+    IOStreamWritef(stream, "System.out.println(");
+    if(is_printvar) {
+        IOStreamWritef(stream, "\"%s = \" + ", exp_str);
+    }
+
+    IOStreamWritef(stream, "%s)", exp_str);
+}
+#pragma GCC diagnostic pop
+
+static const char* parseType(const ASTType type) {
+ switch (type) {
+    case AST_TYPE_BOOL:
+        return "boolean";
+    default:
+        return ASTTypeToStr(type);
     }
 }
+
+const OutSerializer javaSerializer = {
+    &parseType,
+    &print
+};
 
 void setClassName(char* class_name, const char* file_name) {
     strcpy(class_name, file_name);
@@ -31,7 +49,7 @@ bool outCompileToJava(const ASTNode* ast, const SymbolTable* st, const char* fil
 
     IOStreamWritef(stream, "class %s {\n", class_name);
     IOStreamWritef(stream, "%s", PRE);
-    compileASTStatements(ast, st, stream, &printJava, INITIAL_INDENTATION_LEVEL);
+    compileASTStatements(ast, st, stream, &javaSerializer, INITIAL_INDENTATION_LEVEL);
     IOStreamWritef(stream, "%s", POS);
 
     return true;

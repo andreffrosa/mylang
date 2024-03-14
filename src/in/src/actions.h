@@ -16,8 +16,9 @@ ASTNode* assignment(const char* id, ASTNode* exp, SymbolTable* st, int lineno);
 
 ASTNode* idReference(const char* id, SymbolTable* st, int lineno);
 
-ASTNode* arithmetic(ASTResult res, ASTNode* left, ASTNode* right, int lineno);
+ASTNode* binaryOp(ASTResult res, ASTNode* left, ASTNode* right, int lineno);
 
-ASTNode* uarithmetic(ASTResult res, ASTNode* child, int lineno);
+ASTNode* unaryOp(ASTResult res, ASTNode* child, int lineno);
+
 
 #endif

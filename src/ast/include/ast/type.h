@@ -7,6 +7,7 @@ typedef enum ASTType {
     AST_TYPE_VOID = 0,  // No type
     AST_TYPE_TYPE,      // Types are also a type
     AST_TYPE_INT,
+    AST_TYPE_BOOL,
     AST_TYPE_COUNT,
 } ASTType;
 

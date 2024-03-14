@@ -17,10 +17,14 @@ void executeASTStatements(const ASTNode* ast, const SymbolTable* st, Frame* fram
 
 int evalASTExpression(const ASTNode* node, const SymbolTable* st, Frame* frame);
 
-void outCompileExpression(const ASTNode* ast, const SymbolTable* st, const IOStream* stream);
+typedef struct OutSerializer {
+    const char* (*parseType)(const ASTType type);
+    void (*print)(const char* exp_str, const ASTType type, const bool is_printvar, const IOStream* stream);
+} OutSerializer;
 
-typedef void (*printFunc)(const IOStream* stream, const char* str, bool printvar);
-void compileASTStatements(const ASTNode* ast, const SymbolTable* st, const IOStream* stream, printFunc print, unsigned int indentation_level);
+void compileASTExpression(const ASTNode* ast, const SymbolTable* st, const IOStream* stream);
+
+void compileASTStatements(const ASTNode* ast, const SymbolTable* st, const IOStream* stream, const OutSerializer* os, unsigned int indentation_level);
 
 bool outCompileToC(const ASTNode* ast, const SymbolTable* st, const char* file_name, const IOStream* stream);
 

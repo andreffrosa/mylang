@@ -32,11 +32,13 @@
 
 %union {
   int ival;
+  bool bval;
   char sval[MAX_ID_SIZE];
   ASTNode* ast_node;
 }
 
 %token <ival> INT_LITERAL
+%token <bval> BOOL_LITERAL
 %token <sval> ID
 %token <sval> TYPE
 
@@ -46,11 +48,11 @@
 %token '='
 
 %left L_SHIFT R_SHIFT
-%left BITWISE_OR BITWISE_AND BITWISE_XOR
+%left BITWISE_OR BITWISE_AND BITWISE_XOR LOGICAL_OR LOGICAL_AND
 %left '+' '-'
 %left '*' '/' '%'
 
-%precedence UMINUS UPLUS SET_POSITIVE SET_NEGATIVE BITWISE_NOT
+%precedence UMINUS UPLUS SET_POSITIVE SET_NEGATIVE BITWISE_NOT '!'
 
 %token OPEN_ABS CLOSE_ABS
 
@@ -97,24 +99,28 @@ restr_exp
 
 pure_exp
    : INT_LITERAL            { $$ = newASTInt($1); }
+   | BOOL_LITERAL           { $$ = newASTBool($1); }
    | ID                     { TRY( $$ = idReference($1, ST(), LINE()) ); }
-   | exp '+' exp            { TRY( $$ = arithmetic(newASTAdd($1, $3), $1, $3, LINE()) ); }
-   | exp '-' exp            { TRY( $$ = arithmetic(newASTSub($1, $3), $1, $3, LINE()) ); }
-   | exp '*' exp            { TRY( $$ = arithmetic(newASTMul($1, $3), $1, $3, LINE()) ); }
-   | exp '/' exp            { TRY( $$ = arithmetic(newASTDiv($1, $3), $1, $3, LINE()) ); }
-   | exp '%' exp            { TRY( $$ = arithmetic(newASTMod($1, $3), $1, $3, LINE()) ); }
+   | exp '+' exp            { TRY( $$ = binaryOp(newASTAdd($1, $3), $1, $3, LINE()) ); }
+   | exp '-' exp            { TRY( $$ = binaryOp(newASTSub($1, $3), $1, $3, LINE()) ); }
+   | exp '*' exp            { TRY( $$ = binaryOp(newASTMul($1, $3), $1, $3, LINE()) ); }
+   | exp '/' exp            { TRY( $$ = binaryOp(newASTDiv($1, $3), $1, $3, LINE()) ); }
+   | exp '%' exp            { TRY( $$ = binaryOp(newASTMod($1, $3), $1, $3, LINE()) ); }
    | '(' exp ')'            { $$ = $2; }
-   | '-' exp %prec UMINUS   { TRY( $$ = uarithmetic(newASTUSub($2), $2, LINE()) ); }
-   | '+' exp %prec UPLUS    { TRY( $$ = uarithmetic(newASTUAdd($2), $2, LINE()) ); }
-   | exp BITWISE_AND exp    { TRY( $$ = arithmetic(newASTBitwiseAnd($1, $3), $1, $3, LINE()) ); }
-   | exp BITWISE_OR exp     { TRY( $$ = arithmetic(newASTBitwiseOr($1, $3), $1, $3, LINE()) ); }
-   | exp BITWISE_XOR exp    { TRY( $$ = arithmetic(newASTBitwiseXor($1, $3), $1, $3, LINE()) ); }
-   | BITWISE_NOT exp        { TRY( $$ = uarithmetic(newASTBitwiseNot($2), $2, LINE()) ); }
-   | exp L_SHIFT exp        { TRY( $$ = arithmetic(newASTLeftShift($1, $3), $1, $3, LINE()) ); }
-   | exp R_SHIFT exp        { TRY( $$ = arithmetic(newASTRightShift($1, $3), $1, $3, LINE()) ); }
-   | OPEN_ABS exp CLOSE_ABS { TRY( $$ = uarithmetic(newASTAbs($2), $2, LINE()) ); }
-   | SET_POSITIVE exp       { TRY( $$ = uarithmetic(newASTSetPositive($2), $2, LINE()) ); }
-   | SET_NEGATIVE exp       { TRY( $$ = uarithmetic(newASTSetNegative($2), $2, LINE()) ); }
+   | '-' exp %prec UMINUS   { TRY( $$ = unaryOp(newASTUSub($2), $2, LINE()) ); }
+   | '+' exp %prec UPLUS    { TRY( $$ = unaryOp(newASTUAdd($2), $2, LINE()) ); }
+   | exp BITWISE_AND exp    { TRY( $$ = binaryOp(newASTBitwiseAnd($1, $3), $1, $3, LINE()) ); }
+   | exp BITWISE_OR exp     { TRY( $$ = binaryOp(newASTBitwiseOr($1, $3), $1, $3, LINE()) ); }
+   | exp BITWISE_XOR exp    { TRY( $$ = binaryOp(newASTBitwiseXor($1, $3), $1, $3, LINE()) ); }
+   | BITWISE_NOT exp        { TRY( $$ = unaryOp(newASTBitwiseNot($2), $2, LINE()) ); }
+   | exp L_SHIFT exp        { TRY( $$ = binaryOp(newASTLeftShift($1, $3), $1, $3, LINE()) ); }
+   | exp R_SHIFT exp        { TRY( $$ = binaryOp(newASTRightShift($1, $3), $1, $3, LINE()) ); }
+   | OPEN_ABS exp CLOSE_ABS { TRY( $$ = unaryOp(newASTAbs($2), $2, LINE()) ); }
+   | SET_POSITIVE exp       { TRY( $$ = unaryOp(newASTSetPositive($2), $2, LINE()) ); }
+   | SET_NEGATIVE exp       { TRY( $$ = unaryOp(newASTSetNegative($2), $2, LINE()) ); }
+   | '!' exp                { TRY( $$ = unaryOp(newASTLogicalNot($2), $2, LINE()) ); }
+   | exp LOGICAL_AND exp    { TRY( $$ = binaryOp(newASTLogicalAnd($1, $3), $1, $3, LINE()) ); }
+   | exp LOGICAL_OR exp     { TRY( $$ = binaryOp(newASTLogicalOr($1, $3), $1, $3, LINE()) ); }
    ;
 
 %%
