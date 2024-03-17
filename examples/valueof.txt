@@ -1,0 +1,9 @@
+int a = 0;
+int b = valueof(a = 1);
+printvar(a);
+printvar(b);
+
+int n = 0;
+int m = valueof(n = n + 1);
+printvar(n);
+printvar(m);

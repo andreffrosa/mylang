@@ -36,7 +36,7 @@ ASTResult unaryExpressionTypeHandler(ASTType child_type) {
     return OK(AST_TYPE_INT);
 }
 
-ASTResult assignmentTypeHandler(ASTType left_type, ASTType right_type) {
+ASTResult declAssignmentTypeHandler(ASTType left_type, ASTType right_type) {
     if(right_type == AST_TYPE_VOID) {
         return ERR(AST_RES_ERR_INVALID_RIGHT_TYPE);
     }
@@ -47,6 +47,19 @@ ASTResult assignmentTypeHandler(ASTType left_type, ASTType right_type) {
 
     return OK(AST_TYPE_VOID);
 }
+
+ASTResult assignmentTypeHandler(ASTType left_type, ASTType right_type) {
+    if(right_type == AST_TYPE_VOID) {
+        return ERR(AST_RES_ERR_INVALID_RIGHT_TYPE);
+    }
+
+    if(left_type != right_type) {
+        return ERR(AST_RES_ERR_DIFFERENT_TYPES);
+    }
+
+    return OK(left_type);
+}
+
 
 ASTResult genericStatementTypeHandler() {
     return OK(AST_TYPE_VOID);
@@ -73,7 +86,7 @@ ASTNodeInfo ASTNodeTable[] = {
     [AST_SET_NEGATIVE] = {UNARY_OP, false, .type_handler.unary = &unaryExpressionTypeHandler},
     [AST_ID] = {ZEROARY_OP, false, {NULL}},
     [AST_ID_DECLARATION] = {UNARY_OP, true, .type_handler.unary = &genericStatementTypeHandler},
-    [AST_ID_DECL_ASSIGN] = {BINARY_OP, true, .type_handler.binary = &assignmentTypeHandler},
+    [AST_ID_DECL_ASSIGN] = {BINARY_OP, true, .type_handler.binary = &declAssignmentTypeHandler},
     [AST_ID_ASSIGNMENT] = {BINARY_OP, true, .type_handler.binary = &assignmentTypeHandler},
     [AST_STATEMENT_SEQ] = {BINARY_OP, true, .type_handler.binary = &genericStatementTypeHandler},
     [AST_PRINT] = {UNARY_OP, true, .type_handler.unary = &genericStatementTypeHandler},
@@ -263,7 +276,7 @@ bool equalAST(const ASTNode* ast1, const ASTNode* ast2) {
         return true;
     }
 
-    if(ast1->size != ast2->size || ast1->node_type != ast2->node_type) {
+    if(ast1->size != ast2->size || ast1->node_type != ast2->node_type || ast1->value_type != ast2->value_type) {
         return false;
     }
 

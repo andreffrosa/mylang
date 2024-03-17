@@ -134,6 +134,15 @@ void testPrintJava() {
     ASSERT_COMPILE_PRINT_EQUALS(ast, &printJava, "System.out.println(\"n = \" + n);\n");
 }
 
+void compileRestrainedExpression() {
+    ASTNode* stmt1 = newASTIDDeclarationAssignment(AST_TYPE_INT, "n", newASTInt(0), st).result_value;
+    ASTNode* restr_exp = newASTAssignment("n", newASTAdd(newASTIDReference("n", st).result_value, newASTInt(1)).result_value, st).result_value; // valueof(n=n+1)
+    ASTNode* stmt2 = newASTIDDeclarationAssignment(AST_TYPE_INT, "m", restr_exp, st).result_value;
+    ASTNode* ast = newASTStatementList(stmt1, stmt2);
+
+    ASSERT_COMPILE_STMT_EQUALS(ast, "int n = 0;\nint m = (n = n + 1);\n");
+}
+
 int main() {
     UNITY_BEGIN();
     RUN_TEST(testVarDeclaration);
@@ -143,5 +152,6 @@ int main() {
     RUN_TEST(testStatementSequence);
     RUN_TEST(testPrintC);
     RUN_TEST(testPrintJava);
+    RUN_TEST(compileRestrainedExpression);
     return UNITY_END();
 }

@@ -70,13 +70,32 @@ void assignEvalIDGivesSameValue() {
     deleteSymbolTable(&st);
 }
 
+void evalRestrainedExpressionReturnsValueAndHasSideEffects() {
+    SymbolTable* st = newSymbolTable(2);
+
+    ASTNode* stmt1 = newASTIDDeclarationAssignment(AST_TYPE_INT, "n", newASTInt(0), st).result_value;
+    ASTNode* restr_exp = newASTAssignment("n", newASTAdd(newASTIDReference("n", st).result_value, newASTInt(1)).result_value, st).result_value; // valueof(n=n+1)
+    ASTNode* stmt2 = newASTIDDeclarationAssignment(AST_TYPE_INT, "m", restr_exp, st).result_value;
+    ASTNode* ast = newASTStatementList(stmt1, stmt2);
+
+    Frame* frame = executeAST(ast, st);
+
+    unsigned int index = getVarIndex(st, lookupVar(st, "n"));
+    TEST_ASSERT_EQUAL_INT(1, getFrameValue(frame, index));
+    index = getVarIndex(st, lookupVar(st, "m"));
+    TEST_ASSERT_EQUAL_INT(1, getFrameValue(frame, index));
+
+    deleteFrame(&frame);
+    deleteASTNode(&ast);
+    deleteSymbolTable(&st);
+}
+
 int main() {
     UNITY_BEGIN();
-
     RUN_TEST(declarationAssignmentSetsValue);
     RUN_TEST(assignmentSetsValue);
     RUN_TEST(reassignmentChangesValue);
     RUN_TEST(assignEvalIDGivesSameValue);
-
+    RUN_TEST(evalRestrainedExpressionReturnsValueAndHasSideEffects);
     return UNITY_END();
 }

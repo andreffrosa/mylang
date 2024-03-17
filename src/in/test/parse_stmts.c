@@ -57,6 +57,15 @@ void parseMultipleStatements() {
     ASSERT_MATCH_AST("int n; n = 1;", ast, false);
 }
 
+void parseRestrainedExpression() {
+    Symbol* var = insertVar(st, AST_TYPE_INT, "n");
+    setVarInitialized(var);
+    ASTNode* id = newASTIDReference("n", st).result_value;
+    ASTNode* v = newASTAdd(id, newASTInt(1)).result_value;
+    ASTNode* ast = newASTAssignment("n", v, st).result_value;
+    ASSERT_MATCH_AST("valueof(n = n + 1)", ast, true);
+}
+
 int main() {
     UNITY_BEGIN();
     RUN_TEST(parseIDDeclaration);
@@ -64,5 +73,6 @@ int main() {
     RUN_TEST(parseAssignement);
     RUN_TEST(parseSingleStatement);
     RUN_TEST(parseMultipleStatements);
+    RUN_TEST(parseRestrainedExpression);
     return UNITY_END();
 }

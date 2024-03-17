@@ -91,6 +91,14 @@ static inline void compileBinaryOP(const ASTNode* node, const char* op_symbol, c
     }
 }
 
+void compileAssignment(const ASTNode* ast, const SymbolTable* st, const IOStream* stream) {
+    assert(ast->left->node_type == AST_ID);
+
+    Symbol* var = ast->left->id;
+    IOStreamWritef(stream, "%s = ", getVarId(var));
+    outCompileExpression(ast->right, st, stream);
+}
+
 void outCompileExpression(const ASTNode* node, const SymbolTable* st, const IOStream* stream) {
     assert(node != NULL);
 
@@ -158,6 +166,11 @@ void outCompileExpression(const ASTNode* node, const SymbolTable* st, const IOSt
         case AST_R_SHIFT:
             compileBinaryOP(node, " >> ", st, stream);
             break;
+        case AST_ID_ASSIGNMENT:
+            IOStreamWritef(stream, "(");
+            compileAssignment(node, st, stream);
+            IOStreamWritef(stream, ")");
+            break;
         default:
             assert(false);
     }
@@ -196,10 +209,7 @@ void compileASTStatements(const ASTNode* ast, const SymbolTable* st, const IOStr
             compileIDDeclaration(var, ast->right, st, stream);
             break;
         } case AST_ID_ASSIGNMENT: {
-            assert(ast->left->node_type == AST_ID);
-            Symbol* var = ast->left->id;
-            IOStreamWritef(stream, "%s = ", getVarId(var));
-            outCompileExpression(ast->right, st, stream);
+            compileAssignment(ast, st, stream);
             break;
         } case AST_PRINT:
           case AST_PRINT_VAR: {
@@ -214,7 +224,8 @@ void compileASTStatements(const ASTNode* ast, const SymbolTable* st, const IOStr
 
             free(ptr);
             break;
-        } default: {
+        } case AST_NO_OP: break;
+          default: {
             if(isExp(ast)) {
                 outCompileExpression(ast, st, stream);
             } else {

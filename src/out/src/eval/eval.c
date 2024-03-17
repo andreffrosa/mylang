@@ -24,6 +24,18 @@ int evalID(const SymbolTable* st, const Symbol* var, const Frame* frame) {
     return getFrameValue(frame, index);
 }
 
+int evalAssignment(const ASTNode* ast, const SymbolTable* st, Frame* frame) {
+    assert(ast->left->node_type == AST_ID);
+    assert(ast->left->id != NULL);
+
+    Symbol* var = ast->left->id;
+    int value = evalASTExpression(ast->right, st, frame);
+    unsigned int index = getVarIndex(st, var);
+    setFrameValue(frame, index, value);
+
+    return value;
+}
+
 void executeASTStatements(const ASTNode* ast, const SymbolTable* st, Frame* frame) {
     assert(ast != NULL && st != NULL);
 
@@ -42,13 +54,7 @@ void executeASTStatements(const ASTNode* ast, const SymbolTable* st, Frame* fram
             setFrameValue(frame, index, value);
             break;
         } case AST_ID_ASSIGNMENT: {
-            assert(ast->left->node_type == AST_ID);
-            assert(ast->left->id != NULL);
-
-            Symbol* var = ast->left->id;
-            int value = evalASTExpression(ast->right, st, frame);
-            unsigned int index = getVarIndex(st, var);
-            setFrameValue(frame, index, value);
+            evalAssignment(ast, st, frame);
             break;
         } case AST_STATEMENT_SEQ: {
             executeASTStatements(ast->left, st, frame);
@@ -63,7 +69,8 @@ void executeASTStatements(const ASTNode* ast, const SymbolTable* st, Frame* fram
             int value = evalASTExpression(ast->child, st, frame);
             printf("%s = %d\n", getVarId(ast->child->id), value);
             break;
-        } default: {
+        } case AST_NO_OP: break;
+          default: {
             if(isExp(ast)) {
                 evalASTExpression(ast, st, frame);
             } else {
@@ -73,7 +80,7 @@ void executeASTStatements(const ASTNode* ast, const SymbolTable* st, Frame* fram
     }
 }
 
-int evalASTExpression(const ASTNode* node, const SymbolTable* st, const Frame* frame) {
+int evalASTExpression(const ASTNode* node, const SymbolTable* st, Frame* frame) {
     assert(node != NULL);
     switch (node->node_type) {
         case AST_INT:
@@ -117,6 +124,8 @@ int evalASTExpression(const ASTNode* node, const SymbolTable* st, const Frame* f
             Symbol* var = node->id;
             assert(isVarInitialized(var));
             return evalID(st, var, frame);
+        } case AST_ID_ASSIGNMENT: {
+            return evalAssignment(node, st, frame);
         } default:
             assert(false);
     }

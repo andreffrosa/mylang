@@ -19,7 +19,7 @@ int printSymbolTable(const SymbolTable* st, const Frame* frame, IOStream* stream
 
     int n_vars = getSymbolTableSize(st);
 
-    int n_bytes = IOStreamWritef(stream, " = (%d vars) [", n_vars);
+    int n_bytes = IOStreamWritef(stream, " (%d vars) [", n_vars);
     if(n_vars > 0) {
         Symbol* var = NULL;
         int i = 0;

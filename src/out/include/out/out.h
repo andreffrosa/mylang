@@ -15,7 +15,7 @@ Frame* executeAST(const ASTNode* ast, const SymbolTable* st);
 
 void executeASTStatements(const ASTNode* ast, const SymbolTable* st, Frame* frame);
 
-int evalASTExpression(const ASTNode* node, const SymbolTable* st, const Frame* frame);
+int evalASTExpression(const ASTNode* node, const SymbolTable* st, Frame* frame);
 
 void outCompileExpression(const ASTNode* ast, const SymbolTable* st, const IOStream* stream);
 

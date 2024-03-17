@@ -68,12 +68,12 @@ void newASTAssignmentOnlyAcceptsExpressions() {
     deleteASTNode(&val_node);
 }
 
-void newASTAssignmentIsStatement() {
+void newASTAssignmentHasSameType() {
     insertVar(st, AST_TYPE_INT, ID);
     ASTResult res = newASTAssignment(ID, newASTInt(1), st);
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* ast = (ASTNode*) res.result_value;
-    ASSERT_EQUAL_VALUE_TYPE(ast, AST_TYPE_VOID);
+    ASSERT_EQUAL_VALUE_TYPE(ast, AST_TYPE_INT);
     deleteASTNode(&ast);
 }
 
@@ -159,7 +159,7 @@ int main() {
     RUN_TEST(newASTDeclarationIsStatement);
     RUN_TEST(newASTAssignmentOnlyAcceptsExpressions);
     RUN_TEST(newASTAssignmentExpressionHasSameTypeAsVar);
-    RUN_TEST(newASTAssignmentIsStatement);
+    RUN_TEST(newASTAssignmentHasSameType);
     RUN_TEST(newASTDeclarationAssignmentCannotHaveVoidType);
     RUN_TEST(newASTDeclarationAssignmentOnlyAcceptsExpressions);
     RUN_TEST(newASTDeclarationAssignmentExpressionHasSameTypeAsVar);

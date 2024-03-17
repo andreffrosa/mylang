@@ -39,8 +39,9 @@
 
 "int"       { strncpy(yylval_param->sval, yytext, MAX_ID_SIZE); return TYPE; }
 
-"print"     { return PRINT; }
-"printvar"  { return PRINT_VAR; }
+"print"                 { return PRINT; }
+"printvar"              { return PRINT_VAR; }
+"valueof"               { return VALUE_OF; }
 
 %{/**** NUMBERS ****/%}
 [0-9]+      { yylval_param->ival = atoi(yytext); return INT_LITERAL; }

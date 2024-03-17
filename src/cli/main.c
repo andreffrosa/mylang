@@ -52,7 +52,7 @@ bool intrepert(InContext ctx) {
         return true; // Exit shell
     }
 
-    printf("Parsed stdin: %d AST nodes.", ast->size);
+    printf("Parsed stdin: %d AST nodes.\n", ast->size);
 
     Frame* frame = executeAST(ast, st);
 

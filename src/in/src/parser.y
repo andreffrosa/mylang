@@ -40,6 +40,8 @@
 %token <sval> ID
 %token <sval> TYPE
 
+%token VALUE_OF
+
 //%right '=' // TODO: rethink
 %token '='
 
@@ -58,30 +60,43 @@
 
 %token END 0
 
-%type <ast_node> exp stmt stmt_seq
+%type <ast_node> exp stmt stmt_seq pure_exp restr_exp
 
 %start program
 
 %%
 
-program: stmt_seq END       { *(ctx.ast) = $1; YYACCEPT; }
+program
+   : stmt_seq END           { *(ctx.ast) = $1; YYACCEPT; }
    | program error END      { yyerrok; }
    ;
 
-stmt_seq: %empty            { $$ = NULL; }
+stmt_seq
+   : %empty                 { $$ = NULL; }
    | stmt                   { $$ = $1; } // If the program is a single statement, it does not require a trailling ';'
    | stmt ';' stmt_seq      { $$ = newASTStatementList($1, $3); }
    ;
 
-stmt: exp                   { $$ = $1; }
+stmt
+   : exp                    { $$ = $1; }
    | TYPE ID                { TRY( $$ = declaration($1, $2, ST(), LINE()) ); }
    | TYPE ID '=' exp        { TRY( $$ = declarationAssignment($1, $2, $4, ST(), LINE()) ); }
-   | ID '=' exp             { TRY( $$ = assignment($1, $3, ST(), LINE()) ); }
    | PRINT '(' exp ')'      { $$ = newASTPrint($3); }
    | PRINT_VAR '(' ID ')'   { ASTNode* id; TRY( id = idReference($3, ST(), LINE()) ); $$ = newASTPrintVar(id); }
+   | restr_exp              { $$ = $1; }
    ;
 
-exp: INT_LITERAL            { $$ = newASTInt($1); }
+exp
+   : pure_exp
+   | VALUE_OF '(' restr_exp ')' { $$ = $3; }
+   ;
+
+restr_exp
+   : ID '=' exp             { TRY( $$ = assignment($1, $3, ST(), LINE()) ); }
+   ;
+
+pure_exp
+   : INT_LITERAL            { $$ = newASTInt($1); }
    | ID                     { TRY( $$ = idReference($1, ST(), LINE()) ); }
    | exp '+' exp            { TRY( $$ = arithmetic(newASTAdd($1, $3), $1, $3, LINE()) ); }
    | exp '-' exp            { TRY( $$ = arithmetic(newASTSub($1, $3), $1, $3, LINE()) ); }
