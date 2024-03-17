@@ -174,12 +174,12 @@ void compileIDDeclaration(Symbol* var, const ASTNode* value, const SymbolTable* 
     }
 }
 
-void compileASTStatements(const ASTNode* ast, const SymbolTable* st, const IOStream* stream, unsigned int indentation_level) {
+void compileASTStatements(const ASTNode* ast, const SymbolTable* st, const IOStream* stream, printFunc print, unsigned int indentation_level) {
     assert(ast != NULL && st != NULL);
 
     if(ast->type == AST_STATEMENT_SEQ) {
-        compileASTStatements(ast->left, st, stream, indentation_level);
-        compileASTStatements(ast->right, st, stream, indentation_level);
+        compileASTStatements(ast->left, st, stream, print, indentation_level);
+        compileASTStatements(ast->right, st, stream, print, indentation_level);
         return;
     }
 
@@ -201,12 +201,26 @@ void compileASTStatements(const ASTNode* ast, const SymbolTable* st, const IOStr
             IOStreamWritef(stream, "%s = ", getVarId(var));
             outCompileExpression(ast->right, st, stream);
             break;
+        } case AST_PRINT:
+          case AST_PRINT_VAR: {
+            assert(print != NULL);
+            char* ptr;
+            size_t size;
+            IOStream* s = openIOStreamFromMemmory(&ptr, &size);
+            outCompileExpression(ast->child, st, s);
+            IOStreamClose(&s);
+
+            print(stream, ptr, ast->type == AST_PRINT_VAR);
+
+            free(ptr);
+            break;
         } default: {
             if(isExp(ast)) {
                 outCompileExpression(ast, st, stream);
             } else {
                 assert(false);
             }
+            break;
         }
     }
     IOStreamWritef(stream, ";\n");

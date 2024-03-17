@@ -28,6 +28,8 @@ typedef enum ASTNodeType {
     AST_ID_DECL_ASSIGN,
     AST_ID_ASSIGNMENT,
     AST_STATEMENT_SEQ,
+    AST_PRINT,
+    AST_PRINT_VAR,
     AST_NODE_TYPES_COUNT  // Count of AST node types
 } ASTNodeType;
 
@@ -116,5 +118,8 @@ ASTResult newASTIDReference(const char* id, SymbolTable* st);
 ASTResult newASTIDDeclaration(const char* id, SymbolTable* st);
 ASTResult newASTIDDeclarationAssignment(const char* id, const ASTNode* value, SymbolTable* st);
 ASTResult newASTAssignment(const char* id, const ASTNode* value, SymbolTable* st);
+
+#define newASTPrint(e) newASTUnaryOP(AST_PRINT, e)
+#define newASTPrintVar(e) newASTUnaryOP(AST_PRINT_VAR, e)
 
 #endif

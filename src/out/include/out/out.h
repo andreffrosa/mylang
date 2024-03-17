@@ -19,7 +19,8 @@ int evalASTExpression(const ASTNode* node, const SymbolTable* st, const Frame* f
 
 int outCompileExpression(const ASTNode* ast, const SymbolTable* st, const IOStream* stream);
 
-void compileASTStatements(const ASTNode* ast, const SymbolTable* st, const IOStream* stream, unsigned int indentation_level);
+typedef void (*printFunc)(const IOStream* stream, const char* str, bool printvar);
+void compileASTStatements(const ASTNode* ast, const SymbolTable* st, const IOStream* stream, printFunc print, unsigned int indentation_level);
 
 int outCompileToC(const ASTNode* ast, const SymbolTable* st, const char* file_name, const IOStream* stream);
 

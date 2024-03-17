@@ -12,6 +12,14 @@ static const char* POS = ""
 
 #define INITIAL_INDENTATION_LEVEL 2
 
+void printJava(const IOStream* stream, const char* str, bool printvar) {
+    if(printvar) {
+        IOStreamWritef(stream, "System.out.println(\"%s = \" + %s)", str, str);
+    } else {
+        IOStreamWritef(stream, "System.out.println(%s)", str);
+    }
+}
+
 void setClassName(char* class_name, const char* file_name) {
     strcpy(class_name, file_name);
     *class_name = toupper((unsigned char)*class_name);
@@ -23,6 +31,6 @@ int outCompileToJava(const ASTNode* ast, const SymbolTable* st, const char* file
 
     IOStreamWritef(stream, "class %s {\n", class_name);
     IOStreamWritef(stream, "%s", PRE);
-    compileASTStatements(ast, st, stream, INITIAL_INDENTATION_LEVEL);
+    compileASTStatements(ast, st, stream, &printJava, INITIAL_INDENTATION_LEVEL);
     IOStreamWritef(stream, "%s", POS);
 }

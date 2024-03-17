@@ -54,6 +54,15 @@ void executeASTStatements(const ASTNode* ast, const SymbolTable* st, Frame* fram
             executeASTStatements(ast->left, st, frame);
             executeASTStatements(ast->right, st, frame);
             break;
+        } case AST_PRINT: {
+            int value = evalASTExpression(ast->child, st, frame);
+            printf("%d\n", value);
+            break;
+        } case AST_PRINT_VAR: {
+            assert(ast->child->type == AST_ID);
+            int value = evalASTExpression(ast->child, st, frame);
+            printf("%s = %d\n", getVarId(ast->child->id), value);
+            break;
         } default: {
             if(isExp(ast)) {
                 evalASTExpression(ast, st, frame);

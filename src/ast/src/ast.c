@@ -32,6 +32,8 @@ ASTOpType ASTOpMap[] = {
     [AST_ID_DECL_ASSIGN] = BINARY_OP,
     [AST_ID_ASSIGNMENT] = BINARY_OP,
     [AST_STATEMENT_SEQ] = BINARY_OP,
+    [AST_PRINT] = UNARY_OP,
+    [AST_PRINT_VAR] = UNARY_OP,
 };
 
 static inline ASTNode* newASTNode(const ASTNodeType type) {
@@ -204,6 +206,8 @@ bool isStmt(const ASTNode* ast) {
     case AST_ID_DECL_ASSIGN:
     case AST_ID_ASSIGNMENT:
     case AST_STATEMENT_SEQ:
+    case AST_PRINT:
+    case AST_PRINT_VAR:
         return true;
     default:
         return false;

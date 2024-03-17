@@ -36,6 +36,9 @@
 %{/**** KEYWORDS ****/%}
 "var"       { return VAR; }
 
+"print"     { return PRINT; }
+"printvar"  { return PRINT_VAR; }
+
 %{/**** NUMBERS ****/%}
 [0-9]+      { yylval_param->ival = atoi(yytext); return NUMBER; }
 0x[a-f0-9]+ { yylval_param->ival = strtol(yytext, NULL, 16); return NUMBER; } // Hexadecimal
@@ -45,7 +48,7 @@
 
 "//".*\n    { /* ignore comments */ }
 \\\n        { /* ignore line continuation */ }
-\n          { /*return END;*/ }
+\n          { /* return END; */ }
 [ \t]       { /* ignore whitespace */ }
 
 ".end\n"    { return END; }

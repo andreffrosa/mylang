@@ -53,6 +53,8 @@
 
 %token VAR
 
+%token PRINT PRINT_VAR
+
 %token END 0
 
 %type <ast_node> exp stmt stmt_seq
@@ -74,6 +76,8 @@ stmt: exp                   { $$ = $1; }
    | VAR ID                 { TRY( $$ = declaration($2, CTX(), LINE()) ); }
    | VAR ID '=' exp         { TRY( $$ = declarationAssignment($2, $4, CTX(), LINE()) ); }
    | ID '=' exp             { TRY( $$ = assignment($1, $3, CTX(), LINE()) ); }
+   | PRINT '(' exp ')'      { $$ = newASTPrint($3); }
+   | PRINT_VAR '(' ID ')'   { ASTNode* id; TRY( id = idReference($3, CTX(), LINE()) ); $$ = newASTPrintVar(id); }
    ;
 
 exp: NUMBER                 { $$ = newASTNumber($1); }
