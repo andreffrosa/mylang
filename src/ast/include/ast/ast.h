@@ -55,6 +55,9 @@ typedef enum ASTNodeType {
     AST_LOGICAL_TOGGLE,
     AST_BITWISE_TOGGLE,
     AST_COMPD_ASSIGN,
+    AST_WHILE,
+    AST_DO_WHILE,
+    AST_FOR,
     AST_NODE_TYPES_COUNT  // Count of AST node types
 } ASTNodeType;
 
@@ -180,5 +183,9 @@ ASTResult newASTCompoundAssignment(ASTNodeType node_type, const ASTNode* lval, A
 #define newASTTernaryCond(e, l, r) newASTTernaryOP(AST_TERNARY_COND, e, l, r)
 #define newASTIf(cond, t) newASTBinaryOP(AST_IF, cond, t)
 #define newASTIfElse(cond, t, f) newASTTernaryOP(AST_IF_ELSE, cond, t, f)
+
+#define newASTWhile(cond, s) newASTBinaryOP(AST_WHILE, cond, s)
+#define newASTDoWhile(s, cond) newASTBinaryOP(AST_DO_WHILE, s, cond)
+ASTResult newASTFor(const ASTNode* init, const ASTNode* cond, const ASTNode* update, const ASTNode* body);
 
 #endif

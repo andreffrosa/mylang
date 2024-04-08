@@ -93,6 +93,11 @@ whitespace      [ \t\r]
 "then"                  { return THEN; }
 "else"                  { return ELSE; }
 
+"while"                 { return WHILE; }
+"do"                    { return DO; }
+"for"                   { return FOR; }
+"loop"                  { return LOOP; }
+
 %{/**** NUMBERS ****/%}
 {digit}+                { yylval_param->ival = atoi(yytext); return INT_LITERAL; }
 0x{hex_digit}+          { yylval_param->ival = strtol(yytext, NULL, 16); return INT_LITERAL; } // Hexadecimal

@@ -551,7 +551,7 @@ void compileScope(const ASTNode* scope_node, const SymbolTable* st, const IOStre
                   unsigned int indentation_level, bool print_new_line) {
     IOStreamWritef(stream, "{\n");
 
-    compileASTStatements(scope_node->child, st, stream, os, indentation_level + 1, true);
+    compileASTStatements(scope_node->child, st, stream, os, indentation_level + 1, true, true);
 
     indent(stream, indentation_level);
     IOStreamWritef(stream, "}");
@@ -576,7 +576,7 @@ void compileIf(const ASTNode* ast, const SymbolTable* st, const IOStream* stream
         compileScope(then, st, stream, os, indentation_level, false);
     } else {
         IOStreamWritef(stream, "{ ");
-        compileASTStatements(then, st, stream, os, 0, false);
+        compileASTStatements(then, st, stream, os, 0, false, true);
         IOStreamWritef(stream, " }");
     }
 
@@ -593,13 +593,13 @@ void compileIf(const ASTNode* ast, const SymbolTable* st, const IOStream* stream
     }
 }
 
-void compileASTStatements(const ASTNode* ast, const SymbolTable* st, const IOStream* stream, const OutSerializer* os, unsigned int indentation_level, bool print_new_line) {
+void compileASTStatements(const ASTNode* ast, const SymbolTable* st, const IOStream* stream, const OutSerializer* os, unsigned int indentation_level, bool print_new_line, bool print_semicolon) {
     assert(ast != NULL);
     assert(st != NULL);
 
     if(ast->node_type == AST_STATEMENT_SEQ) {
-        compileASTStatements(ast->left, st, stream, os, indentation_level, print_new_line);
-        compileASTStatements(ast->right, st, stream, os, indentation_level, print_new_line);
+        compileASTStatements(ast->left, st, stream, os, indentation_level, print_new_line, print_semicolon);
+        compileASTStatements(ast->right, st, stream, os, indentation_level, print_new_line, print_semicolon);
         return;
     }
 
@@ -652,7 +652,63 @@ void compileASTStatements(const ASTNode* ast, const SymbolTable* st, const IOStr
         case AST_IF_ELSE: {
             compileIf(ast, st, stream, os, indentation_level);
             return; // Skip the ;
-        } 
+        }
+        case AST_WHILE: {
+            IOStreamWritef(stream, "while (");
+            compileASTExpression(ast->left, st, stream, os, true);
+            IOStreamWritef(stream, ")");
+            if (ast->right->node_type == AST_SCOPE) {
+                IOStreamWritef(stream, " ");
+                compileScope(ast->right, st, stream, os, indentation_level, true);
+            } else if (ast->right->node_type == AST_NO_OP) {
+                compileASTStatements(ast->right, st, stream, os, 0, true, true);
+            } else {
+                assert(false);
+            }
+            return; // Skip the ;
+        }
+        case AST_DO_WHILE: {
+            IOStreamWritef(stream, "do ");
+            if (ast->left->node_type == AST_SCOPE) {
+                compileScope(ast->left, st, stream, os, indentation_level, false);
+            } else if (ast->left->node_type == AST_NO_OP) {
+                IOStreamWritef(stream, "{ }");
+            } else {
+                assert(false);
+            }
+            IOStreamWritef(stream, " while (");
+            compileASTExpression(ast->right, st, stream, os, true);
+            IOStreamWritef(stream, ")");
+            break;
+        }
+        case AST_FOR: {
+            const ASTNode* init = ast->child->left;
+            const ASTNode* cond = ast->child->right->left;
+            const ASTNode* scope = ast->child->right->right;
+            assert(scope->node_type == AST_SCOPE);
+            const ASTNode* update = scope->child->right;
+            const ASTNode* body = scope->child->left;
+
+            IOStreamWritef(stream, "for (");
+            compileASTStatements(init, st, stream, os, 0, false, true);
+            IOStreamWritef(stream, " ");
+            compileASTStatements(cond, st, stream, os, 0, false, true);
+            if (update->node_type != AST_NO_OP) {
+                IOStreamWritef(stream, " ");
+                compileASTStatements(update, st, stream, os, 0, false, false);
+            }
+            IOStreamWritef(stream, ")");
+
+            if (body->node_type == AST_SCOPE) {
+                IOStreamWritef(stream, " ");
+                compileScope(body, st, stream, os, indentation_level, true);
+            } else if (body->node_type == AST_NO_OP) {
+                compileASTStatements(body, st, stream, os, 0, true, true);
+            } else {
+                assert(false);
+            }
+            return; // Skip the ;
+        }
         default: {
             if(isExp(ast)) {
                 compileASTExpression(ast, st, stream, os, true);
@@ -663,9 +719,11 @@ void compileASTStatements(const ASTNode* ast, const SymbolTable* st, const IOStr
         }
     }
 
-    if (print_new_line) {
-        IOStreamWritef(stream, ";\n");
-    } else {
+    if(print_semicolon) {
         IOStreamWritef(stream, ";");
+    }
+
+    if (print_new_line) {
+        IOStreamWritef(stream, "\n");
     }
 }

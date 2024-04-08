@@ -30,7 +30,7 @@ void outCompileAST(const ASTNode* ast, const SymbolTable* st, const IOStream* st
 
 void compileASTExpression(const ASTNode* ast, const SymbolTable* st, const IOStream* stream, const OutSerializer* os, bool is_rval);
 
-void compileASTStatements(const ASTNode* ast, const SymbolTable* st, const IOStream* stream, const OutSerializer* os, unsigned int indentation_level, bool print_new_line);
+void compileASTStatements(const ASTNode* ast, const SymbolTable* st, const IOStream* stream, const OutSerializer* os, unsigned int indentation_level, bool print_new_line, bool print_semicolon);
 
 bool outCompileToC(const ASTNode* ast, const SymbolTable* st, const char* file_name, const IOStream* stream);
 

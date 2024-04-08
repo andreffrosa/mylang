@@ -264,15 +264,19 @@ ASTResult ternaryCondTypeHandler(ASTNode* node) {
 }
 
 ASTResult ifTypeHandler(ASTNode* node) {
-    assert(node);
+    assert(node != NULL);
 
-    if(node->node_type == AST_IF) {
-        if(node->left->value_type != AST_TYPE_BOOL) {
+    if (node->node_type == AST_IF || node->node_type == AST_WHILE) {
+        if (node->left->value_type != AST_TYPE_BOOL) {
             return ERR(AST_RES_ERR_INVALID_LEFT_TYPE);
         }
-    } else if(node->node_type == AST_IF_ELSE) {
-        if(node->first->value_type != AST_TYPE_BOOL) {
+    } else if (node->node_type == AST_IF_ELSE) {
+        if (node->first->value_type != AST_TYPE_BOOL) {
             return ERR(AST_RES_ERR_INVALID_LEFT_TYPE);
+        }
+    } else if (node->node_type == AST_DO_WHILE) {
+        if (node->right->value_type != AST_TYPE_BOOL) {
+            return ERR(AST_RES_ERR_INVALID_RIGHT_TYPE);
         }
     } else {
         assert(false);
@@ -354,6 +358,9 @@ ASTNodeInfo ASTNodeTable[] = {
     [AST_LOGICAL_TOGGLE] = {"AST_LOGICAL_TOGGLE", UNARY_OP,   false, &unaryBooleanExpressionTypeHandler, NULL},
     [AST_BITWISE_TOGGLE] = {"AST_BITWISE_TOGGLE", UNARY_OP,   false, &unaryBitwiseExpressionTypeHandler, NULL},
     [AST_COMPD_ASSIGN]   = {"AST_COMPD_ASSIGN",   UNARY_OP,   false, &anyUnaryExpressionTypeHandler, NULL},
+    [AST_WHILE]          = {"AST_WHILE",          BINARY_OP,  true,  &ifTypeHandler, NULL},
+    [AST_DO_WHILE]       = {"AST_DO_WHILE",       BINARY_OP,  true,  &ifTypeHandler, NULL},
+    [AST_FOR]            = {"AST_FOR",            UNARY_OP,   true,  &genericStatementTypeHandler, NULL},
 };
 
 ASTOpType getNodeOpType(ASTNodeType node_type) {
@@ -623,6 +630,29 @@ ASTResult newASTCompoundAssignment(ASTNodeType node_type, const ASTNode* lval, A
     }
 
     return newASTUnaryOP(AST_COMPD_ASSIGN, res.result_value);
+}
+
+ASTResult newASTFor(const ASTNode* init, const ASTNode* cond, const ASTNode* update, const ASTNode* body) {
+    assert(init != NULL);
+    assert(cond != NULL);
+    assert(update != NULL);
+    assert(body != NULL);
+    assert(body->node_type == AST_SCOPE || body->node_type == AST_NO_OP);
+
+    const ASTNode* s = newASTScope(newASTStatementList(body, update));
+
+    if (cond->node_type == AST_NO_OP) {
+        deleteASTNode((ASTNode**)&cond);
+        cond = newASTBool(true);
+    }
+
+    ASTResult res = newASTWhile(cond, s);
+    if (isERR(res)) {
+        return res;
+    }
+    const ASTNode* loop = res.result_value;
+
+    return newASTUnaryOP(AST_FOR, newASTStatementList(init, loop));
 }
 
 void deleteASTNode(ASTNode** node) {

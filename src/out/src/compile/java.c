@@ -157,7 +157,7 @@ bool outCompileToJava(const ASTNode* ast, const SymbolTable* st, const char* fil
     generateTypeEnum(stream);
     generateTempVars(stream);
     IOStreamWritef(stream, "\n%s", PRE);
-    compileASTStatements(ast, st, stream, &javaSerializer, INITIAL_INDENTATION_LEVEL, true);
+    compileASTStatements(ast, st, stream, &javaSerializer, INITIAL_INDENTATION_LEVEL, true, true);
     IOStreamWritef(stream, "%s", POS);
 
     return true;

@@ -134,8 +134,27 @@ void executeASTStatements(const ASTNode* ast, const SymbolTable* st, Frame* fram
                 executeASTStatements(ast->third, st, frame);
             }
             break;
-        } case AST_NO_OP: break;
-          default: {
+        }
+        case AST_NO_OP: break;
+        case AST_WHILE: {
+            assert(ast->right->node_type == AST_SCOPE);
+            while (evalASTExpression(ast->left, st, frame)) {
+                executeASTStatements(ast->right, st, frame);
+            }
+            break;
+        }
+        case AST_DO_WHILE: {
+            assert(ast->left->node_type == AST_SCOPE);
+            do {
+                executeASTStatements(ast->left, st, frame);
+            } while (evalASTExpression(ast->right, st, frame));
+            break;
+        }
+        case AST_FOR: {
+            executeASTStatements(ast->child, st, frame);
+            break;
+        }
+        default: {
             if(isExp(ast)) {
                 evalASTExpression(ast, st, frame);
             } else {

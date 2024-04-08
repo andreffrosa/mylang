@@ -12,7 +12,7 @@ const char* compileStmt(const ASTNode* ast, const OutSerializer* os, const Symbo
     char* ptr = NULL;
     size_t size = 0;
     IOStream* stream = openIOStreamFromMemmory(&ptr, &size);
-    compileASTStatements(ast, st, stream, os, 0, true);
+    compileASTStatements(ast, st, stream, os, 0, true, true);
     IOStreamClose(&stream);
     return ptr;
 }

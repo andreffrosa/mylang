@@ -1,0 +1,29 @@
+var N = 10;
+
+var i = 0;
+while (i < N) {
+    printvar(i);
+    i++;
+}
+
+var j = 0;
+do {
+   printvar(j);
+   j++;
+} while (j < N)
+
+for (var k = 0; k < N; k++) {
+    printvar(k);
+}
+
+var k = 0;
+for (; k < N; k++) {
+    printvar(k);
+}
+
+k = 0;
+for (; k < N;) {
+    print(k++);
+}
+
+for (k = 0; k < N; print(k++)) { }

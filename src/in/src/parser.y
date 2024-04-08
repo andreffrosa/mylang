@@ -67,7 +67,7 @@
 %token '='
 
 %token ADD_ASS SUB_ASS MUL_ASS DIV_ASS MOD_ASS
- BITWISE_AND_ASS BITWISE_OR_ASS BITWISE_XOR_ASS BITWISE_NOT_ASS LSHIFT_ASS RSHIFT_ASS
+ BITWISE_AND_ASS BITWISE_OR_ASS BITWISE_XOR_ASS LSHIFT_ASS RSHIFT_ASS
  LOGICAL_AND_ASS LOGICAL_OR_ASS
 %token INC DEC LOGICAL_TOGGLE BITWISE_TOGGLE
 
@@ -80,7 +80,7 @@
 %left '+' '-'
 %left '*' '/' '%'
 
-%token IF THEN ELSE
+%token IF THEN ELSE WHILE DO LOOP FOR
 
 %precedence UMINUS UPLUS SET_POSITIVE SET_NEGATIVE '~' '!'
 
@@ -91,7 +91,7 @@
 %token END 0
 
 %type <ast_node> primitive_exp arithmetic_exp logical_exp bitwise_exp cmp_exp cond_exp const_exp assign_exp exp
-%type <ast_node> stmt stmt_seq line_stmt scope cond_stmt
+%type <ast_node> stmt stmt_seq line_stmt scope cond_stmt loop
 %type <sval3> decl
 
 %start program
@@ -108,19 +108,20 @@ program
    ;
 
 stmt_seq
-   : %empty                            { $$ = NULL; }
-   | stmt stmt_seq                     { $$ = ($2 == NULL) ? $1 : newASTStatementList($1, $2); }
+   : stmt   { $$ = $1; }
+   | stmt stmt_seq                     { $$ = newASTStatementList($1, $2); }
    ;
 
 stmt
-   : ';'                               { $$ = newASTNoOp(); }
-   | line_stmt ';'                     { $$ = $1; }
+   : line_stmt ';'                     { $$ = $1; }
    | scope                             { $$ = $1; }
    | cond_stmt                         { $$ = $1; }
+   | loop                              { $$ = $1; }
    ;
 
 line_stmt
-   : exp                               { $$ = $1; }
+   : %empty                            { $$ = newASTNoOp(); }
+   | exp                               { $$ = $1; }
 //[TODO]: Declarations without assignment are disabled while uninitialization verification is not implemented
 //   | decl                              { TRY($$, declaration($1.s1, $1.s2, NULL, $1.s3, ctx->st)); }
    | decl '=' exp                      { TRY($$, declaration($1.s1, $1.s2,   $3, $1.s3, ctx->st)); }
@@ -136,8 +137,9 @@ decl
    ;
 
 scope
-   : '{' { enterScopeDefault(ctx->st); } stmt_seq '}'
-         { leaveScope(ctx->st); $$ = $3 == NULL ? newASTNoOp() : newASTScope($3); }
+   : '{' '}'                           { $$ = newASTNoOp(); }
+   | '{' { enterScopeDefault(ctx->st); }
+         stmt_seq '}'                  { leaveScope(ctx->st); $$ = newASTScope($3); }
    ;
 
 cond_stmt
@@ -148,6 +150,17 @@ cond_stmt
 //   | IF'('const_exp')' '?' line_stmt ';'   { TRY($$, newASTIf($3, $6)); }
 //   | IF'('const_exp')'THEN line_stmt ELSE line_stmt ';' { TRY($$, newASTIfElse($3, $6, $8)); }
 //   | IF'('const_exp')' '?' line_stmt  ':' line_stmt ';' { TRY($$, newASTIfElse($3, $6, $8)); }
+   ;
+
+loop
+   : WHILE '(' exp ')' scope           { TRY($$, newASTWhile($3, $5) ); }
+   | LOOP scope                        { TRY($$, newASTWhile(newASTBool(true), $2) ); }
+   | DO scope WHILE '(' exp ')'        { TRY($$, newASTDoWhile($2, $5) ); }
+   | FOR { enterScopeDefault(ctx->st); }
+        '('line_stmt ';' line_stmt ';' line_stmt')' scope
+                                       { leaveScope(ctx->st);
+                                         TRY($$, newASTFor($4, $6, $8, $10));
+                                       }
    ;
 
 exp
