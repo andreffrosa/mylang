@@ -17,11 +17,18 @@ file(GLOB INCLUDE_DIRECTORIES LIST_DIRECTORIES true "${CMAKE_SOURCE_DIR}/src/*/i
 include_directories(${INCLUDE_DIRECTORIES})
 
 # Option to enable/disable tests
-option(BUILD_TESTS "Enable building tests" ON)
+option(BUILD_TESTS "Enable Building Tests" ON)
 if(BUILD_TESTS)
   include(CTest)
   enable_testing()
   message("Tests Enabled!")
+
+  if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" AND BUILD_COV)
+    message("Including Coverage Reports!")
+    include(".toolchains/CodeCoverage.cmake")
+    append_coverage_compiler_flags()
+    setup_target_for_coverage_lcov(NAME "coverage" EXECUTABLE ctest --output-on-failure EXCLUDE "*/test/*" "dependencies/*" LCOV_ARGS --rc lcov_branch_coverage=1 GENHTML_ARGS --branch-coverage --legend --dark-mode)
+  endif()
 else()
   message("Tests Disabled!")
 endif()
@@ -35,12 +42,14 @@ function(include_tests)
     foreach(test_file ${TEST_SOURCES})
       get_filename_component(test_name ${test_file} NAME_WE)
       set(test_target "test_${MODULE_NAME}_${test_name}")
-      message("Including test: ${test_target}")
 
       add_executable(${test_target} ${test_file})
       set_target_properties(${test_target} PROPERTIES OUTPUT_NAME ${test_target})
       target_link_libraries(${test_target} Unity ${MODULE_NAME})
       target_include_directories(${test_target} PRIVATE ${SRC_DIR} ${PUBLIC_HEADERS} ${OUT_DIR})
+      
+      message(${CMAKE_CURRENT_BINARY_DIR}/${test_target})
+
       add_test(NAME ${test_target} COMMAND ${test_target})
     endforeach()
   endif()

@@ -3,7 +3,7 @@ ifndef VERBOSE
 	MAKEFLAGS += --no-print-directory
 endif
 
-.PHONY: build build-win run test clean
+.PHONY: build build-win debug run test clean cov
 
 all: clean build run
 
@@ -16,17 +16,17 @@ debug:
 	cmake -S . -B build -DCMAKE_BUILD_TYPE:STRING=Debug
 	cmake --build build --clean-first
 
-run:
+cov: 
+	cmake -S . -B build-cov -DCMAKE_BUILD_TYPE:STRING=Debug -DBUILD_COV=ON
+	cmake --build build-cov --clean-first --target coverage
+
+run: debug
 	./build/src/cli/mylang $(ARGS)
 
-test:
-#	cmake -S . -B build -DBUILD_TESTS=ON
-#	cmake --build build --clean-first
+test: debug
 	ctest --test-dir build --output-on-failure
 
-valgrind:
-#	cmake -S . -B build -DCMAKE_BUILD_TYPE:STRING=Debug
-#	cmake --build build --clean-first
+valgrind: debug
 	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --verbose --log-file=valgrind-out.txt $(ARGS)
 
 clean:
