@@ -1,0 +1,14 @@
+int n = 100;
+int m;
+m = n + 1;
+int k = -1 + (27 % 3)*2 - 2;
+
+bool a = true;
+bool b = false;
+bool c = a && b;
+bool d = a || b;
+bool e = !a;
+
+// Type Inference
+var x = 1 + 1;          // int
+var y = true && false;  // bool

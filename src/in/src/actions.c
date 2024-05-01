@@ -1,5 +1,6 @@
 #include <stdarg.h>
 #include <assert.h>
+#include <string.h>
 
 #include "actions.h"
 
@@ -42,14 +43,19 @@ ASTNode* declaration(const char* type_str, const char* id, SymbolTable* st, int 
 }
 
 ASTNode* declarationAssignment(const char* type_str, const char* id, ASTNode* exp, SymbolTable* st, int lineno) {
-    ASTResult res = parseASTType(type_str);
-    if (isERR(res)) {
-        printError(lineno, "Unknown type %s!", type_str);
-        return NULL;
+    ASTType type;
+    if(strncmp("var", type_str, 3) == 0) {
+        type = exp->value_type;
+    } else {
+        ASTResult res = parseASTType(type_str);
+        if (isERR(res)) {
+            printError(lineno, "Unknown type %s!", type_str);
+            return NULL;
+        }
+        type = (ASTType) res.result_value;
     }
 
-    ASTType type = (ASTType) res.result_value;
-    res = newASTIDDeclarationAssignment(type, id, exp, st);
+    ASTResult res = newASTIDDeclarationAssignment(type, id, exp, st);
     if (isERR(res)) {
         switch (res.result_type) {
             case AST_RES_ERR_ID_ALREADY_DEFINED:

@@ -66,6 +66,14 @@ void parseRestrainedExpression() {
     ASSERT_MATCH_AST("valueof(n = n + 1)", ast, true);
 }
 
+void parseDeclarationAssignmentWithTypeInference() {
+    ASTNode* ast = newASTIDDeclarationAssignment(AST_TYPE_INT, "n", newASTInt(1), st).result_value;
+    ASSERT_MATCH_AST("var n = 1", ast, false);
+
+    ast = newASTIDDeclarationAssignment(AST_TYPE_BOOL, "z", newASTBool(true), st).result_value;
+    ASSERT_MATCH_AST("var z = true", ast, false);
+}
+
 int main() {
     UNITY_BEGIN();
     RUN_TEST(parseIDDeclaration);
@@ -74,5 +82,6 @@ int main() {
     RUN_TEST(parseSingleStatement);
     RUN_TEST(parseMultipleStatements);
     RUN_TEST(parseRestrainedExpression);
+    RUN_TEST(parseDeclarationAssignmentWithTypeInference);
     return UNITY_END();
 }

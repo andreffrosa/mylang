@@ -83,6 +83,7 @@ stmt
    : exp                    { $$ = $1; }
    | TYPE ID                { TRY( $$ = declaration($1, $2, ST(), LINE()) ); }
    | TYPE ID '=' exp        { TRY( $$ = declarationAssignment($1, $2, $4, ST(), LINE()) ); }
+   | VAR ID '=' exp         { TRY( $$ = declarationAssignment("var", $2, $4, ST(), LINE()) ); }
    | PRINT '(' exp ')'      { $$ = newASTPrint($3); }
    | PRINT_VAR '(' ID ')'   { ASTNode* id; TRY( id = idReference($3, ST(), LINE()) ); $$ = newASTPrintVar(id); }
    | restr_exp              { $$ = $1; }
