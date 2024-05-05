@@ -11,6 +11,10 @@
 %option reentrant bison-bridge
 /* %option bison-locations */
 
+digit           [0-9]
+hex_digit       [a-f0-9]
+whitespace      [ \t\r]
+
 %%
 "+" |
 "-" |
@@ -21,27 +25,27 @@
 ")" |
 "=" |
 ";" |
-"!"         { return yytext[0]; }
+"!" |
+"|" |
+"&" |
+"^" |
+"~"                     { return yytext[0]; }
 
-"(|"        { return OPEN_ABS; }
-"|)"        { return CLOSE_ABS; }
-"|"         { return BITWISE_OR; }
-"&"         { return BITWISE_AND; }
-"^"         { return BITWISE_XOR; }
-"~"         { return BITWISE_NOT; }
-"<<"        { return L_SHIFT; }
-">>"        { return R_SHIFT; }
-"+|"        { return SET_POSITIVE; }
-"-|"        { return SET_NEGATIVE; }
+"(|"                    { return OPEN_ABS; }
+"|)"                    { return CLOSE_ABS; }
+"<<"                    { return L_SHIFT; }
+">>"                    { return R_SHIFT; }
+"+|"                    { return SET_POSITIVE; }
+"-|"                    { return SET_NEGATIVE; }
 
-"&&"        { return LOGICAL_AND; }
-"||"        { return LOGICAL_OR; }
+"&&"                    { return LOGICAL_AND; }
+"||"                    { return LOGICAL_OR; }
 
 %{/**** KEYWORDS ****/%}
-"var"       { return VAR; }
+"var"                   { return VAR; }
 
 "int"  |
-"bool"      { strncpy(yylval_param->sval, yytext, MAX_ID_SIZE); return TYPE; }
+"bool"                  { strncpy(yylval_param->sval, yytext, MAX_ID_SIZE); return TYPE; }
 
 "true" |
 "false"                 { yylval_param->bval = (yytext[0] == 't'); return BOOL_LITERAL; }
@@ -51,19 +55,17 @@
 "valueof"               { return VALUE_OF; }
 
 %{/**** NUMBERS ****/%}
-[0-9]+      { yylval_param->ival = atoi(yytext); return INT_LITERAL; }
-0x[a-f0-9]+ { yylval_param->ival = strtol(yytext, NULL, 16); return INT_LITERAL; } // Hexadecimal
+{digit}+                { yylval_param->ival = atoi(yytext); return INT_LITERAL; }
+0x{hex_digit}+          { yylval_param->ival = strtol(yytext, NULL, 16); return INT_LITERAL; } // Hexadecimal
 
-%{/**** NAME ****/%}
+%{/**** NAME ****/ %}
 [a-zA-Z][a-zA-Z0-9_]*   { strncpy(yylval_param->sval, yytext, MAX_ID_SIZE); return ID; } // Identifier
 
-"//".*\n    { /* ignore comments */ }
-\\\n        { /* ignore line continuation */ }
-\n          { /* return END; */ }
-[ \t]       { /* ignore whitespace */ }
+"//".*/\n?              { /* ignore comments */ }
+{whitespace}            { /* ignore whitespace */ }
+\\\n                    { /* ignore line continuation */ }
+\n                      { /*return END;*/ }
 
-".end\n"    { return END; }
-
-.           { yyerror(yyscanner, (ParseContext){NULL, NULL}, "Mystery character %c\n", *yytext); }
-<<EOF>>     { return END; }
+.                       { yyerror(yyscanner, (ParseContext){NULL, NULL}, "Mystery character %c\n", *yytext); }
+<<EOF>>                 { return END; }
 %%
