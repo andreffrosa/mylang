@@ -43,6 +43,7 @@
 %token <sval> TYPE
 
 %token VALUE_OF
+%token TYPE_OF
 
 //%right '=' // TODO: rethink
 %token '='
@@ -92,6 +93,8 @@ stmt
 exp
    : pure_exp
    | VALUE_OF '(' restr_exp ')' { $$ = $3; }
+   | TYPE_OF '(' exp ')'        { $$ = newASTTypeOf($3).result_value; } // Built-in function
+   | TYPE_OF '(' restr_exp ')'  { $$ = newASTTypeOf($3).result_value; } // Built-in function
    ;
 
 restr_exp
@@ -101,6 +104,7 @@ restr_exp
 pure_exp
    : INT_LITERAL            { $$ = newASTInt($1); }
    | BOOL_LITERAL           { $$ = newASTBool($1); }
+   | TYPE                   { TRY( $$ = type($1, LINE()) ); }
    | ID                     { TRY( $$ = idReference($1, ST(), LINE()) ); }
    | exp '+' exp            { TRY( $$ = binaryOp(newASTAdd($1, $3), $1, $3, LINE()) ); }
    | exp '-' exp            { TRY( $$ = binaryOp(newASTSub($1, $3), $1, $3, LINE()) ); }

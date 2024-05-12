@@ -30,9 +30,12 @@ ASTResult parseASTType(const char* type_str) {
 const char* ASTTypeValueToStr(const ASTType type, const int value, char* buffer) {
     switch (type) {
         case AST_TYPE_VOID:
-            return "void";
+            snprintf(buffer, TYPE_VALUE_BUFFER_SIZE, "void");
+            return buffer;
         case AST_TYPE_TYPE:
-            return ASTTypeToStr(value);
+            assert(value < AST_TYPE_COUNT);
+            snprintf(buffer, TYPE_VALUE_BUFFER_SIZE, ASTTypeToStr(value));
+            return buffer;
         case AST_TYPE_INT:
             snprintf(buffer, TYPE_VALUE_BUFFER_SIZE, "%d", value);
             return buffer;

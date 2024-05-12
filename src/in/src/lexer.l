@@ -45,7 +45,9 @@ whitespace      [ \t\r]
 "var"                   { return VAR; }
 
 "int"  |
-"bool"                  { strncpy(yylval_param->sval, yytext, MAX_ID_SIZE); return TYPE; }
+"bool" |
+"void" |
+"type"                  { strncpy(yylval_param->sval, yytext, MAX_ID_SIZE); return TYPE; }
 
 "true" |
 "false"                 { yylval_param->bval = (yytext[0] == 't'); return BOOL_LITERAL; }
@@ -53,6 +55,7 @@ whitespace      [ \t\r]
 "print"                 { return PRINT; }
 "printvar"              { return PRINT_VAR; }
 "valueof"               { return VALUE_OF; }
+"typeof"                { return TYPE_OF; }
 
 %{/**** NUMBERS ****/%}
 {digit}+                { yylval_param->ival = atoi(yytext); return INT_LITERAL; }

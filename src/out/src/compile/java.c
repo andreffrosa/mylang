@@ -1,5 +1,6 @@
 #include <string.h>
 #include <ctype.h>
+#include <assert.h>
 
 #include "out.h"
 
@@ -12,6 +13,14 @@ static const char* POS = ""
 
 #define INITIAL_INDENTATION_LEVEL 2
 
+// Lookup table
+static const char* ASTTypeCoverter[] = {
+    [AST_TYPE_VOID] = "VOID",
+    [AST_TYPE_TYPE] = "TYPE",
+    [AST_TYPE_INT] = "INT",
+    [AST_TYPE_BOOL] = "BOOL",
+};
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 static void print(const char* exp_str, const ASTType type, const bool is_printvar, const IOStream* stream) {
@@ -20,37 +29,106 @@ static void print(const char* exp_str, const ASTType type, const bool is_printva
         IOStreamWritef(stream, "\"%s = \" + ", exp_str);
     }
 
-    IOStreamWritef(stream, "%s)", exp_str);
+    if(type == AST_TYPE_TYPE) {
+        IOStreamWritef(stream, "%s.nameLowerCase())", exp_str);
+    } else {
+        IOStreamWritef(stream, "%s)", exp_str);
+    }
 }
 #pragma GCC diagnostic pop
 
-static const char* parseType(const ASTType type) {
- switch (type) {
-    case AST_TYPE_BOOL:
-        return "boolean";
-    default:
-        return ASTTypeToStr(type);
+static void parseType(const IOStream* stream, const ASTType type, const bool in_exp) {
+    if(in_exp) {
+        IOStreamWritef(stream, "_Type.%s", ASTTypeCoverter[type]);
+    } else {
+        switch (type) {
+            case AST_TYPE_BOOL:
+                IOStreamWritef(stream, "boolean");
+                break;
+            case AST_TYPE_TYPE:
+                IOStreamWritef(stream, "_Type");
+                break;
+            default:
+                IOStreamWritef(stream, "%s", ASTTypeToStr(type));
+                break;
+        }
     }
+}
+
+static void typeOf(const IOStream* stream, const ASTNode* node, const char* node_str) {
+    const ASTType type = node->value_type;
+
+    IOStreamWritef(stream, "(%s", node_str);
+    switch (node->value_type) {
+    case AST_TYPE_INT:
+        IOStreamWritef(stream, " > 0");
+        break;
+    case AST_TYPE_BOOL:
+        break;
+    case AST_TYPE_TYPE:
+        IOStreamWritef(stream, " == _Type.VOID");
+        break;
+    case AST_TYPE_VOID:
+        assert(false);
+        break;
+    default:
+        assert(false);
+    }
+
+    char* ptr = NULL;
+    size_t size = 0;
+    IOStream* s = openIOStreamFromMemmory(&ptr, &size);
+    parseType(s, type, true);
+    IOStreamClose(&s);
+
+    IOStreamWritef(stream, " ? %s : %s)", ptr, ptr);
+    free(ptr);
 }
 
 const OutSerializer javaSerializer = {
     &parseType,
+    &typeOf,
     &print
 };
 
-void setClassName(char* class_name, const char* file_name) {
+static void printClassName(const IOStream* stream, const char* file_name) {
+    char class_name[strlen(file_name)];
     strcpy(class_name, file_name);
     *class_name = toupper((unsigned char)*class_name);
+
+    IOStreamWritef(stream, "class %s {\n", class_name);
+}
+
+static void generateTypeEnum(const IOStream* stream) {
+    assert((sizeof(ASTTypeCoverter)/sizeof(ASTTypeCoverter[0])) == AST_TYPE_COUNT);
+
+    IOStreamWritef(stream, "\n");
+    indent(stream, 1);
+    IOStreamWritef(stream, "enum _Type {\n");
+    for(int i = 0; i < AST_TYPE_COUNT - 1; i++) {
+        indent(stream, 2);
+        IOStreamWritef(stream, "%s,\n", ASTTypeCoverter[i]);
+    }
+    indent(stream, 2);
+    IOStreamWritef(stream, "%s;\n\n", ASTTypeCoverter[AST_TYPE_COUNT - 1]);
+
+    indent(stream, 2);
+    IOStreamWritef(stream, "public String nameLowerCase() {\n");
+    indent(stream, 3);
+    IOStreamWritef(stream, "return name().toLowerCase();\n");
+    indent(stream, 2);
+    IOStreamWritef(stream, "}\n");
+    indent(stream, 1);
+    IOStreamWritef(stream, "}\n");
 }
 
 bool outCompileToJava(const ASTNode* ast, const SymbolTable* st, const char* file_name, const IOStream* stream) {
-    char class_name[strlen(file_name)];
-    setClassName(class_name, file_name);
-
-    IOStreamWritef(stream, "class %s {\n", class_name);
-    IOStreamWritef(stream, "%s", PRE);
+    printClassName(stream, file_name);
+    generateTypeEnum(stream);
+    IOStreamWritef(stream, "\n%s", PRE);
     compileASTStatements(ast, st, stream, &javaSerializer, INITIAL_INDENTATION_LEVEL);
     IOStreamWritef(stream, "%s", POS);
 
     return true;
 }
+

@@ -16,7 +16,7 @@ static inline void testCompile(ASTNode* ast, const char* expected) {
     size_t size = 0;
     IOStream* stream = openIOStreamFromMemmory(&ptr, &size);
 
-    compileASTExpression(ast, NULL, stream);
+    compileASTExpression(ast, NULL, stream, NULL);
     IOStreamClose(&stream);
 
     if(PRINT) {printf("%s\n", ptr);}

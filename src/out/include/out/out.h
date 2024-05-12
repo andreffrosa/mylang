@@ -18,11 +18,14 @@ void executeASTStatements(const ASTNode* ast, const SymbolTable* st, Frame* fram
 int evalASTExpression(const ASTNode* node, const SymbolTable* st, Frame* frame);
 
 typedef struct OutSerializer {
-    const char* (*parseType)(const ASTType type);
+    void (*parseType)(const IOStream* stream, const ASTType type, const bool in_exp);
+    void (*typeOf)(const IOStream* stream, const ASTNode* node, const char* node_str);
     void (*print)(const char* exp_str, const ASTType type, const bool is_printvar, const IOStream* stream);
 } OutSerializer;
 
-void compileASTExpression(const ASTNode* ast, const SymbolTable* st, const IOStream* stream);
+void outCompileAST(const ASTNode* ast, const SymbolTable* st, const IOStream* stream, const OutSerializer* os, unsigned int indentation_level);
+
+void compileASTExpression(const ASTNode* ast, const SymbolTable* st, const IOStream* stream, const OutSerializer* os);
 
 void compileASTStatements(const ASTNode* ast, const SymbolTable* st, const IOStream* stream, const OutSerializer* os, unsigned int indentation_level);
 

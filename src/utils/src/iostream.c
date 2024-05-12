@@ -125,3 +125,11 @@ int IOStreamClose(IOStream** stream) {
 IOStream* openIOStreamFromStdout() {
     return newIOStream(stdout, (IOStreamWritter)&vfprintf, NULL);
 }
+
+int indent(const IOStream* stream, unsigned int indentation_level) {
+    int n = 0;
+    for(unsigned int i = 0; i < indentation_level; i++) {
+        n += IOStreamWritef(stream, DEFAULT_IDENTATION);
+    }
+    return n;
+}

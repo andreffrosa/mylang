@@ -15,7 +15,7 @@ extern const char* ASTTypeMap[];
 
 ASTResult parseASTType(const char* type_str);
 
-#define ASTTypeToStr(type) (type >= AST_TYPE_COUNT ? NULL : ASTTypeMap[type])
+#define ASTTypeToStr(type) (type >= AST_TYPE_COUNT ? "" : ASTTypeMap[type])
 
 #define TYPE_VALUE_BUFFER_SIZE (8 * sizeof(int) + 1)
 

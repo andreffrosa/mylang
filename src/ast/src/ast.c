@@ -104,9 +104,12 @@ ASTResult assignmentTypeHandler(ASTType left_type, ASTType right_type) {
     return OK(left_type);
 }
 
-
 ASTResult genericStatementTypeHandler() {
     return OK(AST_TYPE_VOID);
+}
+
+ASTResult typeTypeHandler() {
+    return OK(AST_TYPE_TYPE);
 }
 
 // Lookup Table
@@ -140,6 +143,8 @@ ASTNodeInfo ASTNodeTable[] = {
     [AST_PRINT] = {UNARY_OP, true, .type_handler.unary = &genericStatementTypeHandler},
     [AST_PRINT_VAR] = {UNARY_OP, true, .type_handler.unary = &genericStatementTypeHandler},
     [AST_NO_OP] = {ZEROARY_OP, true, {NULL}},
+    [AST_TYPE] = {ZEROARY_OP, false, {NULL}},
+    [AST_TYPE_OF] = {UNARY_OP, false, .type_handler.unary = &typeTypeHandler},
 };
 
 ASTOpType getNodeOpType(ASTNodeType node_type) {
@@ -163,6 +168,12 @@ ASTNode* newASTInt(const int n) {
 ASTNode* newASTBool(const bool z) {
     ASTNode* node = newASTNode(AST_BOOL, AST_TYPE_BOOL, 1);
     node->z = z;
+    return node;
+}
+
+ASTNode* newASTType(const ASTType t) {
+    ASTNode* node = newASTNode(AST_TYPE, AST_TYPE_TYPE, 1);
+    node->t = t;
     return node;
 }
 
@@ -341,6 +352,8 @@ bool equalAST(const ASTNode* ast1, const ASTNode* ast2) {
                     return ast1->n == ast2->n;
                 case AST_BOOL:
                     return ast1->z == ast2->z;
+                case AST_TYPE:
+                    return ast1->t == ast2->t;
                 case AST_ID:
                     return strncmp(getVarId(ast1->id), getVarId(ast2->id), MAX_ID_SIZE) == 0;
                 default:
@@ -361,4 +374,8 @@ bool isStmt(const ASTNode* ast) {
 
 bool isExp(const ASTNode* ast) {
     return !ASTNodeTable[ast->node_type].is_stmt;
+}
+
+bool isRestrainedExp(const ASTNode* ast) {
+    return ast->node_type == AST_ID_ASSIGNMENT;
 }

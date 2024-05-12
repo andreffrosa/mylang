@@ -20,5 +20,6 @@ ASTNode* binaryOp(ASTResult res, ASTNode* left, ASTNode* right, int lineno);
 
 ASTNode* unaryOp(ASTResult res, ASTNode* child, int lineno);
 
+ASTNode* type(const char* type_str, int lineno);
 
 #endif

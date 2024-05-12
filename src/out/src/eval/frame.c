@@ -8,12 +8,12 @@ int printVar(const Symbol* var, const int* value, IOStream* stream) {
     assert(var != NULL && stream != NULL);
 
     if (!isVarInitialized(var) || value == NULL) {
-        return IOStreamWritef(stream, "%s = -", getVarId(var));
+        return IOStreamWritef(stream, "%s %s = -", ASTTypeToStr(getVarType(var)), getVarId(var));
     }
 
     char buffer[TYPE_VALUE_BUFFER_SIZE];
     ASTTypeValueToStr(getVarType(var), *value, buffer);
-    return IOStreamWritef(stream, "%s = %s", getVarId(var), buffer);
+    return IOStreamWritef(stream, "%s %s = %s", ASTTypeToStr(getVarType(var)), getVarId(var), buffer);
 }
 
 int printSymbolTable(const SymbolTable* st, const Frame* frame, IOStream* stream) {

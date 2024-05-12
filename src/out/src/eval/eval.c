@@ -92,6 +92,8 @@ int evalASTExpression(const ASTNode* node, const SymbolTable* st, Frame* frame) 
             return node->n;
         case AST_BOOL:
             return node->z;
+        case AST_TYPE:
+            return node->t;
         case AST_ADD:
             return evalASTExpression(node->left, st, frame) + evalASTExpression(node->right, st, frame);
         case AST_SUB:
@@ -149,6 +151,10 @@ int evalASTExpression(const ASTNode* node, const SymbolTable* st, Frame* frame) 
             return true;
         } case AST_ID_ASSIGNMENT: {
             return evalAssignment(node, st, frame);
+        } case AST_TYPE_OF: {
+            // TODO: [optimization] check if it needs eval (only needs if has side-effects)
+            evalASTExpression(node->child, st, frame);
+            return node->child->value_type;
         } default:
             assert(false);
     }

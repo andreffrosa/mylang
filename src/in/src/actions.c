@@ -137,3 +137,13 @@ ASTNode* unaryOp(ASTResult res, ASTNode* child, int lineno) {
     }
     return (ASTNode*) res.result_value;
 }
+
+ASTNode* type(const char* type_str, int lineno) {
+    ASTResult res = parseASTType(type_str);
+    if (isERR(res)) {
+        printError(lineno, "Unknown type %s!", type_str);
+        return NULL;
+    }
+    ASTType type = (ASTType) res.result_value;
+    return newASTType(type);
+}

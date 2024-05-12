@@ -26,7 +26,7 @@ const char* compileExp(const ASTNode* ast) {
     char* ptr = NULL;
     size_t size = 0;
     IOStream* stream = openIOStreamFromMemmory(&ptr, &size);
-    compileASTExpression(ast, st, stream);
+    compileASTExpression(ast, st, stream, NULL);
     IOStreamClose(&stream);
     return ptr;
 }

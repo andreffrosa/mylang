@@ -37,6 +37,8 @@ typedef enum ASTNodeType {
     AST_PRINT,
     AST_PRINT_VAR,
     AST_NO_OP,
+    AST_TYPE,
+    AST_TYPE_OF,
     AST_NODE_TYPES_COUNT  // Count of AST node types
 } ASTNodeType;
 
@@ -53,7 +55,8 @@ typedef struct ASTNode {
     unsigned int size;
     union {
         int n;      // AST_INT
-        bool z;
+        bool z;     // AST_BOOL
+        ASTType t;  // AST_TYPE
         Symbol* id; // AST_ID
         struct {    // BINARY_OP
             struct ASTNode* left;
@@ -70,6 +73,8 @@ void deleteASTNode(ASTNode** node);
 ASTNode* newASTInt(const int n);
 
 ASTNode* newASTBool(const bool z);
+
+ASTNode* newASTType(const ASTType t);
 
 ASTResult newASTBinaryOP(const ASTNodeType type, const ASTNode* left, const ASTNode* right);
 
@@ -118,5 +123,6 @@ ASTResult newASTAssignment(const char* id, const ASTNode* value, SymbolTable* st
 
 #define newASTPrint(e) newASTUnaryOP(AST_PRINT, e).result_value
 #define newASTPrintVar(e) newASTUnaryOP(AST_PRINT_VAR, e).result_value
+#define newASTTypeOf(e) newASTUnaryOP(AST_TYPE_OF, e)
 
 #endif
