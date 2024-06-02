@@ -18,7 +18,8 @@ debug:
 
 cov: 
 	cmake -S . -B build-cov -DCMAKE_BUILD_TYPE:STRING=Debug -DBUILD_COV=ON
-	cmake --build build-cov --clean-first --target coverage
+	cmake --build build-cov --clean-first
+	cmake --build build-cov --target coverage
 
 run: debug
 	./build/src/cli/mylang $(ARGS)
