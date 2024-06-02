@@ -1,3 +1,5 @@
+#include <assert.h>
+
 #include "in.h"
 
 #include "parser.h"
@@ -53,11 +55,13 @@ bool inParse(InContext in_ctx, ParseContext parse_ctx) {
     if(parse_ctx.st != NULL && *(parse_ctx.st) == NULL) {
         *(parse_ctx.st) = newSymbolTableDefault();
     }
+    parse_ctx.nested_comment_level = 0;
     return !yyparse($(in_ctx)->scanner, parse_ctx);
 }
 
 int inLex(InContext in_ctx, void* yylval_param) {
-    return yylex((YYSTYPE*)yylval_param, $(in_ctx)->scanner);
+    unsigned int nested_comment_level = 0;
+    return yylex((YYSTYPE*)yylval_param, $(in_ctx)->scanner, &nested_comment_level);
 }
 
 unsigned int inGetLineNumber(InContext in_ctx) {

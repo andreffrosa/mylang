@@ -4,7 +4,7 @@
 %define api.pure full
 //%locations
 %parse-param {yyscan_t scanner} {ParseContext ctx}
-%lex-param {yyscan_t scanner}
+%lex-param {yyscan_t scanner} { (unsigned int*) _NESTED_COMMENT_LEVEL_ }
 
 %code requires {
   typedef void * yyscan_t;
@@ -15,9 +15,9 @@
 %code provides {
   void yyerror(yyscan_t scanner, ParseContext ctx, const char * s, ...);
 
-  /*#define YY_DECL \
-       int yylex(YYSTYPE* yylval_param, yyscan_t yyscanner, ASTNode** ast)
-   YY_DECL;*/
+  #define YY_DECL \
+       int yylex(YYSTYPE* yylval_param, yyscan_t yyscanner, unsigned int* nested_comment_level)
+   YY_DECL;
 }
 
 %{
@@ -28,6 +28,8 @@
 #include "lexer.h"
 
 #include "actions.h"
+
+#define _NESTED_COMMENT_LEVEL_ &ctx.nested_comment_level
 %}
 
 %union {

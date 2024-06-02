@@ -38,7 +38,7 @@ bool intrepert(InContext ctx) {
 
     ASTNode* ast = NULL;
     SymbolTable* st = NULL;
-    bool status = inParse(ctx, (ParseContext){&ast, &st});
+    bool status = inParse(ctx, (ParseContext){&ast, &st, 0});
 
     if (!status) {
         fprintf(stderr, PARSE_AST_ERR_MSG, "stdin");
@@ -93,7 +93,7 @@ static inline void compileFile(const char* file_path) {
 
     ASTNode *ast = NULL;
     SymbolTable* st = NULL;
-    bool status = inParse(ctx, (ParseContext){&ast, &st});
+    bool status = inParse(ctx, (ParseContext){&ast, &st, 0});
 
     inDelete(&ctx);
     fclose(in_file);

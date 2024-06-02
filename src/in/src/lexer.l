@@ -15,6 +15,8 @@ digit           [0-9]
 hex_digit       [a-f0-9]
 whitespace      [ \t\r]
 
+%x NESTED_COMMENT
+
 %%
 "+" |
 "-" |
@@ -65,10 +67,13 @@ whitespace      [ \t\r]
 [a-zA-Z][a-zA-Z0-9_]*   { strncpy(yylval_param->sval, yytext, MAX_ID_SIZE); return ID; } // Identifier
 
 "//".*/\n?              { /* ignore comments */ }
+
 {whitespace}            { /* ignore whitespace */ }
 \\\n                    { /* ignore line continuation */ }
-\n                      { /*return END;*/ }
-
-.                       { yyerror(yyscanner, (ParseContext){NULL, NULL}, "Mystery character %c\n", *yytext); }
+<*>\n                   { /* ignore newline */ }
+<*>"/*"                 { if (*nested_comment_level++ == 0) BEGIN(NESTED_COMMENT); }
+<NESTED_COMMENT>"*"+"/" { if (--*nested_comment_level == 0) BEGIN(INITIAL); }
+<NESTED_COMMENT>.       { /* ignore everything */ }
+.                       { yyerror(yyscanner, (ParseContext){NULL, NULL, 0}, "Mystery character %c\n", *yytext); }
 <<EOF>>                 { return END; }
 %%

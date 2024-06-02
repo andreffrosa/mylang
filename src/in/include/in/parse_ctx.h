@@ -6,6 +6,7 @@
 typedef struct ParseContext {
     ASTNode** ast;
     SymbolTable** st;
+    unsigned int nested_comment_level;
 } ParseContext;
 
 #endif
