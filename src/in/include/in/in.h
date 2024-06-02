@@ -6,22 +6,28 @@
 
 #include "ast/ast.h"
 
-#include "parse_ctx.h"
+typedef struct InContext InContext;
 
-typedef void* InContext;
+typedef struct ParseResult {
+    bool status;
+    ASTNode* ast;
+    SymbolTable* st;
+} ParseResult;
 
-InContext inInitWithFile(FILE* file);
+InContext* inInitWithFile(FILE* file);
 
-InContext inInitWithString(const char* string);
+InContext* inInitWithString(const char* string);
 
-InContext inInitWithStdin();
+InContext* inInitWithStdin();
 
-void inDelete(InContext* in_ctx);
+void inDelete(InContext** ctx);
 
-bool inParse(InContext in_ctx, ParseContext parse_ctx);
+ParseResult inParse(const InContext* ctx);
 
-int inLex(InContext in_ctx, void* yylval_param);
+ParseResult inParseWithSt(const InContext* ctx, SymbolTable* st);
 
-unsigned int inGetLineNumber(InContext in_ctx);
+int inLex(const InContext* ctx, void* yylval_param);
+
+unsigned int inGetLineNumber(const InContext* ctx);
 
 #endif

@@ -7,16 +7,23 @@
 %lex-param {yyscan_t scanner} { (unsigned int*) _NESTED_COMMENT_LEVEL_ }
 
 %code requires {
-  typedef void * yyscan_t;
+   typedef void * yyscan_t;
 
-  #include "parse_ctx.h"
+   #include "ast/ast.h"
+   typedef struct ParseContext {
+      ASTNode** ast;
+      SymbolTable* st;
+      unsigned int nested_comment_level;
+   } ParseContext;
+
 }
 
 %code provides {
-  void yyerror(yyscan_t scanner, ParseContext ctx, const char * s, ...);
+   void yyerror(yyscan_t scanner, ParseContext ctx, const char * s, ...);
 
-  #define YY_DECL \
-       int yylex(YYSTYPE* yylval_param, yyscan_t yyscanner, unsigned int* nested_comment_level)
+   // Redefine yylex() definition to include nested_comment_level param
+   #define YY_DECL \
+      int yylex(YYSTYPE* yylval_param, yyscan_t yyscanner, unsigned int* nested_comment_level)
    YY_DECL;
 }
 
@@ -138,7 +145,7 @@ void yyerror(yyscan_t scanner, ParseContext ctx, const char * s, ...) {
 
   fflush(stdout);
 
-  fprintf(stderr, "(line %d) PARSE ERROR: ", yyget_lineno(scanner));
+  fprintf(stderr, "[SYNTAX ERROR] (line %d): ", yyget_lineno(scanner));
   vfprintf(stderr, s, ap);
   fprintf(stderr, "\n");
 

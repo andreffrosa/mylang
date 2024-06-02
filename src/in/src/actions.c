@@ -10,7 +10,7 @@ void printError(int lineno, const char * s, ...) {
 
   fflush(stdout);
 
-  fprintf(stderr, "(line %d) PARSE ERROR: ", lineno);
+  fprintf(stderr, "[SEMANTIC ERROR] (line %d): ", lineno);
   vfprintf(stderr, s, ap);
   fprintf(stderr, "\n");
 }

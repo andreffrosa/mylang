@@ -5,65 +5,77 @@
 #include "parser.h"
 #include "lexer.h"
 
-typedef struct InContext_ {
+typedef struct InContext {
     yyscan_t scanner;
     YY_BUFFER_STATE input_buffer;
-} InContext_;
+} InContext;
 
-#define $(in_ctx) (((struct InContext_*) in_ctx))
+#define newInContext() (malloc(sizeof(struct InContext)))
 
-#define newInContext() (malloc(sizeof(struct InContext_)))
-
-InContext inInitWithFile(FILE* file) {
-    InContext_* ctx = newInContext();
+InContext* inInitWithFile(FILE* file) {
+    assert(file != NULL);
+    InContext* ctx = newInContext();
     yylex_init(&ctx->scanner);
     ctx->input_buffer = NULL;
     yyset_in(file, ctx->scanner);
-    //yyset_lineno(1, ctx->scanner);
     return ctx;
 }
 
-InContext inInitWithString(const char* string) {
-    InContext_* ctx = newInContext();
+InContext* inInitWithString(const char* string) {
+    assert(string != NULL);
+    InContext* ctx = newInContext();
     yylex_init(&ctx->scanner);
     ctx->input_buffer = yy_scan_string(string, ctx->scanner);
-    //yyset_lineno(1, ctx->scanner);
+    yyset_lineno(1, ctx->scanner);
     return ctx;
 }
 
-InContext inInitWithStdin() {
-    InContext_* ctx = newInContext();
+InContext* inInitWithStdin() {
+    InContext* ctx = newInContext();
     yylex_init(&ctx->scanner);
     ctx->input_buffer = NULL;
     return ctx;
 }
 
-void inDelete(InContext* in_ctx) {
-    if(in_ctx != NULL && *in_ctx != NULL) {
-        InContext_* in_ctx_ = $(*in_ctx);
-        yy_delete_buffer(in_ctx_->input_buffer, in_ctx_->scanner);
-        yylex_destroy(in_ctx_->scanner);
-        free(in_ctx_);
-        *in_ctx = NULL;
+void inDelete(InContext** ctx) {
+    assert(ctx != NULL);
+    if(*ctx != NULL) {
+        yy_delete_buffer((*ctx)->input_buffer, (*ctx)->scanner);
+        yylex_destroy((*ctx)->scanner);
+        free(*ctx);
+        *ctx = NULL;
     }
 }
 
-bool inParse(InContext in_ctx, ParseContext parse_ctx) {
-    if(parse_ctx.ast == NULL) {
-        return false;
-    }
-    if(parse_ctx.st != NULL && *(parse_ctx.st) == NULL) {
-        *(parse_ctx.st) = newSymbolTableDefault();
-    }
-    parse_ctx.nested_comment_level = 0;
-    return !yyparse($(in_ctx)->scanner, parse_ctx);
+ParseResult inParse(const InContext* ctx) {
+    return inParseWithSt(ctx, newSymbolTableDefault());
 }
 
-int inLex(InContext in_ctx, void* yylval_param) {
+ParseResult inParseWithSt(const InContext* ctx, SymbolTable* st) {
+    assert(st != NULL);
+
+    ASTNode* ast = NULL;
+    
+    ParseContext parse_ctx = {
+        .ast = &ast,
+        .st = st,
+        .nested_comment_level = 0
+    };
+    
+    bool status = !yyparse(ctx->scanner, parse_ctx);
+
+    return (ParseResult){
+        .status = status,
+        .ast = ast,
+        .st = st
+    };
+}
+
+int inLex(const InContext* ctx, void* yylval_param) {
     unsigned int nested_comment_level = 0;
-    return yylex((YYSTYPE*)yylval_param, $(in_ctx)->scanner, &nested_comment_level);
+    return yylex((YYSTYPE*)yylval_param, ctx->scanner, &nested_comment_level);
 }
 
-unsigned int inGetLineNumber(InContext in_ctx) {
-    return yyget_lineno($(in_ctx)->scanner);
+unsigned int inGetLineNumber(const InContext* ctx) {
+    return yyget_lineno(ctx->scanner);
 }

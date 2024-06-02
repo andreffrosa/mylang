@@ -5,7 +5,7 @@
 
 #define TRY(x) if( (x) == NULL ) { YYABORT; }
 
-#define ST() *(ctx.st)
+#define ST() (ctx.st)
 #define LINE() yyget_lineno(scanner)
 
 ASTNode* declaration(const char* type_str, const char* id, SymbolTable* st, int lineno);

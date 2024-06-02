@@ -17,12 +17,12 @@
 #define COMPILED_MSG "Compiled file %s\n"
 
 void compile(const char* out_file_path_no_ext, size_t len, const char* file_name, const ASTNode* ast, const SymbolTable* st, const char* ext, bool (*compile_to)(const ASTNode* ast, const SymbolTable* st, const char* fname, const IOStream* stream));
-bool intrepert(InContext ctx);
+bool intrepert(InContext* ctx);
 static inline void compileFile(const char* file_path);
 
 int main(int argc, char *argv[]) {
     if (argc == 1) {
-        InContext ctx = inInitWithStdin();
+        InContext* ctx = inInitWithStdin();
         while( !(intrepert(ctx)) );
         inDelete(&ctx);
     } else {
@@ -33,36 +33,34 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-bool intrepert(InContext ctx) {
+bool intrepert(InContext* ctx) {
     printf("> ");
 
-    ASTNode* ast = NULL;
-    SymbolTable* st = NULL;
-    bool status = inParse(ctx, (ParseContext){&ast, &st, 0});
+    ParseResult res = inParse(ctx);
 
-    if (!status) {
+    if (!res.status) {
         fprintf(stderr, PARSE_AST_ERR_MSG, "stdin");
-        deleteASTNode(&ast);
-        deleteSymbolTable(&st);
+        deleteASTNode(&res.ast);
+        deleteSymbolTable(&res.st);
         return false;
     }
 
-    if(ast == NULL) {
+    if(res.ast == NULL) {
         printf("\n");
         return true; // Exit shell
     }
 
-    printf("Parsed stdin: %d AST nodes.\n", ast->size);
+    printf("Parsed stdin: %d AST nodes.\n", res.ast->size);
 
-    Frame* frame = executeAST(ast, st);
+    Frame* frame = executeAST(res.ast, res.st);
 
     IOStream* stream = openIOStreamFromStdout();
-    printSymbolTable(st, frame, stream);
+    printSymbolTable(res.st, frame, stream);
     IOStreamClose(&stream);
 
     deleteFrame(&frame);
-    deleteASTNode(&ast);
-    deleteSymbolTable(&st);
+    deleteASTNode(&res.ast);
+    deleteSymbolTable(&res.st);
 
     return feof(stdin) != 0;
 }
@@ -89,28 +87,25 @@ static inline void compileFile(const char* file_path) {
         return;
     }
 
-    InContext ctx = inInitWithFile(in_file);
-
-    ASTNode *ast = NULL;
-    SymbolTable* st = NULL;
-    bool status = inParse(ctx, (ParseContext){&ast, &st, 0});
+    InContext* ctx = inInitWithFile(in_file);
+    ParseResult res = inParse(ctx);
 
     inDelete(&ctx);
     fclose(in_file);
 
-    if (!status) {
+    if (!res.status) {
         fprintf(stderr, PARSE_AST_ERR_MSG, file_path);
-        deleteASTNode(&ast);
-        deleteSymbolTable(&st);
+        deleteASTNode(&res.ast);
+        deleteSymbolTable(&res.st);
         return;
     }
 
-    if(ast == NULL) {
+    if(res.ast == NULL) {
         printf("Nothing to compile!\n");
         return;
     }
 
-    printf("Parsed file %s: %d AST nodes.\n", file_path, ast->size);
+    printf("Parsed file %s: %d AST nodes.\n", file_path, res.ast->size);
 
     size_t len = strlen(file_path);
     char out_file_path_no_ext[len + 1];
@@ -118,11 +113,11 @@ static inline void compileFile(const char* file_path) {
     const char* file_name = NULL;
     getOutputInfo(file_path, len, out_file_path_no_ext, &len_no_ext, &file_name);
 
-    compile(out_file_path_no_ext, len_no_ext, file_name, ast, st, ".c", &outCompileToC);
-    compile(out_file_path_no_ext, len_no_ext, file_name, ast, st, ".java", &outCompileToJava);
+    compile(out_file_path_no_ext, len_no_ext, file_name, res.ast, res.st, ".c", &outCompileToC);
+    compile(out_file_path_no_ext, len_no_ext, file_name, res.ast, res.st, ".java", &outCompileToJava);
 
-    deleteASTNode(&ast);
-    deleteSymbolTable(&st);
+    deleteASTNode(&res.ast);
+    deleteSymbolTable(&res.st);
 }
 
 void compile(const char* out_file_path_no_ext, size_t len, const char* file_name, const ASTNode* ast, const SymbolTable* st, const char* ext, bool (*compile_to)(const ASTNode* ast, const SymbolTable* st, const char* fname, const IOStream* stream)) {

@@ -9,7 +9,7 @@ void setUp (void) {}
 void tearDown (void) {}
 
 #define TOKENIZE(str) {\
-    InContext ctx = inInitWithString(str);\
+    InContext* ctx = inInitWithString(str);\
     YYSTYPE yylval_param;\
     int tok;\
 
