@@ -361,6 +361,8 @@ ASTNodeInfo ASTNodeTable[] = {
     [AST_WHILE]          = {"AST_WHILE",          BINARY_OP,  true,  &ifTypeHandler, NULL},
     [AST_DO_WHILE]       = {"AST_DO_WHILE",       BINARY_OP,  true,  &ifTypeHandler, NULL},
     [AST_FOR]            = {"AST_FOR",            UNARY_OP,   true,  &genericStatementTypeHandler, NULL},
+    [AST_BREAK]          = {"AST_BREAK",          ZEROARY_OP, true,  NULL, NULL},
+    [AST_CONTINUE]       = {"AST_CONTINUE",       ZEROARY_OP, true,  NULL, NULL},
 };
 
 ASTOpType getNodeOpType(ASTNodeType node_type) {
@@ -653,6 +655,18 @@ ASTResult newASTFor(const ASTNode* init, const ASTNode* cond, const ASTNode* upd
     const ASTNode* loop = res.result_value;
 
     return newASTUnaryOP(AST_FOR, newASTStatementList(init, loop));
+}
+
+ASTNode* newASTBreak() {
+    ASTNode* node = newASTNode(AST_BREAK, 1);
+    node->value_type = AST_TYPE_VOID;
+    return node;
+}
+
+ASTNode* newASTContinue() {
+    ASTNode* node = newASTNode(AST_CONTINUE, 1);
+    node->value_type = AST_TYPE_VOID;
+    return node;
 }
 
 void deleteASTNode(ASTNode** node) {

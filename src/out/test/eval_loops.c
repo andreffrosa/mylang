@@ -98,6 +98,92 @@ void evalForLoop() {
     TEST_ASSERT_EQUAL_INT(ITERATION_COUNT - 1, getFrameValue(frame, n_index));
 }
 
+void evalBreakWhileLoop() {
+    ASTNode* cond = newASTCmpLT(n_node, newASTInt(ITERATION_COUNT)).result_value;
+    ASTNode* body = newASTCmpEQ(copyAST(n_node), newASTInt(ITERATION_COUNT / 2)).result_value;
+    body = newASTIf(body, newASTBreak()).result_value;
+    body = newASTStatementList(body, newASTInc(copyAST(n_node), false).result_value);
+    ast = newASTWhile(cond, newASTScope(body)).result_value;
+
+    execAST();
+
+    TEST_ASSERT_EQUAL_INT(ITERATION_COUNT / 2, getFrameValue(frame, n_index));
+}
+
+void evalContinueWhileLoop() {
+    ASTNode* init = newASTIDDeclaration(AST_TYPE_INT, "i", newASTInt(0), false, st).result_value;
+    ASTNode* i_node = newASTIDReference("i", st).result_value;
+    ASTNode* cond = newASTCmpLT(newASTInc(copyAST(i_node), false).result_value, newASTInt(ITERATION_COUNT)).result_value;
+    ASTNode* body = newASTCmpGTE(copyAST(i_node), newASTInt(ITERATION_COUNT / 2)).result_value;
+    body = newASTIf(body, newASTContinue()).result_value;
+    body = newASTStatementList(body, newASTAssignment(n_node, i_node).result_value);
+    ast = newASTStatementList(init, newASTWhile(cond, newASTScope(body)).result_value);
+
+    execAST();
+
+    TEST_ASSERT_EQUAL_INT(ITERATION_COUNT / 2 - 1, getFrameValue(frame, n_index));
+}
+
+void evalBreakDoWhileLoop() {
+    ASTNode* cond = newASTCmpLT(n_node, newASTInt(ITERATION_COUNT)).result_value;
+    ASTNode* x = newASTCmpEQ(copyAST(n_node), newASTInt(ITERATION_COUNT / 2)).result_value;
+    x = newASTIf(x, newASTBreak()).result_value;
+    x = newASTStatementList(x, newASTInc(copyAST(n_node), false).result_value);
+    ASTNode* body = newASTScope(x);
+    ast = newASTDoWhile(body, cond).result_value;
+
+    execAST();
+
+    TEST_ASSERT_EQUAL_INT(ITERATION_COUNT / 2, getFrameValue(frame, n_index));
+}
+
+void evalContinueDoWhileLoop() {
+    ASTNode* init = newASTIDDeclaration(AST_TYPE_INT, "i", newASTInt(0), false, st).result_value;
+    ASTNode* i_node = newASTIDReference("i", st).result_value;
+    ASTNode* cond = newASTCmpLT(newASTInc(copyAST(i_node), false).result_value, newASTInt(ITERATION_COUNT)).result_value;
+    ASTNode* x = newASTCmpGTE(copyAST(i_node), newASTInt(ITERATION_COUNT / 2)).result_value;
+    x = newASTIf(x, newASTContinue()).result_value;
+    x = newASTStatementList(x, newASTAssignment(n_node, i_node).result_value);
+    ASTNode* body = newASTScope(x);
+    ast = newASTStatementList(init, newASTDoWhile(body, cond).result_value);
+
+    execAST();
+
+    TEST_ASSERT_EQUAL_INT(ITERATION_COUNT / 2 - 1, getFrameValue(frame, n_index));
+}
+
+void evalBreakForLoop() {
+    ASTNode* init = newASTIDDeclaration(AST_TYPE_INT, "i", newASTInt(0), false, st).result_value;
+    ASTNode* i_node = newASTIDReference("i", st).result_value;
+    ASTNode* cond = newASTCmpLT(i_node, newASTInt(ITERATION_COUNT)).result_value;
+    ASTNode* update = newASTInc(copyAST(i_node), false).result_value;
+    ASTNode* x = newASTCmpEQ(copyAST(i_node), newASTInt(ITERATION_COUNT / 2)).result_value;
+    x = newASTIf(x, newASTBreak()).result_value;
+    x = newASTStatementList(x, newASTAssignment(n_node, copyAST(i_node)).result_value);
+    ASTNode* body = newASTScope(x);
+    ast = newASTFor(init, cond, update, body).result_value;
+
+    execAST();
+
+    TEST_ASSERT_EQUAL_INT(ITERATION_COUNT / 2 - 1, getFrameValue(frame, n_index));
+}
+
+void evalContinueForLoop() {
+    ASTNode* init = newASTIDDeclaration(AST_TYPE_INT, "i", newASTInt(0), false, st).result_value;
+    ASTNode* i_node = newASTIDReference("i", st).result_value;
+    ASTNode* cond = newASTCmpLT(i_node, newASTInt(ITERATION_COUNT)).result_value;
+    ASTNode* update = newASTInc(copyAST(i_node), false).result_value;
+    ASTNode* x = newASTCmpGTE(copyAST(i_node), newASTInt(ITERATION_COUNT / 2)).result_value;
+    x = newASTIf(x, newASTContinue()).result_value;
+    x = newASTStatementList(x, newASTAssignment(n_node, copyAST(i_node)).result_value);
+    ASTNode* body = newASTScope(x);
+    ast = newASTFor(init, cond, update, body).result_value;
+
+    execAST();
+
+    TEST_ASSERT_EQUAL_INT(ITERATION_COUNT / 2 - 1, getFrameValue(frame, n_index));
+}
+
 int main() {
     UNITY_BEGIN();
     RUN_TEST(evalWhileLoopWithFalseConditionExecutesZeroTimes);
@@ -105,5 +191,11 @@ int main() {
     RUN_TEST(evalDoWhileLoopWithFalseConditionExecutesOneTime);
     RUN_TEST(evalForLoopWithFalseConditionExecutesZeroTimes);
     RUN_TEST(evalForLoop);
+    RUN_TEST(evalBreakDoWhileLoop);
+    RUN_TEST(evalContinueDoWhileLoop);
+    RUN_TEST(evalBreakWhileLoop);
+    RUN_TEST(evalContinueWhileLoop);
+    RUN_TEST(evalBreakForLoop);
+    RUN_TEST(evalContinueForLoop);
     return UNITY_END();
 }

@@ -97,6 +97,8 @@ whitespace      [ \t\r]
 "do"                    { return DO; }
 "for"                   { return FOR; }
 "loop"                  { return LOOP; }
+"break"                 { return BREAK; }
+"continue"              { return CONTINUE; }
 
 %{/**** NUMBERS ****/%}
 {digit}+                { yylval_param->ival = atoi(yytext); return INT_LITERAL; }

@@ -13,7 +13,12 @@
 
 Frame* executeAST(const ASTNode* ast, const SymbolTable* st);
 
-void executeASTStatements(const ASTNode* ast, const SymbolTable* st, Frame* frame);
+typedef struct EvalStatus {
+    bool status;
+    ASTNodeType node_type;
+} EvalStatus;
+
+EvalStatus executeASTStatements(const ASTNode* ast, const SymbolTable* st, Frame* frame);
 
 int evalASTExpression(const ASTNode* node, const SymbolTable* st, Frame* frame);
 

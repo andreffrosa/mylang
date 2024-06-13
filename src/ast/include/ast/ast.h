@@ -58,6 +58,8 @@ typedef enum ASTNodeType {
     AST_WHILE,
     AST_DO_WHILE,
     AST_FOR,
+    AST_BREAK,
+    AST_CONTINUE,
     AST_NODE_TYPES_COUNT  // Count of AST node types
 } ASTNodeType;
 
@@ -187,5 +189,7 @@ ASTResult newASTCompoundAssignment(ASTNodeType node_type, const ASTNode* lval, A
 #define newASTWhile(cond, s) newASTBinaryOP(AST_WHILE, cond, s)
 #define newASTDoWhile(s, cond) newASTBinaryOP(AST_DO_WHILE, s, cond)
 ASTResult newASTFor(const ASTNode* init, const ASTNode* cond, const ASTNode* update, const ASTNode* body);
+ASTNode* newASTBreak();
+ASTNode* newASTContinue();
 
 #endif

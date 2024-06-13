@@ -80,7 +80,7 @@
 %left '+' '-'
 %left '*' '/' '%'
 
-%token IF THEN ELSE WHILE DO LOOP FOR
+%token IF THEN ELSE WHILE DO LOOP FOR BREAK CONTINUE
 
 %precedence UMINUS UPLUS SET_POSITIVE SET_NEGATIVE '~' '!'
 
@@ -161,6 +161,8 @@ loop
                                        { leaveScope(ctx->st);
                                          TRY($$, newASTFor($4, $6, $8, $10));
                                        }
+   | BREAK ';'                         { $$ = newASTBreak(); }
+   | CONTINUE ';'                      { $$ = newASTContinue(); }
    ;
 
 exp

@@ -84,7 +84,9 @@ bool evalCmpExpression(const ASTNode* ast, const SymbolTable* st, Frame* frame, 
     return compare(ast->node_type, l, r);
 }
 
-void executeASTStatements(const ASTNode* ast, const SymbolTable* st, Frame* frame) {
+
+
+EvalStatus executeASTStatements(const ASTNode* ast, const SymbolTable* st, Frame* frame) {
     assert(ast != NULL && st != NULL);
 
     switch (ast->node_type) {
@@ -102,8 +104,14 @@ void executeASTStatements(const ASTNode* ast, const SymbolTable* st, Frame* fram
             setFrameValue(frame, index, value);
             break;
         } case AST_STATEMENT_SEQ: {
-            executeASTStatements(ast->left, st, frame);
-            executeASTStatements(ast->right, st, frame);
+            EvalStatus s = executeASTStatements(ast->left, st, frame);
+            if (s.status) {
+                return s;
+            }
+            s = executeASTStatements(ast->right, st, frame);
+            if (s.status) {
+                return s;
+            }
             break;
         } case AST_PRINT: {
             const int value = evalASTExpression(ast->child, st, frame);
@@ -120,39 +128,102 @@ void executeASTStatements(const ASTNode* ast, const SymbolTable* st, Frame* fram
             IOStreamClose(&s);
             break;
         } case AST_SCOPE: {
-            executeASTStatements(ast->child, st, frame);
+            EvalStatus s = executeASTStatements(ast->child, st, frame);
+            if (s.status) {
+                return s;
+            }
             break;
         } case AST_IF: {
             if(evalASTExpression(ast->left, st, frame)) {
-                executeASTStatements(ast->right, st, frame);
+                EvalStatus s = executeASTStatements(ast->right, st, frame);
+                if (s.status) {
+                    return s;
+                }
             }
             break;
         } case AST_IF_ELSE: {
             if(evalASTExpression(ast->first, st, frame)) {
-                executeASTStatements(ast->second, st, frame);
+                EvalStatus s = executeASTStatements(ast->second, st, frame);
+                if (s.status) {
+                    return s;
+                }
             } else {
-                executeASTStatements(ast->third, st, frame);
+                EvalStatus s = executeASTStatements(ast->third, st, frame);
+                if (s.status) {
+                    return s;
+                }
             }
             break;
         }
         case AST_NO_OP: break;
         case AST_WHILE: {
             assert(ast->right->node_type == AST_SCOPE);
+            EvalStatus s;
             while (evalASTExpression(ast->left, st, frame)) {
-                executeASTStatements(ast->right, st, frame);
+                s = executeASTStatements(ast->right, st, frame);
+                if (s.status) {
+                    if (s.node_type == AST_BREAK) {
+                        break;
+                    } else if (s.node_type == AST_CONTINUE) {
+                    } else {
+                        assert(false);
+                    }
+                }
             }
             break;
         }
         case AST_DO_WHILE: {
             assert(ast->left->node_type == AST_SCOPE);
+            EvalStatus s;
             do {
-                executeASTStatements(ast->left, st, frame);
+                s = executeASTStatements(ast->left, st, frame);
+                if (s.status) {
+                    if (s.node_type == AST_BREAK) {
+                        break;
+                    } else if (s.node_type == AST_CONTINUE) {
+                    } else {
+                        assert(false);
+                    }
+                }
             } while (evalASTExpression(ast->right, st, frame));
             break;
         }
         case AST_FOR: {
-            executeASTStatements(ast->child, st, frame);
+            //executeASTStatements(ast->child, st, frame);
+            const ASTNode* init = ast->child->left;
+            const ASTNode* cond = ast->child->right->left;
+            const ASTNode* scope = ast->child->right->right;
+            assert(scope->node_type == AST_SCOPE);
+            const ASTNode* update = scope->child->right;
+            const ASTNode* body = scope->child->left;
+
+            EvalStatus s;
+            executeASTStatements(init, st, frame);
+            while(evalASTExpression(cond, st, frame)) {
+                s = executeASTStatements(body, st, frame);
+                if (s.status) {
+                    if (s.node_type == AST_BREAK) {
+                        break;
+                    } else if (s.node_type == AST_CONTINUE) {
+                    } else {
+                        assert(false);
+                    }
+                }
+                executeASTStatements(update, st, frame);
+            }
             break;
+        }
+        case AST_BREAK: {
+            return (EvalStatus) {
+                .status = true,
+                .node_type = AST_BREAK,
+            };
+        }
+        case AST_CONTINUE: {
+            return (EvalStatus) {
+                .status = true,
+                .node_type = AST_CONTINUE,
+            };
         }
         default: {
             if(isExp(ast)) {
@@ -162,6 +233,11 @@ void executeASTStatements(const ASTNode* ast, const SymbolTable* st, Frame* fram
             }
         }
     }
+
+    return (EvalStatus) {
+        .status = false,
+        .node_type = AST_NODE_TYPES_COUNT
+    };
 }
 
 int evalASTExpression(const ASTNode* node, const SymbolTable* st, Frame* frame) {

@@ -709,6 +709,14 @@ void compileASTStatements(const ASTNode* ast, const SymbolTable* st, const IOStr
             }
             return; // Skip the ;
         }
+        case AST_BREAK: {
+            IOStreamWritef(stream, "break");
+            break;
+        }
+        case AST_CONTINUE: {
+            IOStreamWritef(stream, "continue");
+            break;
+        }
         default: {
             if(isExp(ast)) {
                 compileASTExpression(ast, st, stream, os, true);

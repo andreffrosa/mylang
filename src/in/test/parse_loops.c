@@ -45,6 +45,10 @@ void parseInfiniteForLoop() {
     ASSERT_MATCH_AST("for (;;) {}", ast, false);
 }
 
+// TODO: parse break and continue
+// What to check ??
+// How to ensure that they can only be placed inside a loop?
+
 int main() {
     UNITY_BEGIN();
     RUN_TEST(parseWhileLoop);

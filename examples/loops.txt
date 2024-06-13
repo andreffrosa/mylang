@@ -27,3 +27,9 @@ for (; k < N;) {
 }
 
 for (k = 0; k < N; print(k++)) { }
+
+for (k = 0; k < N; k++) {
+    if (k % 2 == 0) { continue; }
+    if (k == 5)     { break; }
+    printvar(k);
+}
