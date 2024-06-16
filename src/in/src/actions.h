@@ -3,23 +3,24 @@
 
 #include "ast/ast.h"
 
-#define TRY(x) if( (x) == NULL ) { YYABORT; }
-
-#define ST() (ctx.st)
 #define LINE() yyget_lineno(scanner)
 
-ASTNode* declaration(const char* type_str, const char* id, SymbolTable* st, int lineno);
+#define TRY(v, action) if( (v = handleErrors(action, LINE())) == NULL ) { YYABORT; }
 
-ASTNode* declarationAssignment(const char* type_str, const char* id, ASTNode* exp, SymbolTable* st, int lineno);
+//void printError(int lineno, const char * s, ...);
 
-ASTNode* assignment(const char* id, ASTNode* exp, SymbolTable* st, int lineno);
+void syntaxError(int lineno, const char* s, ...);
+void vsyntaxError(int lineno, const char* s, va_list args);
 
-ASTNode* idReference(const char* id, SymbolTable* st, int lineno);
+void semanticError(int lineno, const char* s, ...);
 
-ASTNode* binaryOp(ASTResult res, ASTNode* left, ASTNode* right, int lineno);
 
-ASTNode* unaryOp(ASTResult res, ASTNode* child, int lineno);
+ASTNode* handleErrors(ASTResult res, int lineno);
 
-ASTNode* type(const char* type_str, int lineno);
+ASTResult typeFromStr(const char* type_str);
+
+ASTResult declaration(const char* type_str, const char* id, ASTNode* exp, SymbolTable* st);
+
+ASTResult handlePrintVar(const char* id, SymbolTable* st);
 
 #endif

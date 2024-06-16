@@ -62,7 +62,17 @@ ParseResult inParseWithSt(const InContext* ctx, SymbolTable* st) {
         .nested_comment_level = 0
     };
     
-    bool status = !yyparse(ctx->scanner, parse_ctx);
+    bool status = !yyparse(ctx->scanner, &parse_ctx);
+
+    if(!status) {
+        if(ast != NULL) {
+            deleteASTNode(&ast);
+        }
+
+        if(st != NULL) {
+            deleteSymbolTable(&st);
+        }
+    }
 
     return (ParseResult){
         .status = status,
@@ -72,8 +82,12 @@ ParseResult inParseWithSt(const InContext* ctx, SymbolTable* st) {
 }
 
 int inLex(const InContext* ctx, void* yylval_param) {
-    unsigned int nested_comment_level = 0;
-    return yylex((YYSTYPE*)yylval_param, ctx->scanner, &nested_comment_level);
+    ParseContext parse_ctx = {
+        .ast = NULL,
+        .st = NULL,
+        .nested_comment_level = 0
+    };
+    return yylex((YYSTYPE*)yylval_param, ctx->scanner, &parse_ctx);
 }
 
 unsigned int inGetLineNumber(const InContext* ctx) {

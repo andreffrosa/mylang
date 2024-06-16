@@ -35,7 +35,7 @@ void newASTDeclarationIsStatement() {
 void newASTDeclarationCannotHaveVoidType() {
     ASTResult res = newASTIDDeclaration(AST_TYPE_VOID, ID, st);
     TEST_ASSERT_TRUE(isERR(res));
-    TEST_ASSERT_EQUAL_INT(AST_RES_ERR_INVALID_CHILD_TYPE, res.result_type);
+    TEST_ASSERT_EQUAL_INT(AST_RES_ERR_INVALID_TYPE, res.result_type);
 }
 
 void newASTIDReferenceHasDeclaredType() {
@@ -83,7 +83,7 @@ void newASTDeclarationAssignmentCannotHaveVoidType() {
     ASTNode* val_node = newASTNoOp();
     ASTResult res = newASTIDDeclarationAssignment(AST_TYPE_VOID, ID, val_node, st);
     TEST_ASSERT_TRUE(isERR(res));
-    TEST_ASSERT_EQUAL_INT(AST_RES_ERR_INVALID_LEFT_TYPE, res.result_type);
+    TEST_ASSERT_EQUAL_INT(AST_RES_ERR_INVALID_TYPE, res.result_type);
     deleteASTNode(&val_node);
 }
 
@@ -163,34 +163,24 @@ void validateNewASTType() {
 }
 
 void typeofHasTypeType() {
-    ASTResult res = newASTTypeOf(newASTInt(1));
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* ast = res.result_value;
+    ASTNode* ast = newASTTypeOf(newASTInt(1));
     TEST_ASSERT_EQUAL_INT(AST_TYPE_TYPE, ast->value_type);
     deleteASTNode(&ast);
 
-    res = newASTTypeOf(newASTBool(true));
-    TEST_ASSERT_TRUE(isOK(res));
-    ast = res.result_value;
+    ast = newASTTypeOf(newASTBool(true));
     TEST_ASSERT_EQUAL_INT(AST_TYPE_TYPE, ast->value_type);
     deleteASTNode(&ast);
 
-    res = newASTTypeOf(newASTType(AST_TYPE_VOID));
-    TEST_ASSERT_TRUE(isOK(res));
-    ast = res.result_value;
+    ast = newASTTypeOf(newASTType(AST_TYPE_VOID));
     TEST_ASSERT_EQUAL_INT(AST_TYPE_TYPE, ast->value_type);
     deleteASTNode(&ast);
 
-    res = newASTTypeOf(newASTAdd(newASTInt(1), newASTInt(1)).result_value);
-    TEST_ASSERT_TRUE(isOK(res));
-    ast = res.result_value;
+    ast = newASTTypeOf(newASTAdd(newASTInt(1), newASTInt(1)).result_value);
     TEST_ASSERT_EQUAL_INT(AST_TYPE_TYPE, ast->value_type);
     deleteASTNode(&ast);
 
     insertVar(st, AST_TYPE_INT, "n");
-    res = newASTTypeOf(newASTAssignment("n", newASTInt(1), st).result_value);
-    TEST_ASSERT_TRUE(isOK(res));
-    ast = res.result_value;
+    ast = newASTTypeOf(newASTAssignment("n", newASTInt(1), st).result_value);
     TEST_ASSERT_EQUAL_INT(AST_TYPE_TYPE, ast->value_type);
     deleteASTNode(&ast);
 }

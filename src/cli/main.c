@@ -1,5 +1,6 @@
 #include <stdbool.h>
 #include <string.h>
+#include <assert.h>
 
 #include "in/in.h"
 #include "out/out.h"
@@ -40,12 +41,13 @@ bool intrepert(InContext* ctx) {
 
     if (!res.status) {
         fprintf(stderr, PARSE_AST_ERR_MSG, "stdin");
-        deleteASTNode(&res.ast);
-        deleteSymbolTable(&res.st);
-        return false;
+        assert(res.ast == NULL);
+        assert(res.st == NULL);
+        return true; // Exit shell
     }
 
     if(res.ast == NULL) {
+        assert(res.st == NULL);
         printf("\n");
         return true; // Exit shell
     }

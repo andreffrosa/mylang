@@ -34,9 +34,7 @@ const char* compileExp(const ASTNode* ast, const OutSerializer* os) {
 }
 
 void compileTypeOfIntInC() {
-    ASTResult res = newASTTypeOf(newASTInt(1));
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* ast = res.result_value;
+    ASTNode* ast = newASTTypeOf(newASTInt(1));
 
     ASSERT_COMPILE_EQUALS(ast, &cSerializer, "(1, _TYPE_INT)");
 
@@ -44,9 +42,7 @@ void compileTypeOfIntInC() {
 }
 
 void compileTypeOfIntInJava() {
-    ASTResult res = newASTTypeOf(newASTInt(1));
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* ast = res.result_value;
+    ASTNode* ast = newASTTypeOf(newASTInt(1));
 
     ASSERT_COMPILE_EQUALS(ast, &javaSerializer, "(1 > 0 ? _Type.INT : _Type.INT)");
 
@@ -54,9 +50,7 @@ void compileTypeOfIntInJava() {
 }
 
 void compileTypeOfBoolInC() {
-    ASTResult res = newASTTypeOf(newASTBool(true));
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* ast = res.result_value;
+    ASTNode* ast = newASTTypeOf(newASTBool(true));
 
     ASSERT_COMPILE_EQUALS(ast, &cSerializer, "(true, _TYPE_BOOL)");
 
@@ -64,9 +58,7 @@ void compileTypeOfBoolInC() {
 }
 
 void compileTypeOfBoolInJava() {
-    ASTResult res = newASTTypeOf(newASTBool(true));
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* ast = res.result_value;
+    ASTNode* ast = newASTTypeOf(newASTBool(true));
 
     ASSERT_COMPILE_EQUALS(ast, &javaSerializer, "(true ? _Type.BOOL : _Type.BOOL)");
 
@@ -74,9 +66,7 @@ void compileTypeOfBoolInJava() {
 }
 
 void compileTypeOfIntExpressionInC() {
-    ASTResult res = newASTTypeOf(newASTAdd(newASTInt(1), newASTInt(1)).result_value);
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* ast = res.result_value;
+    ASTNode* ast = newASTTypeOf(newASTAdd(newASTInt(1), newASTInt(1)).result_value);
 
     ASSERT_COMPILE_EQUALS(ast, &cSerializer, "(1 + 1, _TYPE_INT)");
 
@@ -84,9 +74,7 @@ void compileTypeOfIntExpressionInC() {
 }
 
 void compileTypeOfIntExpressionInJava() {
-    ASTResult res = newASTTypeOf(newASTAdd(newASTInt(1), newASTInt(1)).result_value);
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* ast = res.result_value;
+    ASTNode* ast = newASTTypeOf(newASTAdd(newASTInt(1), newASTInt(1)).result_value);
 
     ASSERT_COMPILE_EQUALS(ast, &javaSerializer, "(1 + 1 > 0 ? _Type.INT : _Type.INT)");
 
@@ -94,9 +82,7 @@ void compileTypeOfIntExpressionInJava() {
 }
 
 void compileTypeOfBoolExpressionInC() {
-    ASTResult res = newASTTypeOf(newASTLogicalAnd(newASTBool(true), newASTBool(true)).result_value);
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* ast = res.result_value;
+    ASTNode* ast = newASTTypeOf(newASTLogicalAnd(newASTBool(true), newASTBool(true)).result_value);
 
     ASSERT_COMPILE_EQUALS(ast, &cSerializer, "(true && true, _TYPE_BOOL)");
 
@@ -104,9 +90,7 @@ void compileTypeOfBoolExpressionInC() {
 }
 
 void compileTypeOfBoolExpressionInJava() {
-    ASTResult res = newASTTypeOf(newASTLogicalAnd(newASTBool(true), newASTBool(true)).result_value);
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* ast = res.result_value;
+    ASTNode* ast = newASTTypeOf(newASTLogicalAnd(newASTBool(true), newASTBool(true)).result_value);
 
     ASSERT_COMPILE_EQUALS(ast, &javaSerializer, "(true && true ? _Type.BOOL : _Type.BOOL)");
 
@@ -114,9 +98,7 @@ void compileTypeOfBoolExpressionInJava() {
 }
 
 void compileTypeofTypeInC() {
-    ASTResult res = newASTTypeOf(newASTType(AST_TYPE_INT));
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* ast = res.result_value;
+    ASTNode* ast = newASTTypeOf(newASTType(AST_TYPE_INT));
 
     ASSERT_COMPILE_EQUALS(ast, &cSerializer, "(_TYPE_INT, _TYPE_TYPE)");
 
@@ -124,9 +106,7 @@ void compileTypeofTypeInC() {
 }
 
 void compileTypeofTypeInJava() {
-    ASTResult res = newASTTypeOf(newASTType(AST_TYPE_INT));
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* ast = res.result_value;
+    ASTNode* ast = newASTTypeOf(newASTType(AST_TYPE_INT));
 
     ASSERT_COMPILE_EQUALS(ast, &javaSerializer, "(_Type.INT == _Type.VOID ? _Type.TYPE : _Type.TYPE)");
 
@@ -138,9 +118,7 @@ void compileTypeofIDInC() {
     setVarInitialized(var);
     ASTResult res = newASTIDReference("z", st);
     TEST_ASSERT_TRUE(isOK(res));
-    res = newASTTypeOf(res.result_value);
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* ast = res.result_value;
+    ASTNode* ast = newASTTypeOf(res.result_value);
 
     ASSERT_COMPILE_EQUALS(ast, &cSerializer, "(z, _TYPE_BOOL)");
 
@@ -152,9 +130,7 @@ void compileTypeofIDInJava() {
     setVarInitialized(var);
     ASTResult res = newASTIDReference("z", st);
     TEST_ASSERT_TRUE(isOK(res));
-    res = newASTTypeOf(res.result_value);
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* ast = res.result_value;
+    ASTNode* ast = newASTTypeOf(res.result_value);
 
     ASSERT_COMPILE_EQUALS(ast, &javaSerializer, "(z ? _Type.BOOL : _Type.BOOL)");
 
@@ -165,9 +141,7 @@ void compileTypeofValueofRestrainedExpInC() {
     insertVar(st, AST_TYPE_BOOL, "z");
     ASTResult res = newASTAssignment("z", newASTBool(true), st);
     TEST_ASSERT_TRUE(isOK(res));
-    res = newASTTypeOf(res.result_value);
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* ast = res.result_value;
+    ASTNode* ast = newASTTypeOf(res.result_value);
 
     ASSERT_COMPILE_EQUALS(ast, &cSerializer, "((z = true), _TYPE_BOOL)");
 
@@ -178,9 +152,7 @@ void compileTypeofValueofRestrainedExpInJava() {
     insertVar(st, AST_TYPE_BOOL, "z");
     ASTResult res = newASTAssignment("z", newASTBool(true), st);
     TEST_ASSERT_TRUE(isOK(res));
-    res = newASTTypeOf(res.result_value);
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* ast = res.result_value;
+    ASTNode* ast = newASTTypeOf(res.result_value);
 
     ASSERT_COMPILE_EQUALS(ast, &javaSerializer, "((z = true) ? _Type.BOOL : _Type.BOOL)");
 

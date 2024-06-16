@@ -11,6 +11,7 @@ typedef union TypeHandler {
 } TypeHandler;
 
 typedef struct ASTNodeInfo {
+    const char* str;
     ASTOpType op_type;
     bool is_stmt;
     TypeHandler type_handler;
@@ -114,41 +115,45 @@ ASTResult typeTypeHandler() {
 
 // Lookup Table
 ASTNodeInfo ASTNodeTable[] = {
-    [AST_INT] = {ZEROARY_OP, false, {NULL}},
-    [AST_BOOL] = {ZEROARY_OP, false, {NULL}},
-    [AST_ADD] = {BINARY_OP, false, .type_handler.binary = &binaryExpressionTypeHandler},
-    [AST_SUB] = {BINARY_OP, false, .type_handler.binary = &binaryExpressionTypeHandler},
-    [AST_MUL] = {BINARY_OP, false, .type_handler.binary = &binaryExpressionTypeHandler},
-    [AST_DIV] = {BINARY_OP, false, .type_handler.binary = &binaryExpressionTypeHandler},
-    [AST_MOD] = {BINARY_OP, false, .type_handler.binary = &binaryExpressionTypeHandler},
-    [AST_USUB] = {UNARY_OP, false, .type_handler.unary = &unaryExpressionTypeHandler},
-    [AST_UADD] = {UNARY_OP, false, .type_handler.unary = &unaryExpressionTypeHandler},
-    [AST_BITWISE_OR] = {BINARY_OP, false, .type_handler.binary = &binaryBitwiseExpressionTypeHandler},
-    [AST_BITWISE_AND] = {BINARY_OP, false, .type_handler.binary = &binaryBitwiseExpressionTypeHandler},
-    [AST_BITWISE_XOR] = {BINARY_OP, false, .type_handler.binary = &binaryBitwiseExpressionTypeHandler},
-    [AST_BITWISE_NOT] = {UNARY_OP, false, .type_handler.unary = &unaryBitwiseExpressionTypeHandler},
-    [AST_L_SHIFT] = {BINARY_OP, false, .type_handler.binary = &binaryExpressionTypeHandler},
-    [AST_R_SHIFT] = {BINARY_OP, false, .type_handler.binary = &binaryExpressionTypeHandler},
-    [AST_ABS] = {UNARY_OP, false, .type_handler.unary = &unaryExpressionTypeHandler},
-    [AST_SET_POSITIVE] = {UNARY_OP, false, .type_handler.unary = &unaryExpressionTypeHandler},
-    [AST_SET_NEGATIVE] = {UNARY_OP, false, .type_handler.unary = &unaryExpressionTypeHandler},
-    [AST_LOGICAL_NOT] = {UNARY_OP, false, .type_handler.unary = &unaryBooleanExpressionTypeHandler},
-    [AST_LOGICAL_AND] = {BINARY_OP, false, .type_handler.binary = &binaryBooleanExpressionTypeHandler},
-    [AST_LOGICAL_OR] = {BINARY_OP, false, .type_handler.binary = &binaryBooleanExpressionTypeHandler},
-    [AST_ID] = {ZEROARY_OP, false, {NULL}},
-    [AST_ID_DECLARATION] = {UNARY_OP, true, .type_handler.unary = &genericStatementTypeHandler},
-    [AST_ID_DECL_ASSIGN] = {BINARY_OP, true, .type_handler.binary = &declAssignmentTypeHandler},
-    [AST_ID_ASSIGNMENT] = {BINARY_OP, true, .type_handler.binary = &assignmentTypeHandler},
-    [AST_STATEMENT_SEQ] = {BINARY_OP, true, .type_handler.binary = &genericStatementTypeHandler},
-    [AST_PRINT] = {UNARY_OP, true, .type_handler.unary = &genericStatementTypeHandler},
-    [AST_PRINT_VAR] = {UNARY_OP, true, .type_handler.unary = &genericStatementTypeHandler},
-    [AST_NO_OP] = {ZEROARY_OP, true, {NULL}},
-    [AST_TYPE] = {ZEROARY_OP, false, {NULL}},
-    [AST_TYPE_OF] = {UNARY_OP, false, .type_handler.unary = &typeTypeHandler},
+    [AST_INT]           = {"AST_INT",            ZEROARY_OP,    false, {NULL}},
+    [AST_BOOL]          = {"AST_BOOL",           ZEROARY_OP,    false, {NULL}},
+    [AST_ADD]           = {"AST_ADD",            BINARY_OP,     false, .type_handler.binary = &binaryExpressionTypeHandler},
+    [AST_SUB]           = {"AST_SUB",            BINARY_OP,     false, .type_handler.binary = &binaryExpressionTypeHandler},
+    [AST_MUL]           = {"AST_MUL",            BINARY_OP,     false, .type_handler.binary = &binaryExpressionTypeHandler},
+    [AST_DIV]           = {"AST_DIV",            BINARY_OP,     false, .type_handler.binary = &binaryExpressionTypeHandler},
+    [AST_MOD]           = {"AST_MOD",            BINARY_OP,     false, .type_handler.binary = &binaryExpressionTypeHandler},
+    [AST_USUB]          = {"AST_USUB",           UNARY_OP,      false, .type_handler.unary = &unaryExpressionTypeHandler},
+    [AST_UADD]          = {"AST_UADD",           UNARY_OP,      false, .type_handler.unary = &unaryExpressionTypeHandler},
+    [AST_BITWISE_OR]    = {"AST_BITWISE_OR",     BINARY_OP,     false, .type_handler.binary = &binaryBitwiseExpressionTypeHandler},
+    [AST_BITWISE_AND]   = {"AST_BITWISE_AND",    BINARY_OP,     false, .type_handler.binary = &binaryBitwiseExpressionTypeHandler},
+    [AST_BITWISE_XOR]   = {"AST_BITWISE_XOR",    BINARY_OP,     false, .type_handler.binary = &binaryBitwiseExpressionTypeHandler},
+    [AST_BITWISE_NOT]   = {"AST_BITWISE_NOT",    UNARY_OP,      false, .type_handler.unary = &unaryBitwiseExpressionTypeHandler},
+    [AST_L_SHIFT]       = {"AST_L_SHIFT",        BINARY_OP,     false, .type_handler.binary = &binaryExpressionTypeHandler},
+    [AST_R_SHIFT]       = {"AST_R_SHIFT",        BINARY_OP,     false, .type_handler.binary = &binaryExpressionTypeHandler},
+    [AST_ABS]           = {"AST_ABS",            UNARY_OP,      false, .type_handler.unary = &unaryExpressionTypeHandler},
+    [AST_SET_POSITIVE]  = {"AST_SET_POSITIVE",   UNARY_OP,      false, .type_handler.unary = &unaryExpressionTypeHandler},
+    [AST_SET_NEGATIVE]  = {"AST_SET_NEGATIVE",   UNARY_OP,      false, .type_handler.unary = &unaryExpressionTypeHandler},
+    [AST_LOGICAL_NOT]   = {"AST_LOGICAL_NOT",    UNARY_OP,      false, .type_handler.unary = &unaryBooleanExpressionTypeHandler},
+    [AST_LOGICAL_AND]   = {"AST_LOGICAL_AND",    BINARY_OP,     false, .type_handler.binary = &binaryBooleanExpressionTypeHandler},
+    [AST_LOGICAL_OR]    = {"AST_LOGICAL_OR",     BINARY_OP,     false, .type_handler.binary = &binaryBooleanExpressionTypeHandler},
+    [AST_ID]            = {"AST_ID",             ZEROARY_OP,    false, {NULL}},
+    [AST_ID_DECLARATION]= {"AST_ID_DECLARATION", UNARY_OP,      true,  .type_handler.unary = &genericStatementTypeHandler},
+    [AST_ID_DECL_ASSIGN]= {"AST_ID_DECL_ASSIGN", BINARY_OP,     true,  .type_handler.binary = &declAssignmentTypeHandler},
+    [AST_ID_ASSIGNMENT] = {"AST_ID_ASSIGNMENT",  BINARY_OP,     true,  .type_handler.binary = &assignmentTypeHandler},
+    [AST_STATEMENT_SEQ] = {"AST_STATEMENT_SEQ",  BINARY_OP,     true,  .type_handler.binary = &genericStatementTypeHandler},
+    [AST_PRINT]         = {"AST_PRINT",          UNARY_OP,      true,  .type_handler.unary = &genericStatementTypeHandler},
+    [AST_PRINT_VAR]     = {"AST_PRINT_VAR",      UNARY_OP,      true,  .type_handler.unary = &genericStatementTypeHandler},
+    [AST_NO_OP]         = {"AST_NO_OP",          ZEROARY_OP,    true,  {NULL}},
+    [AST_TYPE]          = {"AST_TYPE",           ZEROARY_OP,    false, {NULL}},
+    [AST_TYPE_OF]       = {"AST_TYPE_OF",        UNARY_OP,      false, .type_handler.unary = &typeTypeHandler},
 };
 
 ASTOpType getNodeOpType(ASTNodeType node_type) {
     return node_type >= AST_NODE_TYPES_COUNT ? UNKNOWN_OP : ASTNodeTable[node_type].op_type;
+}
+
+const char* nodeTypeToStr(ASTNodeType node_type) {
+    return node_type >= AST_NODE_TYPES_COUNT ? "Unknow" : ASTNodeTable[node_type].str;
 }
 
 static inline ASTNode* newASTNode(const ASTNodeType node_type, const ASTType value_type, const unsigned int size) {
@@ -182,13 +187,16 @@ ASTResult newASTBinaryOP(const ASTNodeType node_type, const ASTNode* left, const
 
     ASTResult res = ASTNodeTable[node_type].type_handler.binary(left->value_type, right->value_type);
     if(isERR(res)) {
-        return res;
+        ASTNode* node = newASTNode(node_type, AST_TYPE_COUNT, left->size + right->size + 1);
+        node->left = left;
+        node->right = right;
+        return ERR_VAL(res.result_type, node);
     }
     ASTType value_type = (ASTType) res.result_value;
 
     ASTNode* node = newASTNode(node_type, value_type, left->size + right->size + 1);
-    node->left = (ASTNode*) left;
-    node->right = (ASTNode*) right;
+    node->left = left;
+    node->right = right;
     return OK(node);
 }
 
@@ -197,20 +205,23 @@ ASTResult newASTUnaryOP(const ASTNodeType node_type, const ASTNode* child) {
 
     ASTResult res = ASTNodeTable[node_type].type_handler.unary(child->value_type);
     if(isERR(res)) {
-        return res;
+        ASTNode* node = newASTNode(node_type, AST_TYPE_COUNT, child->size + 1);
+        node->child = child;
+        return ERR_VAL(res.result_type, node);
     }
     ASTType value_type = (ASTType) res.result_value;
 
     ASTNode* node = newASTNode(node_type, value_type, child->size + 1);
-    node->child = (ASTNode*) child;
+    node->child = child;
     return OK(node);
 }
 
-ASTNode* newASTID(const Symbol* id) {
+ASTNode* newASTID(Symbol* id) {
     assert(id != NULL);
 
     ASTNode* node = newASTNode(AST_ID, getVarType(id), 1);
-    node->id = (Symbol*) id;
+    node->value_type = getVarType(id);
+    node->id = id;
     return node;
 }
 
@@ -218,7 +229,7 @@ ASTResult newASTIDDefinition(const ASTType type, const char* id, SymbolTable* st
     assert(id != NULL && st != NULL);
 
     if(!checkIDWasNotDeclared(id, st)) {
-        return ERR(AST_RES_ERR_ID_ALREADY_DEFINED);
+        return ERR_VAL(AST_RES_ERR_ID_ALREADY_DEFINED, id);
     }
     Symbol* var = insertVar(st, type, id);
     return OK(newASTID(var));
@@ -229,11 +240,11 @@ ASTResult newASTIDReference(const char* id, SymbolTable* st) {
 
     Symbol* var = lookupVar(st, id);
     if(var == NULL) {
-        return ERR(AST_RES_ERR_ID_NOT_DEFINED);
+        return ERR_VAL(AST_RES_ERR_ID_NOT_DEFINED, id);
     }
 
     if(!isVarInitialized(var)) {
-        return ERR(AST_RES_ERR_ID_NOT_INIT);
+        return ERR_VAL(AST_RES_ERR_ID_NOT_INIT, id);
     }
 
     return OK(newASTID(var));
@@ -244,7 +255,7 @@ ASTResult newASTIDLeftReference(const char* id, SymbolTable* st) {
 
     Symbol* var = lookupVar(st, id);
     if(var == NULL) {
-        return ERR(AST_RES_ERR_ID_NOT_DEFINED);
+        return ERR_VAL(AST_RES_ERR_ID_NOT_DEFINED, id);
     }
     return OK(newASTID(var));
 }
@@ -253,7 +264,7 @@ ASTResult newASTIDDeclaration(const ASTType type, const char* id, SymbolTable* s
     assert(id != NULL && st != NULL);
 
     if(type == AST_TYPE_VOID) {
-        return ERR(AST_RES_ERR_INVALID_CHILD_TYPE);
+        return ERR_VAL(AST_RES_ERR_INVALID_TYPE, ASTTypeToStr(type));
     }
 
     ASTResult res = newASTIDDefinition(type, id, st);
@@ -262,18 +273,14 @@ ASTResult newASTIDDeclaration(const ASTType type, const char* id, SymbolTable* s
     }
     ASTNode* ast = res.result_value;
 
-    res = newASTUnaryOP(AST_ID_DECLARATION, ast);
-    if(isERR(res)) {
-        deleteASTNode(&ast);
-    }
-    return res;
+    return newASTUnaryOP(AST_ID_DECLARATION, ast);
 }
 
 ASTResult newASTIDDeclarationAssignment(const ASTType type, const char* id, const ASTNode* value, SymbolTable* st) {
     assert(id != NULL && value != NULL && st != NULL);
 
     if(type == AST_TYPE_VOID) {
-        return ERR(AST_RES_ERR_INVALID_LEFT_TYPE);
+        return ERR_VAL(AST_RES_ERR_INVALID_TYPE, ASTTypeToStr(type));
     }
 
     ASTResult res = newASTIDDefinition(type, id, st);
@@ -285,11 +292,7 @@ ASTResult newASTIDDeclarationAssignment(const ASTType type, const char* id, cons
     Symbol* var = ast->id;
     setVarInitialized(var);
 
-    res = newASTBinaryOP(AST_ID_DECL_ASSIGN, res.result_value, value);
-    if(isERR(res)) {
-        deleteASTNode(&ast);
-    }
-    return res;
+    return newASTBinaryOP(AST_ID_DECL_ASSIGN, res.result_value, value);
 }
 
 ASTResult newASTAssignment(const char* id, const ASTNode* value, SymbolTable* st) {
@@ -303,15 +306,14 @@ ASTResult newASTAssignment(const char* id, const ASTNode* value, SymbolTable* st
     ASTNode* ast = res.result_value;
     Symbol* var = ast->id;
     setVarInitialized(var);
-    res = newASTBinaryOP(AST_ID_ASSIGNMENT, res.result_value, value);
-    if(isERR(res)) {
-        deleteASTNode(&ast);
-    }
-    return res;
+
+    return newASTBinaryOP(AST_ID_ASSIGNMENT, res.result_value, value);
 }
 
 ASTNode* newASTNoOp() {
-    return newASTNode(AST_NO_OP, AST_TYPE_VOID, 1);
+    ASTNode* node = newASTNode(AST_NO_OP, AST_TYPE_VOID, 1);
+    node->value_type = AST_TYPE_VOID;
+    return node;
 }
 
 void deleteASTNode(ASTNode** node) {
@@ -320,11 +322,11 @@ void deleteASTNode(ASTNode** node) {
         case ZEROARY_OP:
             break;
         case BINARY_OP:
-            deleteASTNode(&((*node)->left));
-            deleteASTNode(&((*node)->right));
+            deleteASTNode((ASTNode**)&((*node)->left));
+            deleteASTNode((ASTNode**)&((*node)->right));
             break;
         case UNARY_OP:
-            deleteASTNode(&((*node)->child));
+            deleteASTNode((ASTNode**)&((*node)->child));
             break;
         default:
             assert(false);

@@ -71,9 +71,9 @@ whitespace      [ \t\r]
 {whitespace}            { /* ignore whitespace */ }
 \\\n                    { /* ignore line continuation */ }
 <*>\n                   { /* ignore newline */ }
-<*>"/*"                 { if (*nested_comment_level++ == 0) BEGIN(NESTED_COMMENT); }
-<NESTED_COMMENT>"*"+"/" { if (--*nested_comment_level == 0) BEGIN(INITIAL); }
+<*>"/*"                 { if (ctx->nested_comment_level++ == 0) BEGIN(NESTED_COMMENT); }
+<NESTED_COMMENT>"*"+"/" { if (--ctx->nested_comment_level == 0) BEGIN(INITIAL); }
 <NESTED_COMMENT>.       { /* ignore everything */ }
-.                       { yyerror(yyscanner, (ParseContext){NULL, NULL, 0}, "Mystery character %c\n", *yytext); }
+.                       { yyerror(yyscanner, ctx, "Mystery character: %c\n", *yytext); return YYerror; }
 <<EOF>>                 { return END; }
 %%

@@ -9,9 +9,7 @@ void setUp (void) {}
 void tearDown (void) {}
 
 void typeOfIntIsInt() {
-    ASTResult res = newASTTypeOf(newASTInt(1));
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* ast = res.result_value;
+    ASTNode* ast = newASTTypeOf(newASTInt(1));
 
     int result = evalASTExpression(ast, NULL, NULL);
     TEST_ASSERT_EQUAL_INT(AST_TYPE_INT, result);
@@ -20,9 +18,7 @@ void typeOfIntIsInt() {
 }
 
 void typeOfIntExpressionIsInt() {
-    ASTResult res = newASTTypeOf(newASTAdd(newASTInt(1), newASTInt(1)).result_value);
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* ast = res.result_value;
+    ASTNode* ast = newASTTypeOf(newASTAdd(newASTInt(1), newASTInt(1)).result_value);
 
     int result = evalASTExpression(ast, NULL, NULL);
     TEST_ASSERT_EQUAL_INT(AST_TYPE_INT, result);
@@ -31,9 +27,7 @@ void typeOfIntExpressionIsInt() {
 }
 
 void typeOfBoolExpressionIsBool() {
-    ASTResult res = newASTTypeOf(newASTLogicalAnd(newASTBool(true), newASTBool(true)).result_value);
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* ast = res.result_value;
+    ASTNode* ast = newASTTypeOf(newASTLogicalAnd(newASTBool(true), newASTBool(true)).result_value);
 
     int result = evalASTExpression(ast, NULL, NULL);
     TEST_ASSERT_EQUAL_INT(AST_TYPE_BOOL, result);
@@ -42,9 +36,7 @@ void typeOfBoolExpressionIsBool() {
 }
 
 void typeOfBoolIsBool() {
-    ASTResult res = newASTTypeOf(newASTBool(true));
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* ast = res.result_value;
+    ASTNode* ast = newASTTypeOf(newASTBool(true));
 
     int result = evalASTExpression(ast, NULL, NULL);
     TEST_ASSERT_EQUAL_INT(AST_TYPE_BOOL, result);
@@ -53,9 +45,7 @@ void typeOfBoolIsBool() {
 }
 
 void typeofTypeIsType() {
-    ASTResult res = newASTTypeOf(newASTType(AST_TYPE_INT));
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* ast = res.result_value;
+    ASTNode* ast = newASTTypeOf(newASTType(AST_TYPE_INT));
 
     int result = evalASTExpression(ast, NULL, NULL);
     TEST_ASSERT_EQUAL_INT(AST_TYPE_TYPE, result);
@@ -69,9 +59,7 @@ void typeofIDIsVarType() {
     setVarInitialized(var);
     ASTResult res = newASTIDReference("n", st);
     TEST_ASSERT_TRUE(isOK(res));
-    res = newASTTypeOf(res.result_value);
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* ast = res.result_value;
+    ASTNode* ast = newASTTypeOf(res.result_value);
 
     Frame* frame = newFrame(1);
     setFrameValue(frame, 0, false);
@@ -89,9 +77,7 @@ void typeofValueofRestrainedExpIsCorrectType() {
     insertVar(st, AST_TYPE_BOOL, "n");
     ASTResult res = newASTAssignment("n", newASTBool(true), st);
     TEST_ASSERT_TRUE(isOK(res));
-    res = newASTTypeOf(res.result_value);
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* ast = res.result_value;
+    ASTNode* ast = newASTTypeOf(res.result_value);
 
     Frame* frame = newFrame(1);
     setFrameValue(frame, 0, false);

@@ -11,7 +11,7 @@
 const char* ASTTypeMap[] = {
     [AST_TYPE_VOID] = "void",
     [AST_TYPE_TYPE] = "type",
-    [AST_TYPE_INT] = "int",
+    [AST_TYPE_INT]  = "int",
     [AST_TYPE_BOOL] = "bool",
 };
 
@@ -24,7 +24,7 @@ ASTResult parseASTType(const char* type_str) {
         }
     }
 
-    return ERR(AST_RES_ERR_INVALID_CHILD_TYPE);
+    return ERR_VAL(AST_RES_ERR_UNKNOWN_TYPE, type_str);
 }
 
 const char* ASTTypeValueToStr(const ASTType type, const int value, char* buffer) {

@@ -3,8 +3,8 @@
 
 %define api.pure full
 //%locations
-%parse-param {yyscan_t scanner} {ParseContext ctx}
-%lex-param {yyscan_t scanner} { (unsigned int*) _NESTED_COMMENT_LEVEL_ }
+%parse-param {yyscan_t scanner} {ParseContext* ctx}
+%lex-param {yyscan_t scanner} {ParseContext* ctx}
 
 %code requires {
    typedef void * yyscan_t;
@@ -19,11 +19,10 @@
 }
 
 %code provides {
-   void yyerror(yyscan_t scanner, ParseContext ctx, const char * s, ...);
+   void yyerror(yyscan_t scanner, ParseContext* ctx, const char * s, ...);
 
-   // Redefine yylex() definition to include nested_comment_level param
    #define YY_DECL \
-      int yylex(YYSTYPE* yylval_param, yyscan_t yyscanner, unsigned int* nested_comment_level)
+      int yylex(YYSTYPE* yylval_param, yyscan_t yyscanner, ParseContext* ctx)
    YY_DECL;
 }
 
@@ -36,7 +35,6 @@
 
 #include "actions.h"
 
-#define _NESTED_COMMENT_LEVEL_ &ctx.nested_comment_level
 %}
 
 %union {
@@ -73,13 +71,16 @@
 %token END 0
 
 %type <ast_node> exp stmt stmt_seq pure_exp restr_exp
+%type <sval> type
 
 %start program
+
+%destructor { if($$ != NULL) { deleteASTNode(&($$)); } } <ast_node>
 
 %%
 
 program
-   : stmt_seq END           { *(ctx.ast) = $1; YYACCEPT; }
+   : stmt_seq END           { *(ctx->ast) = $1; YYACCEPT; }
    | program error END      { yyerrok; }
    ;
 
@@ -91,63 +92,70 @@ stmt_seq
 
 stmt
    : exp                    { $$ = $1; }
-   | TYPE ID                { TRY( $$ = declaration($1, $2, ST(), LINE()) ); }
-   | TYPE ID '=' exp        { TRY( $$ = declarationAssignment($1, $2, $4, ST(), LINE()) ); }
-   | VAR ID '=' exp         { TRY( $$ = declarationAssignment("var", $2, $4, ST(), LINE()) ); }
-   | PRINT '(' exp ')'      { $$ = newASTPrint($3); }
-   | PRINT_VAR '(' ID ')'   { ASTNode* id; TRY( id = idReference($3, ST(), LINE()) ); $$ = newASTPrintVar(id); }
    | restr_exp              { $$ = $1; }
+   | type ID                { TRY($$, declaration($1,    $2, NULL, ctx->st)); }
+   | type ID '=' exp        { TRY($$, declaration($1,    $2,   $4, ctx->st)); }
+   | VAR ID '=' exp         { TRY($$, declaration("var", $2,   $4, ctx->st)); }
+//   | VAR ID                 { syntaxError(LINE(), "Type inference can only be used in declarations with assignment"); deleteSymbolTable(&ctx->st); $$ = NULL; YYABORT; }
+   | PRINT '(' exp ')'      { $$ = newASTPrint($3); }
+   | PRINT_VAR '(' ID ')'   { TRY($$, handlePrintVar($3, ctx->st)); }
+   ;
+
+type
+   : TYPE                   { strncpy($$, $1, MAX_ID_SIZE); }
+   | ID                     { strncpy($$, $1, MAX_ID_SIZE); }
    ;
 
 exp
    : pure_exp
-   | VALUE_OF '(' restr_exp ')' { $$ = $3; }
-   | TYPE_OF '(' exp ')'        { $$ = newASTTypeOf($3).result_value; } // Built-in function
-   | TYPE_OF '(' restr_exp ')'  { $$ = newASTTypeOf($3).result_value; } // Built-in function
+   | VALUE_OF'('restr_exp')' { $$ = $3; }
+   | TYPE_OF'('restr_exp')'  { $$ = newASTTypeOf($3); } // Built-in function
    ;
 
 restr_exp
-   : ID '=' exp             { TRY( $$ = assignment($1, $3, ST(), LINE()) ); }
+   : ID '=' exp             { TRY($$, newASTAssignment($1, $3, ctx->st)); }
    ;
 
 pure_exp
    : INT_LITERAL            { $$ = newASTInt($1); }
    | BOOL_LITERAL           { $$ = newASTBool($1); }
-   | TYPE                   { TRY( $$ = type($1, LINE()) ); }
-   | ID                     { TRY( $$ = idReference($1, ST(), LINE()) ); }
-   | exp '+' exp            { TRY( $$ = binaryOp(newASTAdd($1, $3), $1, $3, LINE()) ); }
-   | exp '-' exp            { TRY( $$ = binaryOp(newASTSub($1, $3), $1, $3, LINE()) ); }
-   | exp '*' exp            { TRY( $$ = binaryOp(newASTMul($1, $3), $1, $3, LINE()) ); }
-   | exp '/' exp            { TRY( $$ = binaryOp(newASTDiv($1, $3), $1, $3, LINE()) ); }
-   | exp '%' exp            { TRY( $$ = binaryOp(newASTMod($1, $3), $1, $3, LINE()) ); }
+   | TYPE                   { TRY($$, typeFromStr($1)) }
+   | ID                     { TRY($$, newASTIDReference($1, ctx->st)); }
+   | exp '+' exp            { TRY($$, newASTAdd($1, $3)); }
+   | exp '-' exp            { TRY($$, newASTSub($1, $3)); }
+   | exp '*' exp            { TRY($$, newASTMul($1, $3)); }
+   | exp '/' exp            { TRY($$, newASTDiv($1, $3)); }
+   | exp '%' exp            { TRY($$, newASTMod($1, $3)); }
    | '(' exp ')'            { $$ = $2; }
-   | '-' exp %prec UMINUS   { TRY( $$ = unaryOp(newASTUSub($2), $2, LINE()) ); }
-   | '+' exp %prec UPLUS    { TRY( $$ = unaryOp(newASTUAdd($2), $2, LINE()) ); }
-   | exp '&' exp            { TRY( $$ = binaryOp(newASTBitwiseAnd($1, $3), $1, $3, LINE()) ); }
-   | exp '|' exp            { TRY( $$ = binaryOp(newASTBitwiseOr($1, $3), $1, $3, LINE()) ); }
-   | exp '^' exp            { TRY( $$ = binaryOp(newASTBitwiseXor($1, $3), $1, $3, LINE()) ); }
-   | '~' exp                { TRY( $$ = unaryOp(newASTBitwiseNot($2), $2, LINE()) ); }
-   | exp L_SHIFT exp        { TRY( $$ = binaryOp(newASTLeftShift($1, $3), $1, $3, LINE()) ); }
-   | exp R_SHIFT exp        { TRY( $$ = binaryOp(newASTRightShift($1, $3), $1, $3, LINE()) ); }
-   | OPEN_ABS exp CLOSE_ABS { TRY( $$ = unaryOp(newASTAbs($2), $2, LINE()) ); }
-   | SET_POSITIVE exp       { TRY( $$ = unaryOp(newASTSetPositive($2), $2, LINE()) ); }
-   | SET_NEGATIVE exp       { TRY( $$ = unaryOp(newASTSetNegative($2), $2, LINE()) ); }
-   | '!' exp                { TRY( $$ = unaryOp(newASTLogicalNot($2), $2, LINE()) ); }
-   | exp LOGICAL_AND exp    { TRY( $$ = binaryOp(newASTLogicalAnd($1, $3), $1, $3, LINE()) ); }
-   | exp LOGICAL_OR exp     { TRY( $$ = binaryOp(newASTLogicalOr($1, $3), $1, $3, LINE()) ); }
+   | '-' exp %prec UMINUS   { TRY($$, newASTUSub($2)); }
+   | '+' exp %prec UPLUS    { TRY($$, newASTUAdd($2)); }
+   | exp '&' exp            { TRY($$, newASTBitwiseAnd($1, $3)); }
+   | exp '|' exp            { TRY($$, newASTBitwiseOr($1, $3)); }
+   | exp '^' exp            { TRY($$, newASTBitwiseXor($1, $3)); }
+   | '~' exp                { TRY($$, newASTBitwiseNot($2)); }
+   | exp L_SHIFT exp        { TRY($$, newASTLeftShift($1, $3)); }
+   | exp R_SHIFT exp        { TRY($$, newASTRightShift($1, $3)); }
+   | OPEN_ABS exp CLOSE_ABS { TRY($$, newASTAbs($2)); }
+   | SET_POSITIVE exp       { TRY($$, newASTSetPositive($2)); }
+   | SET_NEGATIVE exp       { TRY($$, newASTSetNegative($2)); }
+   | '!' exp                { TRY($$, newASTLogicalNot($2)); }
+   | exp LOGICAL_AND exp    { TRY($$, newASTLogicalAnd($1, $3)); }
+   | exp LOGICAL_OR exp     { TRY($$, newASTLogicalOr($1, $3)); }
+   | TYPE_OF'('exp')'       { $$ = newASTTypeOf($3); } // Built-in function
    ;
 
 %%
 
-void yyerror(yyscan_t scanner, ParseContext ctx, const char * s, ...) {
-  va_list ap;
-  va_start(ap, s);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+void yyerror(yyscan_t scanner, ParseContext* ctx, const char * s, ...) {
+  va_list args;
+  va_start(args, s);
 
   fflush(stdout);
 
-  fprintf(stderr, "[SYNTAX ERROR] (line %d): ", yyget_lineno(scanner));
-  vfprintf(stderr, s, ap);
-  fprintf(stderr, "\n");
+  vsyntaxError(yyget_lineno(scanner), s, args);
 
-  va_end(ap);
+  va_end(args);
 }
+#pragma GCC diagnostic pop

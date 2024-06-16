@@ -59,11 +59,11 @@ typedef struct ASTNode {
         ASTType t;  // AST_TYPE
         Symbol* id; // AST_ID
         struct {    // BINARY_OP
-            struct ASTNode* left;
-            struct ASTNode* right;
+            const struct ASTNode* left;
+            const struct ASTNode* right;
         };
         struct {    // UNARY_OP
-            struct ASTNode* child;
+            const struct ASTNode* child;
         };
     };
 } ASTNode;
@@ -89,6 +89,8 @@ bool isStmt(const ASTNode* ast);
 bool isExp(const ASTNode* ast);
 
 ASTOpType getNodeOpType(const ASTNodeType node_type);
+
+const char* nodeTypeToStr(ASTNodeType node_type);
 
 #define newASTAdd(l, r) newASTBinaryOP(AST_ADD, l, r)
 #define newASTSub(l, r) newASTBinaryOP(AST_SUB, l, r)
@@ -123,6 +125,6 @@ ASTResult newASTAssignment(const char* id, const ASTNode* value, SymbolTable* st
 
 #define newASTPrint(e) newASTUnaryOP(AST_PRINT, e).result_value
 #define newASTPrintVar(e) newASTUnaryOP(AST_PRINT_VAR, e).result_value
-#define newASTTypeOf(e) newASTUnaryOP(AST_TYPE_OF, e)
+#define newASTTypeOf(e) newASTUnaryOP(AST_TYPE_OF, e).result_value
 
 #endif
