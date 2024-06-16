@@ -30,6 +30,14 @@ test: debug
 valgrind: debug
 	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --verbose --log-file=valgrind-out.txt $(ARGS)
 
+diff:
+	rm -f diff.html
+	git diff HEAD | ./dependencies/diff2html.sh > diff.html
+
+diff-cmt:
+	rm -f diff.html
+	git diff HEAD^ HEAD | ./dependencies/diff2html.sh > diff.html
+
 clean:
 	rm -rf build*
 
