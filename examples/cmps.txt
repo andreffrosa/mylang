@@ -1,0 +1,35 @@
+// Ints
+print(0 == 0);
+print(0 != 1);
+print(0 < 1);
+print(0 <= 1);
+print(0 > 1);
+print(0 >= 1);
+
+// Bools
+print(true == true);
+print(true != false);
+
+// Types
+print(int == typeof(1));
+print(int != bool);
+
+// Chained Comparisons
+print(0 <= 1 <= 2);
+print(0 <= 1 == 1 < 2);
+print((true == (true != false)) == (true == true));
+print(int == typeof(1));
+
+// Single Eval
+var n = 0;
+print(0 <= n + 1 < 2);
+printvar(n);
+print(0 <= valueof(n = n + 1) < 2);
+printvar(n); // == 1
+
+// Short Circuit
+n = 0;
+var m = 0;
+print(2 <= valueof(n = n + 1) == valueof(m = m + 3) < 3);
+printvar(n); // == 1
+printvar(m); // == 0

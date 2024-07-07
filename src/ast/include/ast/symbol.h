@@ -43,4 +43,8 @@ unsigned int getVarIndex(const SymbolTable* st, const Symbol* var);
 
 Symbol* getVarFromIndex(const SymbolTable* st, unsigned int index);
 
+Symbol* newSymbol();
+
+Symbol* initSymbol(Symbol* var, const ASTType type, const char* id, unsigned int index, const bool is_init);
+
 #endif

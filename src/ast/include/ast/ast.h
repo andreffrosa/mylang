@@ -39,6 +39,13 @@ typedef enum ASTNodeType {
     AST_NO_OP,
     AST_TYPE,
     AST_TYPE_OF,
+    AST_PARENTHESES,
+    AST_CMP_EQ,
+    AST_CMP_NEQ,
+    AST_CMP_LT,
+    AST_CMP_LTE,
+    AST_CMP_GT,
+    AST_CMP_GTE,
     AST_NODE_TYPES_COUNT  // Count of AST node types
 } ASTNodeType;
 
@@ -88,6 +95,10 @@ bool isStmt(const ASTNode* ast);
 
 bool isExp(const ASTNode* ast);
 
+bool isRestrainedExp(const ASTNode* ast);
+
+bool isCmpExp(const ASTNode* ast);
+
 ASTOpType getNodeOpType(const ASTNodeType node_type);
 
 const char* nodeTypeToStr(ASTNodeType node_type);
@@ -126,5 +137,14 @@ ASTResult newASTAssignment(const char* id, const ASTNode* value, SymbolTable* st
 #define newASTPrint(e) newASTUnaryOP(AST_PRINT, e).result_value
 #define newASTPrintVar(e) newASTUnaryOP(AST_PRINT_VAR, e).result_value
 #define newASTTypeOf(e) newASTUnaryOP(AST_TYPE_OF, e).result_value
+
+#define newASTParentheses(e) newASTUnaryOP(AST_PARENTHESES, e).result_value
+
+#define newASTCmpEQ(l, r) newASTBinaryOP(AST_CMP_EQ, l, r)
+#define newASTCmpNEQ(l, r) newASTBinaryOP(AST_CMP_NEQ, l, r)
+#define newASTCmpLT(l, r) newASTBinaryOP(AST_CMP_LT, l, r)
+#define newASTCmpLTE(l, r) newASTBinaryOP(AST_CMP_LTE, l, r)
+#define newASTCmpGT(l, r) newASTBinaryOP(AST_CMP_GT, l, r)
+#define newASTCmpGTE(l, r) newASTBinaryOP(AST_CMP_GTE, l, r)
 
 #endif

@@ -97,13 +97,14 @@ static inline void compileFile(const char* file_path) {
 
     if (!res.status) {
         fprintf(stderr, PARSE_AST_ERR_MSG, file_path);
-        deleteASTNode(&res.ast);
-        deleteSymbolTable(&res.st);
+        assert(res.ast == NULL);
+        assert(res.st == NULL);
         return;
     }
 
     if(res.ast == NULL) {
         printf("Nothing to compile!\n");
+        assert(res.st == NULL);
         return;
     }
 

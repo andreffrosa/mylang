@@ -93,6 +93,70 @@ void compileAssignment(const ASTNode* ast, const SymbolTable* st, const OutSeria
     compileASTExpression(ast->right, st, stream, os);
 }
 
+void compileIDDeclaration(Symbol* var, const ASTNode* value, const SymbolTable* st, const IOStream* stream, const OutSerializer* os) {
+    assert(var != NULL &&  st != NULL);
+
+    os->parseType(stream, getVarType(var), false);
+    IOStreamWritef(stream, " %s", getVarId(var));
+
+    if(value != NULL) {
+        IOStreamWritef(stream, " = ");
+        compileASTExpression(value, st, stream, os);
+    }
+}
+
+static inline const char* compare(const ASTNodeType node_type) {
+    switch (node_type) {
+        case AST_CMP_EQ: return "==";
+        case AST_CMP_NEQ: return "!=";
+        case AST_CMP_LT: return "<";
+        case AST_CMP_LTE: return "<=";
+        case AST_CMP_GT: return ">";
+        case AST_CMP_GTE: return ">=";
+        default:
+            assert(false);
+    }
+}
+
+static inline bool needsTempVar(const ASTNodeType node_type) {
+    switch (node_type) {
+        case AST_INT:
+        case AST_BOOL:
+        case AST_TYPE:
+        case AST_ID:
+            return false;
+        default:
+            return true;
+    }
+}
+
+void compileCmpExp(const ASTNode* ast, const SymbolTable* st, const IOStream* stream, const OutSerializer* os, const bool is_chained) {
+    assert(stream != NULL);
+
+    if(isCmpExp(ast->left)) { // left is chained
+        compileCmpExp(ast->left, st, stream, os, true);
+    } else {
+        compileASTExpression(ast->left, st, stream, os);
+    }
+
+    IOStreamWritef(stream, " %s ", compare(ast->node_type));
+
+    if(is_chained) {
+        if(needsTempVar(ast->right->node_type)) {
+            const char* tmp_var_type = ASTTypeToStr(ast->right->value_type);
+            IOStreamWritef(stream, "(_tmp_%s = ", tmp_var_type);
+            compileASTExpression(ast->right, st, stream, os);
+            IOStreamWritef(stream, ") && _tmp_%s", tmp_var_type);
+        } else {
+            compileASTExpression(ast->right, st, stream, os);
+            IOStreamWritef(stream, " && ");
+            compileASTExpression(ast->right, st, stream, os);
+        }
+    } else {
+        compileASTExpression(ast->right, st, stream, os);
+    }
+}
+
 void compileASTExpression(const ASTNode* node, const SymbolTable* st, const IOStream* stream, const OutSerializer* os) {
     assert(node != NULL);
 
@@ -200,20 +264,22 @@ void compileASTExpression(const ASTNode* node, const SymbolTable* st, const IOSt
             os->typeOf(stream, node->child, ptr);
             free(ptr);
             break;
-        } default:
+        } case AST_PARENTHESES:
+            IOStreamWritef(stream, "(");
+            compileASTExpression(node->child, st, stream, os);
+            IOStreamWritef(stream, ")");
+            break;
+        case AST_CMP_EQ:
+        case AST_CMP_NEQ:
+        case AST_CMP_LT:
+        case AST_CMP_LTE:
+        case AST_CMP_GT:
+        case AST_CMP_GTE: {
+            compileCmpExp(node, st, stream, os, false);
+            break;
+        }
+        default:
             assert(false);
-    }
-}
-
-void compileIDDeclaration(Symbol* var, const ASTNode* value, const SymbolTable* st, const IOStream* stream, const OutSerializer* os) {
-    assert(var != NULL &&  st != NULL);
-
-    os->parseType(stream, getVarType(var), false);
-    IOStreamWritef(stream, " %s", getVarId(var));
-
-    if(value != NULL) {
-        IOStreamWritef(stream, " = ");
-        compileASTExpression(value, st, stream, os);
     }
 }
 

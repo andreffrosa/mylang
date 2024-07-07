@@ -102,6 +102,14 @@ ASTNode* handleErrors(ASTResult res, int lineno) {
             deleteASTNode(&ast);
             break;
         }
+        case AST_RES_ERR_NON_TRANSITIVE_CHAINING: {
+            ASTNode* ast = (ASTNode*) res.result_value;
+            assert(ast != NULL);
+            assert(getNodeOpType(ast->node_type) == BINARY_OP);
+            semanticError(lineno, "Non-transitive chaining of operators %s and %s!", nodeTypeToStr(ast->left->node_type), nodeTypeToStr(ast->node_type));
+            deleteASTNode(&ast);
+            break;
+        }
         default: {
             semanticError(lineno, "Unknown error %s!", ASTResultTypeToStr(res.result_type));
             assert(false);

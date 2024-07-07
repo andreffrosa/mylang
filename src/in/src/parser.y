@@ -55,8 +55,10 @@
 //%right '=' // TODO: rethink
 %token '='
 
+// TODO: check priority
 %left L_SHIFT R_SHIFT
 %left '|' '&' '^' LOGICAL_OR LOGICAL_AND
+%left CMP_EQ CMP_NEQ '<' CMP_LTE '>' CMP_GTE
 %left '+' '-'
 %left '*' '/' '%'
 
@@ -126,7 +128,7 @@ pure_exp
    | exp '*' exp            { TRY($$, newASTMul($1, $3)); }
    | exp '/' exp            { TRY($$, newASTDiv($1, $3)); }
    | exp '%' exp            { TRY($$, newASTMod($1, $3)); }
-   | '(' exp ')'            { $$ = $2; }
+   | '(' exp ')'            { $$ = isCmpExp($2) ? newASTParentheses($2) : $2; }
    | '-' exp %prec UMINUS   { TRY($$, newASTUSub($2)); }
    | '+' exp %prec UPLUS    { TRY($$, newASTUAdd($2)); }
    | exp '&' exp            { TRY($$, newASTBitwiseAnd($1, $3)); }
@@ -142,6 +144,12 @@ pure_exp
    | exp LOGICAL_AND exp    { TRY($$, newASTLogicalAnd($1, $3)); }
    | exp LOGICAL_OR exp     { TRY($$, newASTLogicalOr($1, $3)); }
    | TYPE_OF'('exp')'       { $$ = newASTTypeOf($3); } // Built-in function
+   | exp CMP_EQ exp         { TRY($$, newASTCmpEQ($1, $3)); }
+   | exp CMP_NEQ exp        { TRY($$, newASTCmpNEQ($1, $3)); }
+   | exp '<' exp            { TRY($$, newASTCmpLT($1, $3)); }
+   | exp CMP_LTE exp        { TRY($$, newASTCmpLTE($1, $3)); }
+   | exp '>' exp            { TRY($$, newASTCmpGT($1, $3)); }
+   | exp CMP_GTE exp        { TRY($$, newASTCmpGTE($1, $3)); }
    ;
 
 %%

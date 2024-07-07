@@ -36,6 +36,35 @@ int evalAssignment(const ASTNode* ast, const SymbolTable* st, Frame* frame) {
     return value;
 }
 
+static inline bool compare(const ASTNodeType node_type, const int l, const int r) {
+    switch (node_type) {
+        case AST_CMP_EQ: return l == r;
+        case AST_CMP_NEQ: return l != r;
+        case AST_CMP_LT: return l < r;
+        case AST_CMP_LTE: return l <= r;
+        case AST_CMP_GT: return l > r;
+        case AST_CMP_GTE: return l >= r;
+        default:
+            assert(false);
+    }
+}
+
+bool evalCmpExpression(const ASTNode* ast, const SymbolTable* st, Frame* frame, int* carry) {
+    if(isCmpExp(ast->left)) { // is chained
+        if(!evalCmpExpression(ast->left, st, frame, carry)) {
+            return false;
+        }
+        int l = *carry;
+        int r = evalASTExpression(ast->right, st, frame);
+        *carry = r;
+        return compare(ast->node_type, l, r);
+    }
+    int l = evalASTExpression(ast->left, st, frame);
+    int r = evalASTExpression(ast->right, st, frame);
+    *carry = r;
+    return compare(ast->node_type, l, r);
+}
+
 void executeASTStatements(const ASTNode* ast, const SymbolTable* st, Frame* frame) {
     assert(ast != NULL && st != NULL);
 
@@ -155,6 +184,16 @@ int evalASTExpression(const ASTNode* node, const SymbolTable* st, Frame* frame) 
             // TODO: [optimization] check if it needs eval (only needs if has side-effects)
             evalASTExpression(node->child, st, frame);
             return node->child->value_type;
+        } case AST_PARENTHESES: {
+            return evalASTExpression(node->child, st, frame);
+        } case AST_CMP_EQ:
+          case AST_CMP_NEQ:
+          case AST_CMP_LT:
+          case AST_CMP_LTE:
+          case AST_CMP_GT:
+          case AST_CMP_GTE: {
+            int carry = 0;
+            return evalCmpExpression(node, st, frame, &carry);
         } default:
             assert(false);
     }

@@ -73,25 +73,8 @@ static void typeOf(const IOStream* stream, const ASTNode* node, const char* node
 const OutSerializer cSerializer = {
     &parseType,
     &typeOf,
-    &print
+    &print,
 };
-
-static void generateTypeEnum(const IOStream* stream);
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-bool outCompileToC(const ASTNode* ast, const SymbolTable* st, const char* file_name, const IOStream* stream) {
-    assert(ast != NULL && stream != NULL);
-
-    IOStreamWritef(stream, "%s", PRE);
-    generateTypeEnum(stream);
-    IOStreamWritef(stream, "int main(int argc, char** argv) {\n");
-    compileASTStatements(ast, st, stream, &cSerializer, INITIAL_INDENTATION_LEVEL);
-    IOStreamWritef(stream, "%s", POS);
-
-    return true;
-}
-#pragma GCC diagnostic pop
 
 static void generateTypeEnum(const IOStream* stream) {
     assert((sizeof(ASTTypeCoverter)/sizeof(ASTTypeCoverter[0])) == AST_TYPE_COUNT);
@@ -106,3 +89,30 @@ static void generateTypeEnum(const IOStream* stream) {
     }
     IOStreamWritef(stream, "};\n\n");
 }
+
+static void generateTempVars(const IOStream* stream) {
+    for(int i = 0; i < AST_TYPE_COUNT; i++) {
+        if(i == AST_TYPE_VOID || i == AST_TYPE_TYPE) {
+            continue;
+        }
+        IOStreamWritef(stream, "static %s _tmp_%s;\n", parseTypeToStr(i, false), ASTTypeToStr(i));
+    }
+    IOStreamWritef(stream, "\n");
+}
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+bool outCompileToC(const ASTNode* ast, const SymbolTable* st, const char* file_name, const IOStream* stream) {
+    assert(ast != NULL && stream != NULL);
+
+    IOStreamWritef(stream, "%s", PRE);
+    generateTypeEnum(stream);
+    generateTempVars(stream);
+    //IOStreamWritef(stream, "#define typeof(e, t) (e, t)\n\n");
+    IOStreamWritef(stream, "int main(int argc, char** argv) {\n");
+    compileASTStatements(ast, st, stream, &cSerializer, INITIAL_INDENTATION_LEVEL);
+    IOStreamWritef(stream, "%s", POS);
+
+    return true;
+}
+#pragma GCC diagnostic pop

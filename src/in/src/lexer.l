@@ -31,7 +31,9 @@ whitespace      [ \t\r]
 "|" |
 "&" |
 "^" |
-"~"                     { return yytext[0]; }
+"~" |
+"<" |
+">"                     { return yytext[0]; }
 
 "(|"                    { return OPEN_ABS; }
 "|)"                    { return CLOSE_ABS; }
@@ -42,6 +44,11 @@ whitespace      [ \t\r]
 
 "&&"                    { return LOGICAL_AND; }
 "||"                    { return LOGICAL_OR; }
+
+"=="                    { return CMP_EQ; }
+"!="                    { return CMP_NEQ; }
+"<="                    { return CMP_LTE; }
+">="                    { return CMP_GTE; }
 
 %{/**** KEYWORDS ****/%}
 "var"                   { return VAR; }

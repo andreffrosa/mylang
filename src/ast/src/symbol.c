@@ -74,9 +74,11 @@ unsigned int getSymbolTableCapacity(const SymbolTable* st) {
     return st->capacity;
 }
 
-#define newSymbol() malloc(sizeof(Symbol))
+Symbol* newSymbol() {
+    return malloc(sizeof(Symbol));
+}
 
-static inline Symbol* initSymbol(Symbol* var, const ASTType type, const char* id, unsigned int index, const bool is_init) {
+Symbol* initSymbol(Symbol* var, const ASTType type, const char* id, unsigned int index, const bool is_init) {
     assert(var != NULL);
     var->type = type;
     strncpy(var->id, id, MAX_ID_SIZE);

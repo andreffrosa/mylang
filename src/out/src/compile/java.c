@@ -88,7 +88,7 @@ static void typeOf(const IOStream* stream, const ASTNode* node, const char* node
 const OutSerializer javaSerializer = {
     &parseType,
     &typeOf,
-    &print
+    &print,
 };
 
 static void printClassName(const IOStream* stream, const char* file_name) {
@@ -119,12 +119,25 @@ static void generateTypeEnum(const IOStream* stream) {
     indent(stream, 2);
     IOStreamWritef(stream, "}\n");
     indent(stream, 1);
-    IOStreamWritef(stream, "}\n");
+    IOStreamWritef(stream, "}\n\n");
+}
+
+static void generateTempVars(const IOStream* stream) {
+    for(int i = 0; i < AST_TYPE_COUNT; i++) {
+        if(i == AST_TYPE_VOID || i == AST_TYPE_TYPE) {
+            continue;
+        }
+        indent(stream, 1);
+        IOStreamWritef(stream, "private static ");
+        parseType(stream, i, false);
+        IOStreamWritef(stream, " _tmp_%s;\n", ASTTypeToStr(i));
+    }
 }
 
 bool outCompileToJava(const ASTNode* ast, const SymbolTable* st, const char* file_name, const IOStream* stream) {
     printClassName(stream, file_name);
     generateTypeEnum(stream);
+    generateTempVars(stream);
     IOStreamWritef(stream, "\n%s", PRE);
     compileASTStatements(ast, st, stream, &javaSerializer, INITIAL_INDENTATION_LEVEL);
     IOStreamWritef(stream, "%s", POS);
