@@ -7,8 +7,10 @@
 #include "ast/ast.h"
 #include "out.h"
 
-static inline int getPrecedence(ASTNodeType node_type) {
-    switch (node_type) {
+static inline int getPrecedence(const ASTNode* node) {
+    assert(node != NULL);
+
+    switch (node->node_type) {
         case AST_INT:
         case AST_BOOL:
         case AST_ID:
@@ -16,7 +18,7 @@ static inline int getPrecedence(ASTNodeType node_type) {
             return 14;
         case AST_INC:
         case AST_DEC:
-        //    return node->is_prefix ? 13 : 14;
+            return node->is_prefix ? 13 : 14;
         case AST_LOGICAL_NOT:
         case AST_BITWISE_NOT:
         case AST_USUB:
@@ -59,133 +61,109 @@ static inline int getPrecedence(ASTNodeType node_type) {
         case AST_COMPD_ASSIGN:
             return 1;
         default:
-            printf("Precedence not defined for %s\n", nodeTypeToStr(node_type));
+            printf("Precedence not defined for %s\n", nodeTypeToStr(node->node_type));
             assert(false);
     }
 }
 
-static inline bool needParentheses(ASTNodeType current_node_type, ASTNodeType child_node_type, bool is_left_child) {
-    if(current_node_type == child_node_type) {
+static inline bool isComutative(const ASTNode* node) {
+    assert(node != NULL);
+
+    switch (node->node_type) {
+        case AST_ADD:
+        case AST_MUL:
+        case AST_LOGICAL_AND:
+        case AST_LOGICAL_OR:
+            return true;
+        default:
+            return false;
+    }
+}
+
+static inline bool isLeftAssociative(const ASTNode* node, const ASTNode* child_node) {
+    assert(node != NULL);
+    assert(child_node != NULL);
+    assert(getPrecedence(node) == getPrecedence(child_node));
+
+    switch (node->node_type) {
+        case AST_TERNARY_COND:
+        case AST_ID_ASSIGNMENT:
+        case AST_COMPD_ASSIGN:
+        case AST_UADD:
+        case AST_USUB:
+        case AST_ABS:
+        case AST_SET_POSITIVE:
+        case AST_SET_NEGATIVE:
+        case AST_BITWISE_NOT:
+        case AST_LOGICAL_NOT:
+            return false;
+        case AST_INC:
+        case AST_DEC:
+            return !node->is_prefix;
+        case AST_PARENTHESES:
+            assert(false);
+        default:
+            return true;
+    }
+}
+
+static inline bool needParentheses(const ASTNode* current_node, const ASTNode* child_node) {
+    assert(current_node != NULL);
+    assert(child_node != NULL);
+
+    // Verify if should force parentheses for clarity
+    bool force_parentheses = current_node->node_type == AST_TERNARY_COND
+                          && child_node->node_type   == AST_TERNARY_COND;
+    if (force_parentheses) { return true; }
+
+    int current_precedence = getPrecedence(current_node);
+    int child_precedence   = getPrecedence(child_node);
+    if (child_precedence < current_precedence) {
+        return true;
+    } else if (child_precedence > current_precedence) {
         return false;
     }
 
-    int current_precedence = getPrecedence(current_node_type);
-    int child_precedence = getPrecedence(child_node_type);
-    if(child_precedence < current_precedence) {
-        return true;
+    if (isComutative(current_node)) {
+        return false;
     }
 
-    bool are_not_commutative = (current_node_type == AST_SUB || current_node_type == AST_DIV || current_node_type == AST_MOD);
-    return child_precedence == current_precedence && !is_left_child && are_not_commutative;
-}
-
-
-static inline void compileBinaryOP(const ASTNode* node, const char* op_symbol, const SymbolTable* st, const OutSerializer* os, const IOStream* stream, bool is_rval) {
-    bool need_parentheses = needParentheses(node->node_type, node->left->node_type, true);
-    if(need_parentheses) {
-        IOStreamWritef(stream, "(");
-    }
-    compileASTExpression(node->left, st, stream, os, is_rval);
-    if(need_parentheses) {
-        IOStreamWritef(stream, ")");
-    }
-
-    IOStreamWritef(stream, op_symbol);
-
-    need_parentheses = needParentheses(node->node_type, node->right->node_type, false);
-    if(need_parentheses) {
-        IOStreamWritef(stream, "(");
-    }
-    compileASTExpression(node->right, st, stream, os, is_rval);
-    if(need_parentheses) {
-        IOStreamWritef(stream, ")");
-    }
-}
-
-void compileTernaryCond(const ASTNode* node, const SymbolTable* st, const OutSerializer* os, const IOStream* stream, bool is_rval) {
-    bool need_parentheses = node->first->node_type == AST_TERNARY_COND;
-    if(need_parentheses) {
-        IOStreamWritef(stream, "(");
-    }
-    compileASTExpression(node->first, st, stream, os, is_rval);
-    if(need_parentheses) {
-        IOStreamWritef(stream, ")");
-    }
-
-    IOStreamWritef(stream, " ? ");
-
-    need_parentheses = node->second->node_type == AST_TERNARY_COND;
-    if(need_parentheses) {
-        IOStreamWritef(stream, "(");
-    }
-    compileASTExpression(node->second, st, stream, os, is_rval);
-    if(need_parentheses) {
-        IOStreamWritef(stream, ")");
-    }
-
-    IOStreamWritef(stream, " : ");
-
-    need_parentheses = node->third->node_type == AST_TERNARY_COND;
-    if(need_parentheses) {
-        IOStreamWritef(stream, "(");
-    }
-    compileASTExpression(node->third, st, stream, os, is_rval);
-    if(need_parentheses) {
-        IOStreamWritef(stream, ")");
-    }
-}
-
-static void writeTmpVar(const ASTType type, const IOStream* stream) {
-    const char* tmp_var_type = ASTTypeToStr(type);
-    IOStreamWritef(stream, "_tmp_%s", tmp_var_type);
-}
-
-static void compileLVal(const ASTNode* lval, const char* op_symbol, const char* rval, const SymbolTable* st, const OutSerializer* os, const IOStream* stream, bool first, bool is_rval) {
-    assert(lval != NULL);
-    assert(rval != NULL);
-
-    if (first && os->condAssignNeedsTmp() && lval->node_type != AST_ID && !is_rval) {
-        writeTmpVar(lval->value_type, stream);
-        IOStreamWritef(stream, " = ");
-    }
-
-    bool need_parentheses = (is_rval || !first) && lval->node_type != AST_PARENTHESES;
-    if (need_parentheses) { IOStreamWritef(stream, "("); }
-
-    switch (lval->node_type) {
-        case AST_ID: {
-            Symbol* var = lval->id;
-            IOStreamWritef(stream, "%s %s %s", getVarId(var), op_symbol, rval);
-        } break;
-        case AST_TERNARY_COND: {
-            // Alternative in C: *(cond ? &a : &b) = rval
-            compileASTExpression(lval->first, st, stream, os, is_rval);
-            IOStreamWritef(stream, " ? ");
-            compileLVal(lval->second, op_symbol, rval, st, os, stream, false, false);
-            IOStreamWritef(stream, " : ");
-            compileLVal(lval->third, op_symbol, rval, st, os, stream, false, false);
-        } break;
-        case AST_PARENTHESES: {
-            compileLVal(lval->child, op_symbol, rval, st, os, stream, false, false);
-        } break;
+    bool is_left_child = false;
+    switch (getNodeOpType(current_node->node_type)) {
+        case UNARY_OP:
+            is_left_child = false;
+            break;
+        case BINARY_OP:
+            is_left_child = (current_node->left == child_node);
+            break;
+        case TERNARY_OP:
+            is_left_child = (current_node->first == child_node || current_node->second == child_node);
+            break;
         default:
             assert(false);
             break;
     }
 
+    bool is_left_assoc = isLeftAssociative(current_node, child_node);
+    return is_left_child ? !is_left_assoc : is_left_assoc;
+}
+
+static inline void compileChildExpression(const ASTNode* node, const ASTNode* child, const SymbolTable* st, const OutSerializer* os, const IOStream* stream) {
+    assert(node != NULL);
+    assert(child != NULL);
+
+    bool need_parentheses = needParentheses(node, child);
+    if (need_parentheses) { IOStreamWritef(stream, "("); }
+
+    compileASTExpression(child, st, stream, os, false);
+
     if (need_parentheses) { IOStreamWritef(stream, ")"); }
 }
 
-void compileAssignment(const ASTNode* lval, const ASTNode* rval, const char* op_symbol, const SymbolTable* st, const OutSerializer* os, const IOStream* stream, bool is_rval) {
-    char* ptr = NULL;
-    size_t size = 0;
-    IOStream* s = openIOStreamFromMemmory(&ptr, &size);
-    compileASTExpression(rval, st, s, os, true);
-    IOStreamClose(&s);
-
-    compileLVal(lval, op_symbol, ptr, st, os, stream, true, is_rval);
-
-    free(ptr);
+static inline void compileBinaryOP(const ASTNode* node, const char* op_symbol, const SymbolTable* st, const OutSerializer* os, const IOStream* stream) {
+    compileChildExpression(node, node->left, st, os, stream);
+    IOStreamWritef(stream, op_symbol);
+    compileChildExpression(node, node->right, st, os, stream);
 }
 
 void printId(const IOStream* stream, const Symbol* var, bool print_redef_level) {
@@ -199,6 +177,164 @@ void printId(const IOStream* stream, const Symbol* var, bool print_redef_level) 
         }
     } else {
         IOStreamWritef(stream, "%s", id);
+    }
+}
+
+static void writeTmpVar(const ASTType type, const IOStream* stream) {
+    const char* tmp_var_type = ASTTypeToStr(type);
+    IOStreamWritef(stream, "_tmp_%s", tmp_var_type);
+}
+
+void compileAssignment(const ASTNode* node, const SymbolTable* st, const OutSerializer* os, const IOStream* stream, bool is_stmt) {
+    assert(node != NULL);
+
+    const ASTNode* lval = node->left;
+    const ASTNode* rval = node->right;
+
+    if (lval->node_type == AST_ID) {
+        IOStreamWritef(stream, "%s = ", getVarId(lval->id));
+        compileASTExpression(rval, st, stream, os, false);
+    } else {
+        assert(lval->node_type == AST_PARENTHESES);
+        assert(lval->child->node_type == AST_TERNARY_COND);
+
+        if (is_stmt) {
+            if (lval->node_type != AST_ID && os->condAssignNeedsTmp()) {
+                writeTmpVar(lval->value_type, stream);
+                IOStreamWritef(stream, " = ");
+            }
+            IOStreamWritef(stream, "(");
+        }
+
+        ASTResult res = newASTAssignment(copyAST(lval->child->second), copyAST(rval));
+        assert(isOK(res));
+        ASTNode* l = res.result_value;
+        res = newASTAssignment(copyAST(lval->child->third), copyAST(rval));
+        assert(isOK(res));
+        ASTNode* r = res.result_value;
+        res = newASTTernaryCond(copyAST(lval->child->first), l, r);
+        assert(isOK(res));
+        ASTNode* new_node = res.result_value;
+        compileASTExpression(new_node, st, stream, os, false);
+        deleteASTNode(&new_node);
+
+        if (is_stmt) {
+            IOStreamWritef(stream, ")");
+        }
+    }
+}
+
+void compileCompoundAssignment(const ASTNode* node, const SymbolTable* st, const OutSerializer* os, const IOStream* stream, bool is_stmt) {
+    assert(node != NULL);
+
+    const ASTNodeType op_type = node->child->right->node_type;
+
+    if (!os->hasCompdAssign(op_type)) {
+        compileAssignment(node->child, st, os, stream, is_stmt);
+        return;
+    }
+
+    const ASTNode* lval = node->child->left;
+    const ASTNode* rval = node->child->right->right;
+
+    char* op_symbol = NULL;
+    switch (op_type) {
+        case AST_ADD:           op_symbol =  "+="; break;
+        case AST_SUB:           op_symbol =  "-="; break;
+        case AST_MUL:           op_symbol =  "*="; break;
+        case AST_DIV:           op_symbol =  "/="; break;
+        case AST_MOD:           op_symbol =  "%="; break;
+        case AST_BITWISE_AND:   op_symbol =  "&="; break;
+        case AST_BITWISE_OR:    op_symbol =  "|="; break;
+        case AST_BITWISE_XOR:   op_symbol =  "^="; break;
+        case AST_L_SHIFT:       op_symbol = "<<="; break;
+        case AST_R_SHIFT:       op_symbol = ">>="; break;
+        case AST_LOGICAL_AND:   op_symbol = "&&="; break;
+        case AST_LOGICAL_OR:    op_symbol = "||="; break;
+        default: assert(false);
+    }
+
+    if (lval->node_type == AST_ID) {
+        IOStreamWritef(stream, "%s %s ", getVarId(lval->id), op_symbol);
+        compileASTExpression(rval, st, stream, os, false);
+    } else {
+        assert(lval->node_type == AST_PARENTHESES);
+        assert(lval->child->node_type == AST_TERNARY_COND);
+
+        if (is_stmt) {
+            if (lval->node_type != AST_ID && os->condAssignNeedsTmp()) {
+                writeTmpVar(lval->value_type, stream);
+                IOStreamWritef(stream, " = ");
+            }
+            IOStreamWritef(stream, "(");
+        }
+
+        ASTResult res = newASTCompoundAssignment(op_type, copyAST(lval->child->second), copyAST(rval));
+        assert(isOK(res));
+        ASTNode* l = res.result_value;
+        res = newASTCompoundAssignment(op_type, copyAST(lval->child->third), copyAST(rval));
+        assert(isOK(res));
+        ASTNode* r = res.result_value;
+        res = newASTTernaryCond(copyAST(lval->child->first), l, r);
+        assert(isOK(res));
+        ASTNode* new_node = res.result_value;
+        compileASTExpression(new_node, st, stream, os, false);
+        deleteASTNode(&new_node);
+
+        if (is_stmt) {
+            IOStreamWritef(stream, ")");
+        }
+    }
+}
+
+void compileUnaryCompoundAssignment(const ASTNode* node, const SymbolTable* st, const OutSerializer* os, const IOStream* stream, bool is_stmt) {
+    assert(node != NULL);
+
+    if (node->child->left->node_type == AST_ID) {
+        if (node->node_type == AST_INC || node->node_type == AST_DEC) {
+            char* op_symbol = node->node_type == AST_INC ? "++" : "--";
+            if (node->is_prefix) {
+                IOStreamWritef(stream, op_symbol);
+                compileASTExpression(node->child->left, st, stream, os, false);
+            } else {
+                compileASTExpression(node->child->left, st, stream, os, false);
+                IOStreamWritef(stream, op_symbol);
+            }
+        } else {
+            assert(node->node_type == AST_LOGICAL_TOGGLE || node->node_type == AST_BITWISE_TOGGLE);
+
+            if (node->is_prefix) {
+                compileASTExpression(node->child, st, stream, os, false);
+            } else {
+                if (os->condAssignNeedsTmp() && is_stmt) {
+                    writeTmpVar(node->child->value_type, stream);
+                    IOStreamWritef(stream, " = ");
+                }
+                char* op_symbol = node->node_type == AST_LOGICAL_TOGGLE ? "!" : (node->child->value_type == AST_TYPE_BOOL ? "!" : "~");
+                IOStreamWritef(stream, "%s(", op_symbol);
+                compileASTExpression(node->child, st, stream, os, false);
+                IOStreamWritef(stream, ")");
+            }
+        }
+    } else {
+        if (node->is_prefix) {
+            compileAssignment(node->child, st, os, stream, is_stmt);
+        } else {
+            ASTNode* new_node = copyAST(node->child);
+            ASTResult res;
+            switch (node->node_type) {
+                case AST_INC:            res = newASTAdd(new_node, newASTInt(-1)); break;
+                case AST_DEC:            res = newASTAdd(new_node, newASTInt(1));  break;
+                case AST_LOGICAL_TOGGLE: res = newASTLogicalNot(new_node); break;
+                case AST_BITWISE_TOGGLE: res = newASTBitwiseNot(new_node); break;
+                default:
+                    assert(false);
+            }
+            assert(isOK(res));
+            new_node = res.result_value;
+            compileASTExpression(new_node, st, stream, os, false);
+            deleteASTNode(&new_node);
+        }
     }
 }
 
@@ -242,13 +378,13 @@ static inline bool needsTempVar(const ASTNodeType node_type) {
     }
 }
 
-void compileCmpExp(const ASTNode* ast, const SymbolTable* st, const IOStream* stream, const OutSerializer* os, const bool is_chained, bool is_rval) {
+void compileCmpExp(const ASTNode* ast, const SymbolTable* st, const IOStream* stream, const OutSerializer* os, const bool is_chained) {
     assert(stream != NULL);
 
     if(isCmpExp(ast->left)) { // left is chained
-        compileCmpExp(ast->left, st, stream, os, true, is_rval);
+        compileCmpExp(ast->left, st, stream, os, true);
     } else {
-        compileASTExpression(ast->left, st, stream, os, is_rval);
+        compileASTExpression(ast->left, st, stream, os, false);
     }
 
     IOStreamWritef(stream, " %s ", compare(ast->node_type));
@@ -258,20 +394,20 @@ void compileCmpExp(const ASTNode* ast, const SymbolTable* st, const IOStream* st
             IOStreamWritef(stream, "(");
             writeTmpVar(ast->right->value_type, stream);
             IOStreamWritef(stream, " = ");
-            compileASTExpression(ast->right, st, stream, os, is_rval);
+            compileASTExpression(ast->right, st, stream, os, false);
             IOStreamWritef(stream, ") && ");
             writeTmpVar(ast->right->value_type, stream);
         } else {
-            compileASTExpression(ast->right, st, stream, os, is_rval);
+            compileASTExpression(ast->right, st, stream, os, false);
             IOStreamWritef(stream, " && ");
-            compileASTExpression(ast->right, st, stream, os, is_rval);
+            compileASTExpression(ast->right, st, stream, os, false);
         }
     } else {
-        compileASTExpression(ast->right, st, stream, os, is_rval);
+        compileASTExpression(ast->right, st, stream, os, false);
     }
 }
 
-void compileASTExpression(const ASTNode* node, const SymbolTable* st, const IOStream* stream, const OutSerializer* os, bool is_rval) {
+void compileASTExpression(const ASTNode* node, const SymbolTable* st, const IOStream* stream, const OutSerializer* os, bool is_stmt) {
     assert(node != NULL);
 
     switch (node->node_type) {
@@ -288,51 +424,51 @@ void compileASTExpression(const ASTNode* node, const SymbolTable* st, const IOSt
             printId(stream, node->id, os->print_redef_level);
             break;
         case AST_ADD:
-            compileBinaryOP(node, " + ", st, os, stream, is_rval);
+            compileBinaryOP(node, " + ", st, os, stream);
             break;
         case AST_SUB:
-            compileBinaryOP(node, " - ", st, os, stream, is_rval);
+            compileBinaryOP(node, " - ", st, os, stream);
             break;
         case AST_MUL:
-            compileBinaryOP(node, "*", st, os, stream, is_rval);
+            compileBinaryOP(node, "*", st, os, stream);
             break;
         case AST_DIV:
-            compileBinaryOP(node, "/", st, os, stream, is_rval);
+            compileBinaryOP(node, "/", st, os, stream);
             break;
         case AST_MOD:
-            compileBinaryOP(node, "%%", st, os, stream, is_rval);
+            compileBinaryOP(node, "%%", st, os, stream);
             break;
         case AST_USUB:
             IOStreamWritef(stream, "-");
-            compileASTExpression(node->child, st, stream, os, is_rval);
+            compileChildExpression(node, node->child, st, os, stream);
             break;
         case AST_UADD:
             IOStreamWritef(stream, "+");
-            compileASTExpression(node->child, st, stream, os, is_rval);
+            compileChildExpression(node, node->child, st, os, stream);
             break;
         case AST_ABS: {
             IOStreamWritef(stream, "abs(");
-            compileASTExpression(node->child, st, stream, os, is_rval);
+            compileASTExpression(node->child, st, stream, os, false);
             IOStreamWritef(stream, ")");
             break;
         } case AST_SET_POSITIVE: {
             IOStreamWritef(stream, "abs(");
-            compileASTExpression(node->child, st, stream, os, is_rval);
+            compileASTExpression(node->child, st, stream, os, false);
             IOStreamWritef(stream, ")");
             break;
         } case AST_SET_NEGATIVE: {
             IOStreamWritef(stream, "-abs(");
-            compileASTExpression(node->child, st, stream, os, is_rval);
+            compileASTExpression(node->child, st, stream, os, false);
             IOStreamWritef(stream, ")");
             break;
         } case AST_BITWISE_AND:
-            compileBinaryOP(node, "&", st, os, stream, is_rval);
+            compileBinaryOP(node, "&", st, os, stream);
             break;
         case AST_BITWISE_OR:
-            compileBinaryOP(node, "|", st, os, stream, is_rval);
+            compileBinaryOP(node, "|", st, os, stream);
             break;
         case AST_BITWISE_XOR:
-            compileBinaryOP(node, "^", st, os, stream, is_rval);
+            compileBinaryOP(node, "^", st, os, stream);
             break;
         case AST_BITWISE_NOT:
             if(node->child->value_type == AST_TYPE_BOOL) {
@@ -340,155 +476,35 @@ void compileASTExpression(const ASTNode* node, const SymbolTable* st, const IOSt
             } else {
                 IOStreamWritef(stream, "~");
             }
-            compileASTExpression(node->child, st, stream, os, is_rval);
+            compileChildExpression(node, node->child, st, os, stream);
             break;
         case AST_L_SHIFT:
-            compileBinaryOP(node, " << ", st, os, stream, is_rval);
+            compileBinaryOP(node, " << ", st, os, stream);
             break;
         case AST_R_SHIFT:
-            compileBinaryOP(node, " >> ", st, os, stream, is_rval);
+            compileBinaryOP(node, " >> ", st, os, stream);
             break;
         case AST_LOGICAL_NOT:
             IOStreamWritef(stream, "!");
-            compileASTExpression(node->child, st, stream, os, is_rval);
+            compileChildExpression(node, node->child, st, os, stream);
             break;
         case AST_LOGICAL_AND:
-            compileBinaryOP(node, " && ", st, os, stream, is_rval);
+            compileBinaryOP(node, " && ", st, os, stream);
             break;
         case AST_LOGICAL_OR:
-            compileBinaryOP(node, " || ", st, os, stream, is_rval);
+            compileBinaryOP(node, " || ", st, os, stream);
             break;
         case AST_ID_ASSIGNMENT: {
-            compileAssignment(node->left, node->right, "=", st, os, stream, is_rval);
-            break;
-        } case AST_INC: {
-            const ASTNode* lval = node->child->left;
-            if (lval->node_type == AST_ID) {
-                if (node->is_prefix) {
-                    IOStreamWritef(stream, "++");
-                    compileASTExpression(lval, st, stream, os, is_rval);
-                } else {
-                    compileASTExpression(lval, st, stream, os, is_rval);
-                    IOStreamWritef(stream, "++");
-                }
-            } else {
-                ASTNode* aux = copyAST(node->child);
-                if (node->is_prefix) {
-                    compileAssignment(aux->left, aux->right, "=", st, os, stream, is_rval);
-                } else {
-                    ASTResult res = newASTAdd(aux, newASTInt(-1));
-                    assert(isOK(res));
-                    aux = res.result_value;
-                    compileASTExpression(aux, st, stream, os, is_rval);
-                }
-                deleteASTNode(&aux);
-            }
-            break;
-        } case AST_DEC: {
-            const ASTNode* lval = node->child->left;
-            if (lval->node_type == AST_ID) {
-                if (node->is_prefix) {
-                    IOStreamWritef(stream, "--");
-                    compileASTExpression(lval, st, stream, os, is_rval);
-                } else {
-                    compileASTExpression(lval, st, stream, os, is_rval);
-                    IOStreamWritef(stream, "--");
-                }
-            } else {
-                ASTNode* aux = copyAST(node->child);
-                if (node->is_prefix) {
-                    compileAssignment(aux->left, aux->right, "=", st, os, stream, is_rval);
-                } else {
-                    ASTResult res = newASTAdd(aux, newASTInt(1));
-                    assert(isOK(res));
-                    aux = res.result_value;
-                    compileASTExpression(aux, st, stream, os, is_rval);
-                }
-                deleteASTNode(&aux);
-            }
-            break;
-        } case AST_LOGICAL_TOGGLE: {
-            const ASTNode* lval = node->child->left;
-            if (lval->node_type == AST_ID) {
-                if (node->is_prefix) {
-                    compileASTExpression(node->child, st, stream, os, is_rval);
-                } else {
-                    if (os->condAssignNeedsTmp() && !is_rval) {
-                        writeTmpVar(node->child->value_type, stream);
-                        IOStreamWritef(stream, " = ");
-                    }
-                    IOStreamWritef(stream, "!(");
-                    compileASTExpression(node->child, st, stream, os, is_rval);
-                    IOStreamWritef(stream, ")");
-                }
-            } else {
-                ASTNode* aux = copyAST(node->child);
-                if (node->is_prefix) {
-                    compileAssignment(aux->left, aux->right, "=", st, os, stream, is_rval);
-                } else {
-                    ASTResult res = newASTLogicalNot(aux);
-                    assert(isOK(res));
-                    aux = res.result_value;
-                    compileASTExpression(aux, st, stream, os, is_rval);
-                }
-                deleteASTNode(&aux);
-            }
-            break;
-        } case AST_BITWISE_TOGGLE: {
-            const ASTNode* lval = node->child->left;
-            if (lval->node_type == AST_ID) {
-                if (node->is_prefix) {
-                    compileASTExpression(node->child, st, stream, os, is_rval);
-                } else {
-                    if (os->condAssignNeedsTmp() && !is_rval) {
-                        writeTmpVar(node->child->value_type, stream);
-                        IOStreamWritef(stream, " = ");
-                    }
-                    IOStreamWritef(stream, (node->child->value_type == AST_TYPE_BOOL ? "!(" : "~("));
-                    compileASTExpression(node->child, st, stream, os, is_rval);
-                    IOStreamWritef(stream, ")");
-                }
-            } else {
-                ASTNode* aux = copyAST(node->child);
-                if (node->is_prefix) {
-                    compileAssignment(aux->left, aux->right, "=", st, os, stream, is_rval);
-                } else {
-                    ASTResult res = newASTBitwiseNot(aux);
-                    assert(isOK(res));
-                    aux = res.result_value;
-                    compileASTExpression(aux, st, stream, os, is_rval);
-                }
-                deleteASTNode(&aux);
-            }
+            compileAssignment(node, st, os, stream, is_stmt);
             break;
         } case AST_COMPD_ASSIGN: {
-            const ASTNode* op_node = node->child->right;
-
-            if (!os->hasCompdAssign(op_node->node_type)) {
-                compileASTExpression(node->child, st, stream, os, is_rval);
-                break;
-            }
-
-            char* op_symbol = NULL;
-            switch (op_node->node_type) {
-                case AST_ADD: op_symbol = "+="; break;
-                case AST_SUB: op_symbol = "-="; break;
-                case AST_MUL: op_symbol = "*="; break;
-                case AST_DIV: op_symbol = "/="; break;
-                case AST_MOD: op_symbol = "%="; break;
-                case AST_BITWISE_AND: op_symbol = "&="; break;
-                case AST_BITWISE_OR: op_symbol = "|="; break;
-                case AST_BITWISE_XOR: op_symbol = "^="; break;
-                case AST_L_SHIFT: op_symbol = "<<="; break;
-                case AST_R_SHIFT: op_symbol = ">>="; break;
-                case AST_LOGICAL_AND: op_symbol = "&&="; break;
-                case AST_LOGICAL_OR: op_symbol = "||="; break;
-                default:
-                    assert(false);
-            }
-
-            compileAssignment(node->child->left, op_node->right, op_symbol, st, os, stream, is_rval);
-
+            compileCompoundAssignment(node, st, os, stream, is_stmt);
+            break;
+        } case AST_INC:
+          case AST_DEC:
+          case AST_LOGICAL_TOGGLE:
+          case AST_BITWISE_TOGGLE: {
+            compileUnaryCompoundAssignment(node, st, os, stream, is_stmt);
             break;
         } case AST_TYPE_OF: {
             // TODO: [optimization] it is only worth serializing the exp if it has side-effets. otherwise, only the type matters
@@ -499,15 +515,16 @@ void compileASTExpression(const ASTNode* node, const SymbolTable* st, const IOSt
             char* ptr;
             size_t size;
             IOStream* s = openIOStreamFromMemmory(&ptr, &size);
-            compileASTExpression(node->child, st, s, os, is_rval);
+            compileASTExpression(node->child, st, s, os, false);
             IOStreamClose(&s);
 
             os->typeOf(stream, node->child, ptr);
             free(ptr);
+
             break;
         } case AST_PARENTHESES:
             IOStreamWritef(stream, "(");
-            compileASTExpression(node->child, st, stream, os, is_rval);
+            compileASTExpression(node->child, st, stream, os, false);
             IOStreamWritef(stream, ")");
             break;
         case AST_CMP_EQ:
@@ -516,14 +533,16 @@ void compileASTExpression(const ASTNode* node, const SymbolTable* st, const IOSt
         case AST_CMP_LTE:
         case AST_CMP_GT:
         case AST_CMP_GTE: {
-            compileCmpExp(node, st, stream, os, false, is_rval);
+            compileCmpExp(node, st, stream, os, false);
             break;
-        }
-        case AST_TERNARY_COND: {
-            compileTernaryCond(node, st, os, stream, is_rval);
+        } case AST_TERNARY_COND: {
+            compileChildExpression(node, node->first, st, os, stream);
+            IOStreamWritef(stream, " ? ");
+            compileChildExpression(node, node->second, st, os, stream);
+            IOStreamWritef(stream, " : ");
+            compileChildExpression(node, node->third, st, os, stream);
             break;
-        }
-        default:
+        } default:
             assert(false);
     }
 }
@@ -636,7 +655,7 @@ void compileASTStatements(const ASTNode* ast, const SymbolTable* st, const IOStr
         } 
         default: {
             if(isExp(ast)) {
-                compileASTExpression(ast, st, stream, os, false);
+                compileASTExpression(ast, st, stream, os, true);
             } else {
                 assert(false);
             }

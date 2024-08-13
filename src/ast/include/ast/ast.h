@@ -69,7 +69,7 @@ typedef enum ASTOpType {
 typedef struct ASTNode {
     ASTNodeType node_type;
     ASTType value_type;
-    
+
     unsigned int size;
     bool allowed_lval;
 

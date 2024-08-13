@@ -126,7 +126,7 @@ void compileTypeofValueofRestrainedExpInC() {
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* ast = newASTTypeOf(res.result_value);
 
-    ASSERT_COMPILE_EXP_EQUALS(ast, &cSerializer, "((z = true), _TYPE_BOOL)");
+    ASSERT_COMPILE_EXP_EQUALS(ast, &cSerializer, "(z = true, _TYPE_BOOL)");
 
     deleteASTNode(&ast);
 }

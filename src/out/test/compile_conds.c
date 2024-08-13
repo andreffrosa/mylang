@@ -121,7 +121,7 @@ void compileChainedCondAssignment() {
     ast = newASTAssignment(newASTParentheses(ast), newASTInt(2)).result_value;
     ast = newASTAssignment(k_node, ast).result_value;
 
-    const char* str = "k = (true ? (n = 2) : (m = 2));\n";
+    const char* str = "k = true ? (n = 2) : (m = 2);\n";
     ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, str);
 
     ASSERT_COMPILE_STMT_EQUALS(ast, &javaSerializer, str);

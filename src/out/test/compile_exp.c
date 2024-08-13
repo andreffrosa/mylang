@@ -95,7 +95,7 @@ void compileMultSub() {
     ast = newASTMul(newASTInt(2), newASTInt(3)).result_value;
     ast = newASTSub(ast, newASTInt(4)).result_value;
     ast = newASTSub(newASTInt(1), ast).result_value;
-    ASSERT_COMPILE_EXP_EQUALS(ast, &cSerializer, "1 - 2*3 - 4");
+    ASSERT_COMPILE_EXP_EQUALS(ast, &cSerializer, "1 - (2*3 - 4)");
 }
 
 void compileDivAdd() {
@@ -123,7 +123,7 @@ void compileDivSub() {
     ast = newASTDiv(newASTInt(2), newASTInt(3)).result_value;
     ast = newASTSub(ast, newASTInt(4)).result_value;
     ast = newASTSub(newASTInt(1), ast).result_value;
-    ASSERT_COMPILE_EXP_EQUALS(ast, &cSerializer, "1 - 2/3 - 4");
+    ASSERT_COMPILE_EXP_EQUALS(ast, &cSerializer, "1 - (2/3 - 4)");
 }
 
 void compileMulDiv() {
@@ -167,7 +167,7 @@ void compileModSub() {
     ast = newASTMod(newASTInt(2), newASTInt(3)).result_value;
     ast = newASTSub(ast, newASTInt(4)).result_value;
     ast = newASTSub(newASTInt(1), ast).result_value;
-    ASSERT_COMPILE_EXP_EQUALS(ast, &cSerializer, "1 - 2%3 - 4");
+    ASSERT_COMPILE_EXP_EQUALS(ast, &cSerializer, "1 - (2%3 - 4)");
 }
 
 void compileMulMod() {

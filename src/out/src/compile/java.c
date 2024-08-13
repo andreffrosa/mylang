@@ -58,21 +58,28 @@ static void parseType(const IOStream* stream, const ASTType type, const bool in_
 static void typeOf(const IOStream* stream, const ASTNode* node, const char* node_str) {
     const ASTType type = node->value_type;
 
-    IOStreamWritef(stream, "(%s", node_str);
+    bool need_parentheses = node->node_type == AST_ID_ASSIGNMENT
+                         || node->node_type ==  AST_COMPD_ASSIGN;
+    if (need_parentheses) { 
+        IOStreamWritef(stream, "((%s)", node_str);
+    } else {
+        IOStreamWritef(stream, "(%s", node_str);
+    }
+
     switch (node->value_type) {
-    case AST_TYPE_INT:
-        IOStreamWritef(stream, " > 0");
-        break;
-    case AST_TYPE_BOOL:
-        break;
-    case AST_TYPE_TYPE:
-        IOStreamWritef(stream, " == _Type.VOID");
-        break;
-    case AST_TYPE_VOID:
-        assert(false);
-        break;
-    default:
-        assert(false);
+        case AST_TYPE_INT:
+            IOStreamWritef(stream, " > 0");
+            break;
+        case AST_TYPE_BOOL:
+            break;
+        case AST_TYPE_TYPE:
+            IOStreamWritef(stream, " == _Type.VOID");
+            break;
+        case AST_TYPE_VOID:
+            assert(false);
+            break;
+        default:
+            assert(false);
     }
 
     char* ptr = NULL;
