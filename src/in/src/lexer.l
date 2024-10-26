@@ -55,7 +55,7 @@ whitespace      [ \t\r]
 ">="                    { return CMP_GTE; }
 
 %{/**** KEYWORDS ****/%}
-"var"                   { return VAR; }
+"var"                   { strncpy(yylval_param->sval, yytext, MAX_ID_SIZE); return VAR; }
 
 "int"  |
 "bool" |
@@ -70,7 +70,7 @@ whitespace      [ \t\r]
 "valueof"               { return VALUE_OF; }
 "typeof"                { return TYPE_OF; }
 
-"redef"                 { strncpy(yylval_param->sval, yytext, MAX_ID_SIZE); return MODIFIER; }
+"redef"                 { strncpy(yylval_param->sval, yytext, MAX_ID_SIZE); return QUALIFIER; }
 
 "if"                    { return IF; }
 "then"                  { return THEN; }

@@ -4,12 +4,13 @@
 %define api.pure full
 //%locations
 %parse-param {yyscan_t scanner} {ParseContext* ctx}
-%lex-param {yyscan_t scanner} {ParseContext* ctx}
+%lex-param   {yyscan_t scanner} {ParseContext* ctx}
 
 %code requires {
    typedef void * yyscan_t;
 
    #include "ast/ast.h"
+
    typedef struct ParseContext {
       ASTNode** ast;
       SymbolTable* st;
@@ -35,24 +36,29 @@
 
 #include "actions.h"
 
+#define cpysval3(res, a, b, c) {\
+   strncpy(res.s1, a, MAX_ID_SIZE); \
+   strncpy(res.s2, b, MAX_ID_SIZE); \
+   strncpy(res.s3, c, MAX_ID_SIZE); }
+
 %}
 
 %union {
-  int ival;
-  bool bval;
-  char sval[MAX_ID_SIZE];
+  int      ival;
+  bool     bval;
+  char     sval [MAX_ID_SIZE];
   ASTNode* ast_node;
   struct {
-      char s1[MAX_ID_SIZE];
-      char s2[MAX_ID_SIZE];
-      char s3[MAX_ID_SIZE];
-  } triple_str;
+     char s1[MAX_ID_SIZE];
+     char s2[MAX_ID_SIZE];
+     char s3[MAX_ID_SIZE];
+  } sval3;
 }
 
 %token <ival> INT_LITERAL
 %token <bval> BOOL_LITERAL
 %token <sval> ID
-%token <sval> TYPE
+%token <sval> TYPE VAR QUALIFIER
 
 %token VALUE_OF
 %token TYPE_OF
@@ -74,17 +80,13 @@
 
 %token OPEN_ABS CLOSE_ABS
 
-%token VAR
-
 %token PRINT PRINT_VAR
-
-%token <sval> MODIFIER
 
 %token END 0
 
-%type <ast_node> exp stmt stmt_seq pure_exp restr_exp line_stmt scope cond
-%type <sval> type
-%type <triple_str> decl
+%type <ast_node> primitive_exp arithmetic_exp logical_exp bitwise_exp cmp_exp cond_exp const_exp assign_exp exp
+%type <ast_node> stmt stmt_seq line_stmt scope cond_stmt
+%type <sval3> decl
 
 %start program
 
@@ -93,106 +95,120 @@
 %%
 
 program
-   : stmt_seq END           { *(ctx->ast) = $1; YYACCEPT; }
-   | program error END      { yyerrok; }
-   | line_stmt END          { *(ctx->ast) = $1; YYACCEPT; } // If the program is a single statement, it does not require a trailling ';'
+   : stmt_seq END                      { *(ctx->ast) = $1; YYACCEPT; }
+//   | program error END                 { yyerrok; }
+
+   // If the program is a single statement, it does not require a trailling ';'
+   | line_stmt END                     { *(ctx->ast) = $1; YYACCEPT; } 
    ;
 
 stmt_seq
-   : %empty                 { $$ = NULL; }
-   | stmt stmt_seq          { $$ = ($2 == NULL) ? $1 : newASTStatementList($1, $2); }
+   : %empty                            { $$ = NULL; }
+   | stmt stmt_seq                     { $$ = ($2 == NULL) ? $1 : newASTStatementList($1, $2); }
    ;
 
 stmt
-   : line_stmt ';'          { $$ = $1; }
-   | ';'                    { $$ = newASTNoOp(); }
-   | scope                  { $$ = $1; }
-   | cond                   { $$ = $1; }
+   : ';'                               { $$ = newASTNoOp(); }
+   | line_stmt ';'                     { $$ = $1; }
+   | scope                             { $$ = $1; }
+   | cond_stmt                         { $$ = $1; }
    ;
 
 line_stmt
-   : exp                    { $$ = $1; }
-   | restr_exp              { $$ = $1; }
-// [TODO]: Declarations without assignment are disabled while uninitialization verification is not implemented
-//   | decl                   { TRY($$, declaration($1.s2, $1.s3, NULL, $1.s1, ctx->st)); }
-   | decl '=' exp           { TRY($$, declaration($1.s2, $1.s3,   $3, $1.s1, ctx->st)); }
-   | PRINT     '(' exp ')'  { $$ = newASTPrint($3); }
-   | PRINT_VAR '('  ID ')'  { TRY($$, handlePrintVar($3, ctx->st)); }
+   : exp                               { $$ = $1; }
+//[TODO]: Declarations without assignment are disabled while uninitialization verification is not implemented
+//   | decl                              { TRY($$, declaration($1.s1, $1.s2, NULL, $1.s3, ctx->st)); }
+   | decl '=' exp                      { TRY($$, declaration($1.s1, $1.s2,   $3, $1.s3, ctx->st)); }
+   | PRINT'('const_exp')'              { $$ = newASTPrint($3); }
+   | PRINT_VAR '(' ID ')'              { TRY($$, handlePrintVar($3, ctx->st)); }
+   ;
+
+decl
+   : TYPE ID                           { cpysval3($$, $1, $2, ""); }
+   | VAR  ID                           { cpysval3($$, $1, $2, ""); }
+   | QUALIFIER TYPE ID                 { cpysval3($$, $2, $3, $1); }
+   | QUALIFIER VAR  ID                 { cpysval3($$, $2, $3, $1); }
    ;
 
 scope
    : '{' { enterScopeDefault(ctx->st); } stmt_seq '}'
-         { leaveScope(ctx->st);
-           if ($3 == NULL) {
-               $$ = newASTNoOp();
-           } else {
-               $$ = newASTScope($3);
-           }
-         }
+         { leaveScope(ctx->st); $$ = $3 == NULL ? newASTNoOp() : newASTScope($3); }
    ;
 
-decl
-   : type ID                { strncpy($$.s1, "", MAX_ID_SIZE); strncpy($$.s2,    $1, MAX_ID_SIZE); strncpy($$.s3, $2, MAX_ID_SIZE); }
-   | VAR  ID                { strncpy($$.s1, "", MAX_ID_SIZE); strncpy($$.s2, "var", MAX_ID_SIZE); strncpy($$.s3, $2, MAX_ID_SIZE); }
-   | MODIFIER type ID       { strncpy($$.s1, $1, MAX_ID_SIZE); strncpy($$.s2,    $2, MAX_ID_SIZE); strncpy($$.s3, $3, MAX_ID_SIZE); }
-   | MODIFIER VAR  ID       { strncpy($$.s1, $1, MAX_ID_SIZE); strncpy($$.s2, "var", MAX_ID_SIZE); strncpy($$.s3, $3, MAX_ID_SIZE); }
-   ;
-
-cond
-   : IF '(' exp ')' scope            { TRY($$, newASTIf($3, $5)); }
-   | IF '(' exp ')' scope ELSE scope { TRY($$, newASTIfElse($3, $5, $7)); }
-   | IF '(' exp ')' scope ELSE cond  { TRY($$, newASTIfElse($3, $5, $7)); }
-//   | IF '(' exp ')' THEN line_stmt';'{ TRY($$, newASTIf($3, $6)); }
-   ;
-
-type
-   : TYPE                   { strncpy($$, $1, MAX_ID_SIZE); }
-   | ID                     { strncpy($$, $1, MAX_ID_SIZE); }
+cond_stmt
+   : IF'('const_exp')'scope                { TRY($$, newASTIf($3, $5)); }
+   | IF'('const_exp')'scope ELSE scope     { TRY($$, newASTIfElse($3, $5, $7)); }
+   | IF'('const_exp')'scope ELSE cond_stmt { TRY($$, newASTIfElse($3, $5, $7)); }
+   | IF'('const_exp')'THEN line_stmt ';'   { TRY($$, newASTIf($3, $6)); }
    ;
 
 exp
-   : pure_exp
-   | VALUE_OF'('restr_exp')'{ $$ = $3; }
-   | TYPE_OF '('restr_exp')'{ $$ = newASTTypeOf($3); } // Built-in function
+   : const_exp                         { $$ = $1; }
+   | assign_exp                        { $$ = $1; }
    ;
 
-restr_exp
-   : ID '=' exp             { TRY($$, newASTAssignment($1, $3, ctx->st)); }
+assign_exp
+   : ID '=' exp                        { TRY($$, newASTAssignment($1, $3, ctx->st)); }
    ;
 
-pure_exp
-   : INT_LITERAL            { $$ = newASTInt($1); }
-   | BOOL_LITERAL           { $$ = newASTBool($1); }
-   | TYPE                   { TRY($$, typeFromStr($1)) }
-   | ID                     { TRY($$, newASTIDReference($1, ctx->st)); }
-   | exp '+' exp            { TRY($$, newASTAdd($1, $3)); }
-   | exp '-' exp            { TRY($$, newASTSub($1, $3)); }
-   | exp '*' exp            { TRY($$, newASTMul($1, $3)); }
-   | exp '/' exp            { TRY($$, newASTDiv($1, $3)); }
-   | exp '%' exp            { TRY($$, newASTMod($1, $3)); }
-   | '(' exp ')'            { $$ = isCmpExp($2) ? newASTParentheses($2) : $2; }
-   | '-' exp %prec UMINUS   { TRY($$, newASTUSub($2)); }
-   | '+' exp %prec UPLUS    { TRY($$, newASTUAdd($2)); }
-   | exp '&' exp            { TRY($$, newASTBitwiseAnd($1, $3)); }
-   | exp '|' exp            { TRY($$, newASTBitwiseOr($1, $3)); }
-   | exp '^' exp            { TRY($$, newASTBitwiseXor($1, $3)); }
-   | '~' exp                { TRY($$, newASTBitwiseNot($2)); }
-   | exp L_SHIFT exp        { TRY($$, newASTLeftShift($1, $3)); }
-   | exp R_SHIFT exp        { TRY($$, newASTRightShift($1, $3)); }
-   | OPEN_ABS exp CLOSE_ABS { TRY($$, newASTAbs($2)); }
-   | SET_POSITIVE exp       { TRY($$, newASTSetPositive($2)); }
-   | SET_NEGATIVE exp       { TRY($$, newASTSetNegative($2)); }
-   | '!' exp                { TRY($$, newASTLogicalNot($2)); }
-   | exp LOGICAL_AND exp    { TRY($$, newASTLogicalAnd($1, $3)); }
-   | exp LOGICAL_OR exp     { TRY($$, newASTLogicalOr($1, $3)); }
-   | TYPE_OF'('exp')'       { $$ = newASTTypeOf($3); } // Built-in function
-   | exp CMP_EQ exp         { TRY($$, newASTCmpEQ($1, $3)); }
-   | exp CMP_NEQ exp        { TRY($$, newASTCmpNEQ($1, $3)); }
-   | exp '<' exp            { TRY($$, newASTCmpLT($1, $3)); }
-   | exp CMP_LTE exp        { TRY($$, newASTCmpLTE($1, $3)); }
-   | exp '>' exp            { TRY($$, newASTCmpGT($1, $3)); }
-   | exp CMP_GTE exp        { TRY($$, newASTCmpGTE($1, $3)); }
-   | exp '?' exp ':' exp    { TRY($$, newASTTernaryCond($1, $3, $5)); }
+const_exp
+   : primitive_exp                     { $$ = $1; }
+   | arithmetic_exp                    { $$ = $1; }
+   | bitwise_exp                       { $$ = $1; }
+   | logical_exp                       { $$ = $1; }
+   | cmp_exp                           { $$ = $1; }
+   | cond_exp                          { $$ = $1; }
+   ;
+
+primitive_exp
+   : INT_LITERAL                       { $$ = newASTInt($1); }
+   | BOOL_LITERAL                      { $$ = newASTBool($1); }
+   | TYPE                              { TRY($$, typeFromStr($1)) }
+   | ID                                { TRY($$, newASTIDReference($1, ctx->st)); }
+   | '(' const_exp ')'                 { $$ = isCmpExp($2) ? newASTParentheses($2) : $2; }
+   | OPEN_ABS const_exp CLOSE_ABS      { TRY($$, newASTAbs($2)); }
+   | VALUE_OF '(' exp ')'              { $$ = $3; }
+   | TYPE_OF  '(' exp ')'              { $$ = newASTTypeOf($3); }
+   ;
+
+arithmetic_exp
+   : const_exp '+' const_exp           { TRY($$, newASTAdd($1, $3)); }
+   | const_exp '-' const_exp           { TRY($$, newASTSub($1, $3)); }
+   | const_exp '*' const_exp           { TRY($$, newASTMul($1, $3)); }
+   | const_exp '/' const_exp           { TRY($$, newASTDiv($1, $3)); }
+   | const_exp '%' const_exp           { TRY($$, newASTMod($1, $3)); }
+   | '-' const_exp %prec UMINUS        { TRY($$, newASTUSub($2));    }
+   | '+' const_exp %prec UPLUS         { TRY($$, newASTUAdd($2));    }
+   | SET_POSITIVE const_exp            { TRY($$, newASTSetPositive($2)); }
+   | SET_NEGATIVE const_exp            { TRY($$, newASTSetNegative($2)); }
+   ;
+
+bitwise_exp
+   : const_exp '&' const_exp           { TRY($$, newASTBitwiseAnd($1, $3)); }
+   | const_exp '|' const_exp           { TRY($$,  newASTBitwiseOr($1, $3)); }
+   | const_exp '^' const_exp           { TRY($$, newASTBitwiseXor($1, $3)); }
+   | '~' const_exp                     { TRY($$, newASTBitwiseNot($2));     }
+   | const_exp L_SHIFT const_exp       { TRY($$,  newASTLeftShift($1, $3)); }
+   | const_exp R_SHIFT const_exp       { TRY($$, newASTRightShift($1, $3)); }
+   ;
+
+logical_exp
+   : const_exp LOGICAL_AND const_exp   { TRY($$, newASTLogicalAnd($1, $3)); }
+   | const_exp LOGICAL_OR const_exp    { TRY($$,  newASTLogicalOr($1, $3)); }
+   | '!' const_exp                     { TRY($$, newASTLogicalNot($2)); }
+   ;
+
+cmp_exp
+   : const_exp CMP_EQ  const_exp       { TRY($$,  newASTCmpEQ($1, $3)); }
+   | const_exp CMP_NEQ const_exp       { TRY($$, newASTCmpNEQ($1, $3)); }
+   | const_exp   '<'   const_exp       { TRY($$,  newASTCmpLT($1, $3)); }
+   | const_exp CMP_LTE const_exp       { TRY($$, newASTCmpLTE($1, $3)); }
+   | const_exp   '>'   const_exp       { TRY($$,  newASTCmpGT($1, $3)); }
+   | const_exp CMP_GTE const_exp       { TRY($$, newASTCmpGTE($1, $3)); }
+   ;
+
+cond_exp
+   : const_exp'?'const_exp':'const_exp { TRY($$, newASTTernaryCond($1, $3, $5)); }
    ;
 
 %%

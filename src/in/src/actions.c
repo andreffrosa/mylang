@@ -110,10 +110,10 @@ ASTNode* handleErrors(ASTResult res, int lineno) {
             deleteASTNode(&ast);
             break;
         }
-        case AST_RES_ERR_UNKNOWN_MODIFIER: {
-            const char* modifier = res.result_value;
-            assert(modifier != NULL);
-            semanticError(lineno, "Unknown modifier %s!", modifier);
+        case AST_RES_ERR_UNKNOWN_QUALIFIER: {
+            const char* qualifier = res.result_value;
+            assert(qualifier != NULL);
+            semanticError(lineno, "Unknown qualifier %s!", qualifier);
             break;
         }
         default: {
@@ -126,18 +126,47 @@ ASTNode* handleErrors(ASTResult res, int lineno) {
     return NULL;
 }
 
-ASTResult declaration(const char* type_str, const char* id, ASTNode* exp, const char* modifier, SymbolTable* st) {
+/*
+ASTResult declaration(const char* type_str, const char* id, ASTNode* exp, const char* qualifier, SymbolTable* st) {
     assert(type_str != NULL);
     assert(id != NULL);
-    assert(modifier != NULL);
+    assert(qualifier != NULL);
 
     bool redef;
-    if(strlen(modifier) == 0) {
+    if(strlen(qualifier) == 0) {
         redef = false;
-    } else if (strcmp("redef", modifier) == 0) {
+    } else if (strcmp("redef", qualifier) == 0) {
         redef = true;
     } else {
-        return ERR_VAL(AST_RES_ERR_UNKNOWN_MODIFIER, modifier);
+        return ERR_VAL(AST_RES_ERR_UNKNOWN_QUALIFIER, qualifier);
+    }
+
+    ASTType type;
+    if (exp != NULL && strncmp("var", type_str, 3) == 0) {
+        type = exp->value_type;
+    } else {
+        ASTResult res = parseASTType(type_str);
+        if (isERR(res)) {
+            return res;
+        }
+        type = (ASTType)res.result_value;
+    }
+
+    return newASTIDDeclaration(type, id, exp, redef, st);
+}*/
+
+ASTResult declaration(const char* type_str, const char* id, ASTNode* exp, const char* qualifier, SymbolTable* st) {
+    assert(type_str != NULL);
+    assert(id != NULL);
+    assert(qualifier != NULL);
+
+    bool redef;
+    if(strlen(qualifier) == 0) {
+        redef = false;
+    } else if (strcmp("redef", qualifier) == 0) {
+        redef = true;
+    } else {
+        return ERR_VAL(AST_RES_ERR_UNKNOWN_QUALIFIER, qualifier);
     }
 
     ASTType type;
