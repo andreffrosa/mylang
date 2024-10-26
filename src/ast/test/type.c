@@ -7,7 +7,7 @@
 SymbolTable* st;
 
 void setUp (void) {
-    st = newSymbolTable(1);
+    st = newSymbolTableDefault();
 }
 
 void tearDown (void) {
@@ -25,7 +25,7 @@ void newASTIntHasTypeInt() {
 }
 
 void newASTDeclarationIsStatement() {
-    ASTResult res = newASTIDDeclaration(AST_TYPE_INT, ID, st);
+    ASTResult res = newASTIDDeclaration(AST_TYPE_INT, ID, NULL, false, st);
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* ast = (ASTNode*) res.result_value;
     ASSERT_EQUAL_VALUE_TYPE(ast, AST_TYPE_VOID);
@@ -33,14 +33,14 @@ void newASTDeclarationIsStatement() {
 }
 
 void newASTDeclarationCannotHaveVoidType() {
-    ASTResult res = newASTIDDeclaration(AST_TYPE_VOID, ID, st);
+    ASTResult res = newASTIDDeclaration(AST_TYPE_VOID, ID, NULL, false, st);
     TEST_ASSERT_TRUE(isERR(res));
     TEST_ASSERT_EQUAL_INT(AST_RES_ERR_INVALID_TYPE, res.result_type);
 }
 
 void newASTIDReferenceHasDeclaredType() {
     ASTType expected_type = AST_TYPE_INT;
-    ASTResult res = newASTIDDeclaration(expected_type, ID, st);
+    ASTResult res = newASTIDDeclaration(expected_type, ID, NULL, false, st);
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* decl = (ASTNode*) res.result_value;
     setVarInitialized(decl->child->id);
@@ -53,26 +53,32 @@ void newASTIDReferenceHasDeclaredType() {
 }
 
 void newASTAssignmentExpressionHasSameTypeAsVar() {
-    insertVar(st, AST_TYPE_TYPE, ID);
+    ASTResult res = defineVar(st, AST_TYPE_TYPE, ID, false, false);
+    TEST_ASSERT_TRUE(isOK(res));
+    
     ASTNode* val_node = newASTInt(1);
-    ASTResult res = newASTAssignment(ID, val_node, st);
+    res = newASTAssignment(ID, val_node, st);
     TEST_ASSERT_TRUE(isERR(res));
     TEST_ASSERT_EQUAL_INT(AST_RES_ERR_DIFFERENT_TYPES, res.result_type);
     deleteASTNode(&val_node);
 }
 
 void newASTAssignmentOnlyAcceptsExpressions() {
-    insertVar(st, AST_TYPE_INT, ID);
+    ASTResult res = defineVar(st, AST_TYPE_TYPE, ID, false, false);
+    TEST_ASSERT_TRUE(isOK(res));
+
     ASTNode* val_node = newASTNoOp();
-    ASTResult res = newASTAssignment(ID, val_node, st);
+    res = newASTAssignment(ID, val_node, st);
     TEST_ASSERT_TRUE(isERR(res));
     TEST_ASSERT_EQUAL_INT(AST_RES_ERR_INVALID_RIGHT_TYPE, res.result_type);
     deleteASTNode(&val_node);
 }
 
 void newASTAssignmentHasSameType() {
-    insertVar(st, AST_TYPE_INT, ID);
-    ASTResult res = newASTAssignment(ID, newASTInt(1), st);
+    ASTResult res = defineVar(st, AST_TYPE_INT, ID, false, false);
+    TEST_ASSERT_TRUE(isOK(res));
+
+    res = newASTAssignment(ID, newASTInt(1), st);
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* ast = (ASTNode*) res.result_value;
     ASSERT_EQUAL_VALUE_TYPE(ast, AST_TYPE_INT);
@@ -81,7 +87,7 @@ void newASTAssignmentHasSameType() {
 
 void newASTDeclarationAssignmentCannotHaveVoidType() {
     ASTNode* val_node = newASTNoOp();
-    ASTResult res = newASTIDDeclarationAssignment(AST_TYPE_VOID, ID, val_node, st);
+    ASTResult res = newASTIDDeclaration(AST_TYPE_VOID, ID, val_node, false, st);
     TEST_ASSERT_TRUE(isERR(res));
     TEST_ASSERT_EQUAL_INT(AST_RES_ERR_INVALID_TYPE, res.result_type);
     deleteASTNode(&val_node);
@@ -89,7 +95,7 @@ void newASTDeclarationAssignmentCannotHaveVoidType() {
 
 void newASTDeclarationAssignmentOnlyAcceptsExpressions() {
     ASTNode* val_node = newASTNoOp();
-    ASTResult res = newASTIDDeclarationAssignment(AST_TYPE_INT, ID, val_node, st);
+    ASTResult res = newASTIDDeclaration(AST_TYPE_INT, ID, val_node, false, st);
     TEST_ASSERT_TRUE(isERR(res));
     TEST_ASSERT_EQUAL_INT(AST_RES_ERR_INVALID_RIGHT_TYPE, res.result_type);
     deleteASTNode(&val_node);
@@ -97,7 +103,7 @@ void newASTDeclarationAssignmentOnlyAcceptsExpressions() {
 
 void newASTDeclarationAssignmentExpressionHasSameTypeAsVar() {
     ASTNode* val_node = newASTInt(1);
-    ASTResult res = newASTIDDeclarationAssignment(AST_TYPE_TYPE, ID, val_node, st);
+    ASTResult res = newASTIDDeclaration(AST_TYPE_TYPE, ID, val_node, false, st);
     TEST_ASSERT_TRUE(isERR(res));
     TEST_ASSERT_EQUAL_INT(AST_RES_ERR_DIFFERENT_TYPES, res.result_type);
     deleteASTNode(&val_node);
@@ -105,7 +111,7 @@ void newASTDeclarationAssignmentExpressionHasSameTypeAsVar() {
 
 void newASTDeclarationAssignmentIsStatement() {
     ASTNode* val_node = newASTInt(1);
-    ASTResult res = newASTIDDeclarationAssignment(AST_TYPE_INT, ID, val_node, st);
+    ASTResult res = newASTIDDeclaration(AST_TYPE_INT, ID, val_node, false, st);
     ASTNode* ast = (ASTNode*) res.result_value;
     ASSERT_EQUAL_VALUE_TYPE(ast, AST_TYPE_VOID);
     deleteASTNode(&ast);
@@ -179,7 +185,8 @@ void typeofHasTypeType() {
     TEST_ASSERT_EQUAL_INT(AST_TYPE_TYPE, ast->value_type);
     deleteASTNode(&ast);
 
-    insertVar(st, AST_TYPE_INT, "n");
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false, false);
+    TEST_ASSERT_TRUE(isOK(res));
     ast = newASTTypeOf(newASTAssignment("n", newASTInt(1), st).result_value);
     TEST_ASSERT_EQUAL_INT(AST_TYPE_TYPE, ast->value_type);
     deleteASTNode(&ast);

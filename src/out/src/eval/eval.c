@@ -11,7 +11,8 @@
 
 Frame* executeAST(const ASTNode* ast, const SymbolTable* st) {
     assert(ast != NULL && st != NULL);
-    Frame* frame = newFrame(getSymbolTableSize(st));
+    unsigned int frame_size = getMaxOffset(st) + 1;
+    Frame* frame = newFrame(frame_size);
     executeASTStatements(ast, st, frame);
     return frame;
 }
@@ -20,7 +21,7 @@ int evalID(const SymbolTable* st, const Symbol* var, const Frame* frame) {
     assert(st != NULL  && var != NULL && frame != NULL);
 
     assert(isVarInitialized(var));
-    unsigned int index = getVarIndex(st, var);
+    unsigned int index = getVarOffset(var);
     return getFrameValue(frame, index);
 }
 
@@ -30,7 +31,7 @@ int evalAssignment(const ASTNode* ast, const SymbolTable* st, Frame* frame) {
 
     Symbol* var = ast->left->id;
     int value = evalASTExpression(ast->right, st, frame);
-    unsigned int index = getVarIndex(st, var);
+    unsigned int index = getVarOffset(var);
     setFrameValue(frame, index, value);
 
     return value;
@@ -79,7 +80,7 @@ void executeASTStatements(const ASTNode* ast, const SymbolTable* st, Frame* fram
 
             Symbol* var = ast->left->id;
             int value = evalASTExpression(ast->right, st, frame);
-            unsigned int index = getVarIndex(st, var);
+            unsigned int index = getVarOffset(var);
             setFrameValue(frame, index, value);
             break;
         } case AST_ID_ASSIGNMENT: {
@@ -104,7 +105,10 @@ void executeASTStatements(const ASTNode* ast, const SymbolTable* st, Frame* fram
             IOStreamClose(&s);
             break;
         } case AST_NO_OP: break;
-          default: {
+          case AST_SCOPE: {
+            executeASTStatements(ast->child, st, frame);
+            break;
+        } default: {
             if(isExp(ast)) {
                 evalASTExpression(ast, st, frame);
             } else {

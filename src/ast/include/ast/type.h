@@ -1,7 +1,7 @@
 #ifndef _AST_TYPE_H_
 #define _AST_TYPE_H_
 
-#include "error.h"
+#include "errors.h"
 
 typedef enum ASTType {
     AST_TYPE_VOID = 0,  // No type

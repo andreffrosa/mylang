@@ -10,7 +10,7 @@
 static SymbolTable* st;
 
 void setUp (void) {
-    st = newSymbolTable(1);
+    st = newSymbolTable(1, 1);
 }
 
 void tearDown (void) {
@@ -98,8 +98,7 @@ void compileTypeofTypeInJava() {
 }
 
 void compileTypeofIDInC() {
-    Symbol* var = insertVar(st, AST_TYPE_BOOL, "z");
-    setVarInitialized(var);
+    defineVar(st, AST_TYPE_BOOL, "z", true, false);
     ASTResult res = newASTIDReference("z", st);
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* ast = newASTTypeOf(res.result_value);
@@ -110,8 +109,7 @@ void compileTypeofIDInC() {
 }
 
 void compileTypeofIDInJava() {
-    Symbol* var = insertVar(st, AST_TYPE_BOOL, "z");
-    setVarInitialized(var);
+    defineVar(st, AST_TYPE_BOOL, "z", true, false);
     ASTResult res = newASTIDReference("z", st);
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* ast = newASTTypeOf(res.result_value);
@@ -122,7 +120,7 @@ void compileTypeofIDInJava() {
 }
 
 void compileTypeofValueofRestrainedExpInC() {
-    insertVar(st, AST_TYPE_BOOL, "z");
+    defineVar(st, AST_TYPE_BOOL, "z", false, false);
     ASTResult res = newASTAssignment("z", newASTBool(true), st);
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* ast = newASTTypeOf(res.result_value);
@@ -133,7 +131,7 @@ void compileTypeofValueofRestrainedExpInC() {
 }
 
 void compileTypeofValueofRestrainedExpInJava() {
-    insertVar(st, AST_TYPE_BOOL, "z");
+    defineVar(st, AST_TYPE_BOOL, "z", false, false);
     ASTResult res = newASTAssignment("z", newASTBool(true), st);
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* ast = newASTTypeOf(res.result_value);

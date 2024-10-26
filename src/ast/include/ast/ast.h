@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-#include "error.h"
+#include "errors.h"
 #include "symbol.h"
 #include "type.h"
 
@@ -46,6 +46,7 @@ typedef enum ASTNodeType {
     AST_CMP_LTE,
     AST_CMP_GT,
     AST_CMP_GTE,
+    AST_SCOPE,
     AST_NODE_TYPES_COUNT  // Count of AST node types
 } ASTNodeType;
 
@@ -129,9 +130,8 @@ const char* nodeTypeToStr(ASTNodeType node_type);
 
 #define newASTStatementList(stmt, list) (list == NULL ? stmt : newASTBinaryOP(AST_STATEMENT_SEQ, stmt, list).result_value)
 
+ASTResult newASTIDDeclaration(ASTType type, const char* id, const ASTNode* value, bool redef, SymbolTable* st);
 ASTResult newASTIDReference(const char* id, SymbolTable* st);
-ASTResult newASTIDDeclaration(const ASTType type, const char* id, SymbolTable* st);
-ASTResult newASTIDDeclarationAssignment(const ASTType type, const char* id, const ASTNode* value, SymbolTable* st);
 ASTResult newASTAssignment(const char* id, const ASTNode* value, SymbolTable* st);
 
 #define newASTPrint(e) newASTUnaryOP(AST_PRINT, e).result_value
@@ -146,5 +146,7 @@ ASTResult newASTAssignment(const char* id, const ASTNode* value, SymbolTable* st
 #define newASTCmpLTE(l, r) newASTBinaryOP(AST_CMP_LTE, l, r)
 #define newASTCmpGT(l, r) newASTBinaryOP(AST_CMP_GT, l, r)
 #define newASTCmpGTE(l, r) newASTBinaryOP(AST_CMP_GTE, l, r)
+
+#define newASTScope(s) newASTUnaryOP(AST_SCOPE, s).result_value
 
 #endif

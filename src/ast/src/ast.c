@@ -276,6 +276,7 @@ ASTNodeInfo ASTNodeTable[] = {
     [AST_CMP_LTE]       = {"AST_CMP_LTE",        BINARY_OP,     false, &binaryCmpExpressionTypeHandler},
     [AST_CMP_GT]        = {"AST_CMP_GT",         BINARY_OP,     false, &binaryCmpExpressionTypeHandler},
     [AST_CMP_GTE]       = {"AST_CMP_GTE",        BINARY_OP,     false, &binaryCmpExpressionTypeHandler},
+    [AST_SCOPE]         = {"AST_SCOPE",          UNARY_OP,      true,  &genericStatementTypeHandler},
 };
 
 ASTOpType getNodeOpType(ASTNodeType node_type) {
@@ -355,89 +356,51 @@ ASTNode* newASTID(Symbol* id) {
     return node;
 }
 
-ASTResult newASTIDDefinition(const ASTType type, const char* id, SymbolTable* st) {
-    assert(id != NULL && st != NULL);
-
-    if(!checkIDWasNotDeclared(id, st)) {
-        return ERR_VAL(AST_RES_ERR_ID_ALREADY_DEFINED, id);
-    }
-    Symbol* var = insertVar(st, type, id);
-    return OK(newASTID(var));
-}
-
 ASTResult newASTIDReference(const char* id, SymbolTable* st) {
     assert(id != NULL && st != NULL);
 
-    Symbol* var = lookupVar(st, id);
-    if(var == NULL) {
-        return ERR_VAL(AST_RES_ERR_ID_NOT_DEFINED, id);
+    ASTResult res = getVarReference(st, id, false);
+    if (isERR(res)) {
+        return res;
     }
-
-    if(!isVarInitialized(var)) {
-        return ERR_VAL(AST_RES_ERR_ID_NOT_INIT, id);
-    }
-
+    Symbol* var = res.result_value;
     return OK(newASTID(var));
 }
 
-ASTResult newASTIDLeftReference(const char* id, SymbolTable* st) {
+ASTResult newASTIDDeclaration(ASTType type, const char* id, const ASTNode* value, bool redef, SymbolTable* st) {
     assert(id != NULL && st != NULL);
 
-    Symbol* var = lookupVar(st, id);
-    if(var == NULL) {
-        return ERR_VAL(AST_RES_ERR_ID_NOT_DEFINED, id);
-    }
-    return OK(newASTID(var));
-}
-
-ASTResult newASTIDDeclaration(const ASTType type, const char* id, SymbolTable* st) {
-    assert(id != NULL && st != NULL);
-
-    if(type == AST_TYPE_VOID) {
+    if (type == AST_TYPE_VOID) {
         return ERR_VAL(AST_RES_ERR_INVALID_TYPE, ASTTypeToStr(type));
     }
 
-    ASTResult res = newASTIDDefinition(type, id, st);
-    if(isERR(res)) {
+    bool is_init = value != NULL;
+
+    ASTResult res = defineVar(st, type, id, is_init, redef);
+    if (isERR(res)) {
         return res;
     }
-    ASTNode* ast = res.result_value;
+    Symbol* var = res.result_value;
 
-    return newASTUnaryOP(AST_ID_DECLARATION, ast);
-}
-
-ASTResult newASTIDDeclarationAssignment(const ASTType type, const char* id, const ASTNode* value, SymbolTable* st) {
-    assert(id != NULL && value != NULL && st != NULL);
-
-    if(type == AST_TYPE_VOID) {
-        return ERR_VAL(AST_RES_ERR_INVALID_TYPE, ASTTypeToStr(type));
+    if (is_init) {
+        return newASTBinaryOP(AST_ID_DECL_ASSIGN, newASTID(var), value);
+    } else {
+        return newASTUnaryOP(AST_ID_DECLARATION, newASTID(var));
     }
-
-    ASTResult res = newASTIDDefinition(type, id, st);
-    if(isERR(res)) {
-        return res;
-    }
-
-    ASTNode* ast = res.result_value;
-    Symbol* var = ast->id;
-    setVarInitialized(var);
-
-    return newASTBinaryOP(AST_ID_DECL_ASSIGN, res.result_value, value);
 }
 
 ASTResult newASTAssignment(const char* id, const ASTNode* value, SymbolTable* st) {
     assert(id != NULL && value != NULL && st != NULL);
 
-    ASTResult res = newASTIDLeftReference(id, st);
-    if(isERR(res)) {
+    ASTResult res = getVarReference(st, id, true);
+    if (isERR(res)) {
         return res;
     }
 
-    ASTNode* ast = res.result_value;
-    Symbol* var = ast->id;
+    Symbol* var = res.result_value;
     setVarInitialized(var);
 
-    return newASTBinaryOP(AST_ID_ASSIGNMENT, res.result_value, value);
+    return newASTBinaryOP(AST_ID_ASSIGNMENT, newASTID(var), value);
 }
 
 ASTNode* newASTNoOp() {
@@ -447,7 +410,7 @@ ASTNode* newASTNoOp() {
 }
 
 void deleteASTNode(ASTNode** node) {
-    assert(node != NULL);
+    assert(node != NULL && *node != NULL);
     switch(getNodeOpType((*node)->node_type)) {
         case ZEROARY_OP:
             break;

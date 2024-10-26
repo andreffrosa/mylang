@@ -59,12 +59,12 @@ void intGtChain() {
 }
 
 void eqChainHasSingleEval() {
-    SymbolTable* st = newSymbolTable(1);
+    SymbolTable* st = newSymbolTable(1, 1);
 
-    ASTResult res = newASTIDDeclarationAssignment(AST_TYPE_INT, "n", newASTInt(0), st);
+    ASTResult res = newASTIDDeclaration(AST_TYPE_INT, "n", newASTInt(0), false, st);
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* stmts = res.result_value;
-    Frame* frame = newFrame(getSymbolTableSize(st));
+    Frame* frame = newFrame(getMaxOffset(st) + 1);
     executeASTStatements(stmts, st, frame);
     deleteASTNode(&stmts);
 
@@ -87,12 +87,12 @@ void eqChainHasSingleEval() {
 }
 
 void eqChainShortCircuitsIfFalseOnEval() {
-    SymbolTable* st = newSymbolTable(1);
+    SymbolTable* st = newSymbolTable(1, 1);
 
-    ASTResult res = newASTIDDeclarationAssignment(AST_TYPE_INT, "n", newASTInt(0), st);
+    ASTResult res = newASTIDDeclaration(AST_TYPE_INT, "n", newASTInt(0), false, st);
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* stmts = res.result_value;
-    Frame* frame = newFrame(getSymbolTableSize(st));
+    Frame* frame = newFrame(getMaxOffset(st) + 1);
     executeASTStatements(stmts, st, frame);
     deleteASTNode(&stmts);
 

@@ -7,7 +7,7 @@
 SymbolTable* st;
 
 void setUp (void) {
-    st = newSymbolTable(1);
+    st = newSymbolTableDefault();
 }
 
 void tearDown (void) {

@@ -42,6 +42,11 @@
   bool bval;
   char sval[MAX_ID_SIZE];
   ASTNode* ast_node;
+  struct {
+      char s1[MAX_ID_SIZE];
+      char s2[MAX_ID_SIZE];
+      char s3[MAX_ID_SIZE];
+  } triple_str;
 }
 
 %token <ival> INT_LITERAL
@@ -70,10 +75,13 @@
 
 %token PRINT PRINT_VAR
 
+%token <sval> MODIFIER
+
 %token END 0
 
-%type <ast_node> exp stmt stmt_seq pure_exp restr_exp
+%type <ast_node> exp stmt stmt_seq pure_exp restr_exp line_stmt scope
 %type <sval> type
+%type <triple_str> decl
 
 %start program
 
@@ -84,23 +92,41 @@
 program
    : stmt_seq END           { *(ctx->ast) = $1; YYACCEPT; }
    | program error END      { yyerrok; }
+   | line_stmt END          { *(ctx->ast) = $1; YYACCEPT; } // If the program is a single statement, it does not require a trailling ';'
    ;
 
 stmt_seq
    : %empty                 { $$ = NULL; }
-   | stmt                   { $$ = $1; } // If the program is a single statement, it does not require a trailling ';'
-   | stmt ';' stmt_seq      { $$ = newASTStatementList($1, $3); }
+   | stmt stmt_seq          { $$ = ($2 == NULL) ? $1 : newASTStatementList($1, $2); }
    ;
 
 stmt
+   : line_stmt ';'          { $$ = $1; }
+   | scope                  { $$ = $1; }
+   ;
+
+line_stmt
    : exp                    { $$ = $1; }
    | restr_exp              { $$ = $1; }
-   | type ID                { TRY($$, declaration($1,    $2, NULL, ctx->st)); }
-   | type ID '=' exp        { TRY($$, declaration($1,    $2,   $4, ctx->st)); }
-   | VAR ID '=' exp         { TRY($$, declaration("var", $2,   $4, ctx->st)); }
-//   | VAR ID                 { syntaxError(LINE(), "Type inference can only be used in declarations with assignment"); deleteSymbolTable(&ctx->st); $$ = NULL; YYABORT; }
-   | PRINT '(' exp ')'      { $$ = newASTPrint($3); }
-   | PRINT_VAR '(' ID ')'   { TRY($$, handlePrintVar($3, ctx->st)); }
+   | decl                   { TRY($$, declaration($1.s2, $1.s3, NULL, $1.s1, ctx->st)); }
+   | decl '=' exp           { TRY($$, declaration($1.s2, $1.s3,   $3, $1.s1, ctx->st)); }
+   | PRINT     '(' exp ')'  { $$ = newASTPrint($3); }
+   | PRINT_VAR '('  ID ')'  { TRY($$, handlePrintVar($3, ctx->st)); }
+   ;
+
+scope
+   : '{' { enterScopeDefault(ctx->st); } stmt_seq '}'
+         { leaveScope(ctx->st);
+           const ASTNode* stmts = $3 == NULL ? newASTNoOp() : $3;
+           $$ = newASTScope(stmts);
+         }
+   ;
+
+decl
+   : type ID                { strncpy($$.s1, "", MAX_ID_SIZE); strncpy($$.s2,    $1, MAX_ID_SIZE); strncpy($$.s3, $2, MAX_ID_SIZE); }
+   | VAR  ID                { strncpy($$.s1, "", MAX_ID_SIZE); strncpy($$.s2, "var", MAX_ID_SIZE); strncpy($$.s3, $2, MAX_ID_SIZE); }
+   | MODIFIER type ID       { strncpy($$.s1, $1, MAX_ID_SIZE); strncpy($$.s2,    $2, MAX_ID_SIZE); strncpy($$.s3, $3, MAX_ID_SIZE); }
+   | MODIFIER VAR  ID       { strncpy($$.s1, $1, MAX_ID_SIZE); strncpy($$.s2, "var", MAX_ID_SIZE); strncpy($$.s3, $3, MAX_ID_SIZE); }
    ;
 
 type
@@ -110,8 +136,8 @@ type
 
 exp
    : pure_exp
-   | VALUE_OF'('restr_exp')' { $$ = $3; }
-   | TYPE_OF'('restr_exp')'  { $$ = newASTTypeOf($3); } // Built-in function
+   | VALUE_OF'('restr_exp')'{ $$ = $3; }
+   | TYPE_OF '('restr_exp')'{ $$ = newASTTypeOf($3); } // Built-in function
    ;
 
 restr_exp

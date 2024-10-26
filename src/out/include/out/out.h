@@ -20,7 +20,8 @@ int evalASTExpression(const ASTNode* node, const SymbolTable* st, Frame* frame);
 typedef struct OutSerializer {
     void (*parseType)(const IOStream* stream, const ASTType type, const bool in_exp);
     void (*typeOf)(const IOStream* stream, const ASTNode* node, const char* node_str);
-    void (*print)(const char* exp_str, const ASTType type, const bool is_printvar, const IOStream* stream);
+    void (*print)(const char* exp_str, const ASTType type, const char* id_str, const IOStream* stream);
+    bool print_redef_level;
 } OutSerializer;
 
 void outCompileAST(const ASTNode* ast, const SymbolTable* st, const IOStream* stream, const OutSerializer* os, unsigned int indentation_level);

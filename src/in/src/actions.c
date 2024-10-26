@@ -110,6 +110,12 @@ ASTNode* handleErrors(ASTResult res, int lineno) {
             deleteASTNode(&ast);
             break;
         }
+        case AST_RES_ERR_UNKNOWN_MODIFIER: {
+            const char* modifier = res.result_value;
+            assert(modifier != NULL);
+            semanticError(lineno, "Unknown modifier %s!", modifier);
+            break;
+        }
         default: {
             semanticError(lineno, "Unknown error %s!", ASTResultTypeToStr(res.result_type));
             assert(false);
@@ -120,24 +126,32 @@ ASTNode* handleErrors(ASTResult res, int lineno) {
     return NULL;
 }
 
-ASTResult declaration(const char* type_str, const char* id, ASTNode* exp, SymbolTable* st) {
-    ASTResult res;
+ASTResult declaration(const char* type_str, const char* id, ASTNode* exp, const char* modifier, SymbolTable* st) {
+    assert(type_str != NULL);
+    assert(id != NULL);
+    assert(modifier != NULL);
+
+    bool redef;
+    if(strlen(modifier) == 0) {
+        redef = false;
+    } else if (strcmp("redef", modifier) == 0) {
+        redef = true;
+    } else {
+        return ERR_VAL(AST_RES_ERR_UNKNOWN_MODIFIER, modifier);
+    }
+
     ASTType type;
-    if(exp != NULL && strncmp("var", type_str, 3) == 0) {
+    if (exp != NULL && strncmp("var", type_str, 3) == 0) {
         type = exp->value_type;
     } else {
-        res = parseASTType(type_str);
+        ASTResult res = parseASTType(type_str);
         if (isERR(res)) {
             return res;
         }
-        type = (ASTType) res.result_value;
+        type = (ASTType)res.result_value;
     }
 
-    if(exp == NULL) {
-        return newASTIDDeclaration(type, id, st);
-    } else {
-        return newASTIDDeclarationAssignment(type, id, exp, st);
-    }
+    return newASTIDDeclaration(type, id, exp, redef, st);
 }
 
 ASTResult typeFromStr(const char* type_str) {

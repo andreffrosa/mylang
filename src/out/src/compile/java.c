@@ -23,10 +23,10 @@ static const char* ASTTypeCoverter[] = {
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-static void print(const char* exp_str, const ASTType type, const bool is_printvar, const IOStream* stream) {
+static void print(const char* exp_str, const ASTType type, const char* id_str, const IOStream* stream) {
     IOStreamWritef(stream, "System.out.println(");
-    if(is_printvar) {
-        IOStreamWritef(stream, "\"%s = \" + ", exp_str);
+    if(id_str != NULL) {
+        IOStreamWritef(stream, "\"%s = \" + ", id_str);
     }
 
     if(type == AST_TYPE_TYPE) {
@@ -89,6 +89,7 @@ const OutSerializer javaSerializer = {
     &parseType,
     &typeOf,
     &print,
+    true
 };
 
 static void printClassName(const IOStream* stream, const char* file_name) {

@@ -20,12 +20,12 @@ void testLogicalAndSequence() {
 }
 
 void logicalAndDoesNotShortCircuitIfTrueOnEval() {
-    SymbolTable* st = newSymbolTable(1);
+    SymbolTable* st = newSymbolTable(1, 1);
 
-    ASTResult res = newASTIDDeclarationAssignment(AST_TYPE_BOOL, "z", newASTBool(false), st);
+    ASTResult res = newASTIDDeclaration(AST_TYPE_BOOL, "z", newASTBool(false), false, st);
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* stmts = res.result_value;
-    Frame* frame = newFrame(getSymbolTableSize(st));
+    Frame* frame = newFrame(getMaxOffset(st) + 1);
     executeASTStatements(stmts, st, frame);
     deleteASTNode(&stmts);
 
@@ -46,12 +46,12 @@ void logicalAndDoesNotShortCircuitIfTrueOnEval() {
 }
 
 void logicalAndShortCircuitsIfFalseOnEval() {
-    SymbolTable* st = newSymbolTable(1);
+    SymbolTable* st = newSymbolTable(1, 1);
 
-    ASTResult res = newASTIDDeclarationAssignment(AST_TYPE_BOOL, "z", newASTBool(false), st);
+    ASTResult res = newASTIDDeclaration(AST_TYPE_BOOL, "z", newASTBool(false), false, st);
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* stmts = res.result_value;
-    Frame* frame = newFrame(getSymbolTableSize(st));
+    Frame* frame = newFrame(getMaxOffset(st) + 1);
     executeASTStatements(stmts, st, frame);
     deleteASTNode(&stmts);
 
@@ -83,12 +83,12 @@ void testLogicalOrSequence() {
 }
 
 void logicalOrDoesNotShortCircuitIfFalseOnEval() {
-    SymbolTable* st = newSymbolTable(1);
+    SymbolTable* st = newSymbolTable(1, 1);
 
-    ASTResult res = newASTIDDeclarationAssignment(AST_TYPE_BOOL, "z", newASTBool(false), st);
+    ASTResult res = newASTIDDeclaration(AST_TYPE_BOOL, "z", newASTBool(false), false, st);
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* stmts = res.result_value;
-    Frame* frame = newFrame(getSymbolTableSize(st));
+    Frame* frame = newFrame(getMaxOffset(st) + 1);
     executeASTStatements(stmts, st, frame);
     deleteASTNode(&stmts);
 
@@ -109,12 +109,12 @@ void logicalOrDoesNotShortCircuitIfFalseOnEval() {
 }
 
 void logicalOrShortCircuitsIfTrueOnEval() {
-    SymbolTable* st = newSymbolTable(1);
+    SymbolTable* st = newSymbolTable(1, 1);
 
-    ASTResult res = newASTIDDeclarationAssignment(AST_TYPE_BOOL, "z", newASTBool(false), st);
+    ASTResult res = newASTIDDeclaration(AST_TYPE_BOOL, "z", newASTBool(false), false, st);
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* stmts = res.result_value;
-    Frame* frame = newFrame(getSymbolTableSize(st));
+    Frame* frame = newFrame(getMaxOffset(st) + 1);
     executeASTStatements(stmts, st, frame);
     deleteASTNode(&stmts);
 
@@ -188,12 +188,12 @@ void testBitwiseNot() {
 }
 
 void bitwiseAndNeverShortCircuitsOnEval() {
-    SymbolTable* st = newSymbolTable(1);
+    SymbolTable* st = newSymbolTable(1, 1);
 
-    ASTResult res = newASTIDDeclarationAssignment(AST_TYPE_BOOL, "z", newASTBool(false), st);
+    ASTResult res = newASTIDDeclaration(AST_TYPE_BOOL, "z", newASTBool(false), false, st);
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* stmts = res.result_value;
-    Frame* frame = newFrame(getSymbolTableSize(st));
+    Frame* frame = newFrame(getMaxOffset(st) + 1);
     executeASTStatements(stmts, st, frame);
     deleteASTNode(&stmts);
 
@@ -212,12 +212,12 @@ void bitwiseAndNeverShortCircuitsOnEval() {
     deleteFrame(&frame);
     deleteSymbolTable(&st);
 
-    st = newSymbolTable(1);
+    st = newSymbolTable(1, 1);
 
-    res = newASTIDDeclarationAssignment(AST_TYPE_BOOL, "z", newASTBool(false), st);
+    res = newASTIDDeclaration(AST_TYPE_BOOL, "z", newASTBool(false), false, st);
     TEST_ASSERT_TRUE(isOK(res));
     stmts = res.result_value;
-    frame = newFrame(getSymbolTableSize(st));
+    frame = newFrame(getMaxOffset(st) + 1);
     executeASTStatements(stmts, st, frame);
     deleteASTNode(&stmts);
 
@@ -239,12 +239,12 @@ void bitwiseAndNeverShortCircuitsOnEval() {
 }
 
 void bitwiseOrNeverShortCircuitsOnEval() {
-    SymbolTable* st = newSymbolTable(1);
+    SymbolTable* st = newSymbolTable(1, 1);
 
-    ASTResult res = newASTIDDeclarationAssignment(AST_TYPE_BOOL, "z", newASTBool(false), st);
+    ASTResult res = newASTIDDeclaration(AST_TYPE_BOOL, "z", newASTBool(false), false, st);
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* stmts = res.result_value;
-    Frame* frame = newFrame(getSymbolTableSize(st));
+    Frame* frame = newFrame(getMaxOffset(st) + 1);
     executeASTStatements(stmts, st, frame);
     deleteASTNode(&stmts);
 
@@ -263,12 +263,12 @@ void bitwiseOrNeverShortCircuitsOnEval() {
     deleteFrame(&frame);
     deleteSymbolTable(&st);
 
-    st = newSymbolTable(1);
+    st = newSymbolTable(1, 1);
 
-    res = newASTIDDeclarationAssignment(AST_TYPE_BOOL, "z", newASTBool(false), st);
+    res = newASTIDDeclaration(AST_TYPE_BOOL, "z", newASTBool(false), false, st);
     TEST_ASSERT_TRUE(isOK(res));
     stmts = res.result_value;
-    frame = newFrame(getSymbolTableSize(st));
+    frame = newFrame(getMaxOffset(st) + 1);
     executeASTStatements(stmts, st, frame);
     deleteASTNode(&stmts);
 

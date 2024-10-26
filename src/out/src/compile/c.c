@@ -24,10 +24,10 @@ static const char* ASTTypeCoverter[] = {
     [AST_TYPE_BOOL] = "_TYPE_BOOL",
 };
 
-static void print(const char* exp_str, const ASTType type, const bool is_printvar, const IOStream* stream) {
+static void print(const char* exp_str, const ASTType type, const char* id_str, const IOStream* stream) {
     IOStreamWritef(stream, "printf(\"");
-    if(is_printvar) {
-        IOStreamWritef(stream, "%s = ", exp_str);
+    if(id_str != NULL) {
+        IOStreamWritef(stream, "%s = ", id_str);
     }
 
     switch (type) {
@@ -74,6 +74,7 @@ const OutSerializer cSerializer = {
     &parseType,
     &typeOf,
     &print,
+    false
 };
 
 static void generateTypeEnum(const IOStream* stream) {

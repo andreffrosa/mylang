@@ -33,7 +33,9 @@ whitespace      [ \t\r]
 "^" |
 "~" |
 "<" |
-">"                     { return yytext[0]; }
+">" |
+"{" |
+"}"                     { return yytext[0]; }
 
 "(|"                    { return OPEN_ABS; }
 "|)"                    { return CLOSE_ABS; }
@@ -65,6 +67,8 @@ whitespace      [ \t\r]
 "printvar"              { return PRINT_VAR; }
 "valueof"               { return VALUE_OF; }
 "typeof"                { return TYPE_OF; }
+
+"redef"                 { strncpy(yylval_param->sval, yytext, MAX_ID_SIZE); return MODIFIER; }
 
 %{/**** NUMBERS ****/%}
 {digit}+                { yylval_param->ival = atoi(yytext); return INT_LITERAL; }

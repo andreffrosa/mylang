@@ -9,7 +9,7 @@
 SymbolTable* st;
 
 void setUp (void) {
-    st = newSymbolTable(1);
+    st = newSymbolTable(1, 1);
 }
 
 void tearDown (void) {
@@ -29,36 +29,36 @@ void tearDown (void) {
 } while (0)
 
 void parseIDDeclaration() {
-    ASTNode* ast = newASTIDDeclaration(AST_TYPE_INT, "n", st).result_value;
+    ASTNode* ast = newASTIDDeclaration(AST_TYPE_INT, "n", NULL, false, st).result_value;
     ASSERT_MATCH_AST("int n", ast, false);
 }
 
 void parseIDDeclarationAssignement() {
-    ASTNode* ast = newASTIDDeclarationAssignment(AST_TYPE_INT, "n", newASTInt(1), st).result_value;
+    ASTNode* ast = newASTIDDeclaration(AST_TYPE_INT, "n", newASTInt(1), false, st).result_value;
     ASSERT_MATCH_AST("int n = 1", ast, false);
 }
 
 void parseAssignement() {
-    insertVar(st, AST_TYPE_INT, "n");
+    defineVar(st, AST_TYPE_INT, "n", false, false);
     ASTNode* ast = newASTAssignment("n", newASTInt(1), st).result_value;
     ASSERT_MATCH_AST("n = 1", ast, true);
 }
 
 void parseSingleStatement() {
-    ASTNode* ast = newASTIDDeclarationAssignment(AST_TYPE_INT, "n", newASTInt(1), st).result_value;
+    ASTNode* ast = newASTIDDeclaration(AST_TYPE_INT, "n", newASTInt(1), false, st).result_value;
     ASSERT_MATCH_AST("int n = 1;", ast, false);
 }
 
 void parseMultipleStatements() {
-    ASTNode* stmt1 = newASTIDDeclaration(AST_TYPE_INT, "n", st).result_value;
+    ASTNode* stmt1 = newASTIDDeclaration(AST_TYPE_INT, "n", NULL, false, st).result_value;
     ASTNode* stmt2 = newASTAssignment("n", newASTInt(1), st).result_value;
     ASTNode* ast = newASTStatementList(stmt1, stmt2);
     ASSERT_MATCH_AST("int n; n = 1;", ast, false);
 }
 
 void parseRestrainedExpression() {
-    Symbol* var = insertVar(st, AST_TYPE_INT, "n");
-    setVarInitialized(var);
+    defineVar(st, AST_TYPE_INT, "n", true, false);
+
     ASTNode* id = newASTIDReference("n", st).result_value;
     ASTNode* v = newASTAdd(id, newASTInt(1)).result_value;
     ASTNode* ast = newASTAssignment("n", v, st).result_value;
@@ -66,10 +66,10 @@ void parseRestrainedExpression() {
 }
 
 void parseDeclarationAssignmentWithTypeInference() {
-    ASTNode* ast = newASTIDDeclarationAssignment(AST_TYPE_INT, "n", newASTInt(1), st).result_value;
+    ASTNode* ast = newASTIDDeclaration(AST_TYPE_INT, "n", newASTInt(1), false, st).result_value;
     ASSERT_MATCH_AST("var n = 1", ast, false);
 
-    ast = newASTIDDeclarationAssignment(AST_TYPE_BOOL, "z", newASTBool(true), st).result_value;
+    ast = newASTIDDeclaration(AST_TYPE_BOOL, "z", newASTBool(true), false, st).result_value;
     ASSERT_MATCH_AST("var z = true", ast, false);
 }
 

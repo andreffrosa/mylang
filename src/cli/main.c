@@ -52,7 +52,7 @@ bool intrepert(InContext* ctx) {
         return true; // Exit shell
     }
 
-    printf("Parsed stdin: %d AST nodes.\n", res.ast->size);
+    printf("Parsed stdin: %d AST nodes and %d symbols.\n", res.ast->size, getTotalSymbolAmount(res.st));
 
     Frame* frame = executeAST(res.ast, res.st);
 
@@ -108,7 +108,7 @@ static inline void compileFile(const char* file_path) {
         return;
     }
 
-    printf("Parsed file %s: %d AST nodes.\n", file_path, res.ast->size);
+    printf("Parsed file %s: %d AST nodes and %d symbols.\n", file_path, res.ast->size, getTotalSymbolAmount(res.st));
 
     size_t len = strlen(file_path);
     char out_file_path_no_ext[len + 1];

@@ -93,11 +93,28 @@ void compileAssignment(const ASTNode* ast, const SymbolTable* st, const OutSeria
     compileASTExpression(ast->right, st, stream, os);
 }
 
+void printId(const IOStream* stream, const Symbol* var, bool print_redef_level) {
+    const char* id = getVarId(var);
+    if (print_redef_level) {
+        unsigned int redef_level = getVarRedefLevel(var);
+        if (redef_level > 0) {
+            IOStreamWritef(stream, "%s_%d_", id, redef_level);
+        } else {
+            IOStreamWritef(stream, "%s", id);
+        }
+    } else {
+        IOStreamWritef(stream, "%s", id);
+    }
+}
+
 void compileIDDeclaration(Symbol* var, const ASTNode* value, const SymbolTable* st, const IOStream* stream, const OutSerializer* os) {
     assert(var != NULL &&  st != NULL);
 
     os->parseType(stream, getVarType(var), false);
-    IOStreamWritef(stream, " %s", getVarId(var));
+
+    IOStreamWritef(stream, " ");
+
+    printId(stream, var, os->print_redef_level);
 
     if(value != NULL) {
         IOStreamWritef(stream, " = ");
@@ -171,7 +188,7 @@ void compileASTExpression(const ASTNode* node, const SymbolTable* st, const IOSt
             os->parseType(stream, node->t, true);
             break;
         case AST_ID:
-            IOStreamWritef(stream, "%s", node->id);
+            printId(stream, node->id, os->print_redef_level);
             break;
         case AST_ADD:
             compileBinaryOP(node, " + ", st, os, stream);
@@ -307,8 +324,7 @@ void compileASTStatements(const ASTNode* ast, const SymbolTable* st, const IOStr
         } case AST_ID_ASSIGNMENT: {
             compileAssignment(ast, st, os, stream);
             break;
-        } case AST_PRINT:
-          case AST_PRINT_VAR: {
+        } case AST_PRINT: {
             assert(os->print != NULL);
             char* ptr;
             size_t size;
@@ -316,12 +332,33 @@ void compileASTStatements(const ASTNode* ast, const SymbolTable* st, const IOStr
             compileASTExpression(ast->child, st, s, os);
             IOStreamClose(&s);
 
-            os->print(ptr, ast->child->value_type, ast->node_type == AST_PRINT_VAR, stream);
+            // TODO: integrate to print
+
+            os->print(ptr, ast->child->value_type, NULL, stream);
 
             free(ptr);
             break;
-        } case AST_NO_OP: break;
-          default: {
+        } case AST_PRINT_VAR: {
+            assert(os->print != NULL);
+            char* ptr;
+            size_t size;
+            IOStream* s = openIOStreamFromMemmory(&ptr, &size);
+            printId(s, ast->child->id, os->print_redef_level);
+            IOStreamClose(&s);
+
+            os->print(ptr, ast->child->value_type, getVarId(ast->child->id), stream);
+
+            free(ptr);
+            break;
+        }
+        case AST_NO_OP: break;
+          case AST_SCOPE: {
+            IOStreamWritef(stream, "{\n");
+            compileASTStatements(ast->child, st, stream, os, indentation_level + 1);
+            indent(stream, indentation_level);
+            IOStreamWritef(stream, "}\n");
+            return; // Skip the ;
+        } default: {
             if(isExp(ast)) {
                 compileASTExpression(ast, st, stream, os);
             } else {
