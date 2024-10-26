@@ -111,7 +111,7 @@ bool outCompileToC(const ASTNode* ast, const SymbolTable* st, const char* file_n
     generateTempVars(stream);
     //IOStreamWritef(stream, "#define typeof(e, t) (e, t)\n\n");
     IOStreamWritef(stream, "int main(int argc, char** argv) {\n");
-    compileASTStatements(ast, st, stream, &cSerializer, INITIAL_INDENTATION_LEVEL);
+    compileASTStatements(ast, st, stream, &cSerializer, INITIAL_INDENTATION_LEVEL, true);
     IOStreamWritef(stream, "%s", POS);
 
     return true;

@@ -104,11 +104,23 @@ void executeASTStatements(const ASTNode* ast, const SymbolTable* st, Frame* fram
             IOStreamWritef(s, "\n");
             IOStreamClose(&s);
             break;
-        } case AST_NO_OP: break;
-          case AST_SCOPE: {
+        } case AST_SCOPE: {
             executeASTStatements(ast->child, st, frame);
             break;
-        } default: {
+        } case AST_IF: {
+            if(evalASTExpression(ast->left, st, frame)) {
+                executeASTStatements(ast->right, st, frame);
+            }
+            break;
+        } case AST_IF_ELSE: {
+            if(evalASTExpression(ast->first, st, frame)) {
+                executeASTStatements(ast->second, st, frame);
+            } else {
+                executeASTStatements(ast->third, st, frame);
+            }
+            break;
+        } case AST_NO_OP: break;
+          default: {
             if(isExp(ast)) {
                 evalASTExpression(ast, st, frame);
             } else {
@@ -198,6 +210,8 @@ int evalASTExpression(const ASTNode* node, const SymbolTable* st, Frame* frame) 
           case AST_CMP_GTE: {
             int carry = 0;
             return evalCmpExpression(node, st, frame, &carry);
+        } case AST_TERNARY_COND: {
+            return evalASTExpression(node->first, st, frame) ? evalASTExpression(node->second, st, frame) : evalASTExpression(node->third, st, frame);
         } default:
             assert(false);
     }

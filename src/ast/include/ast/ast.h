@@ -47,6 +47,9 @@ typedef enum ASTNodeType {
     AST_CMP_GT,
     AST_CMP_GTE,
     AST_SCOPE,
+    AST_TERNARY_COND,
+    AST_IF,
+    AST_IF_ELSE,
     AST_NODE_TYPES_COUNT  // Count of AST node types
 } ASTNodeType;
 
@@ -54,6 +57,7 @@ typedef enum ASTOpType {
     ZEROARY_OP,
     UNARY_OP,
     BINARY_OP,
+    TERNARY_OP,
     UNKNOWN_OP
 } ASTOpType;
 
@@ -73,6 +77,11 @@ typedef struct ASTNode {
         struct {    // UNARY_OP
             const struct ASTNode* child;
         };
+        struct { // TERNARY_OP
+            struct ASTNode* first;
+            struct ASTNode* second;
+            struct ASTNode* third;
+        };
     };
 } ASTNode;
 
@@ -87,6 +96,8 @@ ASTNode* newASTType(const ASTType t);
 ASTResult newASTBinaryOP(const ASTNodeType type, const ASTNode* left, const ASTNode* right);
 
 ASTResult newASTUnaryOP(const ASTNodeType type, const ASTNode* child);
+
+ASTResult newASTTernaryOP(ASTNodeType node_type, ASTNode* first, ASTNode* second, ASTNode* third);
 
 ASTNode* newASTNoOp();
 
@@ -148,5 +159,9 @@ ASTResult newASTAssignment(const char* id, const ASTNode* value, SymbolTable* st
 #define newASTCmpGTE(l, r) newASTBinaryOP(AST_CMP_GTE, l, r)
 
 #define newASTScope(s) newASTUnaryOP(AST_SCOPE, s).result_value
+
+#define newASTTernaryCond(e, l, r) newASTTernaryOP(AST_TERNARY_COND, e, l, r)
+#define newASTIf(cond, t) newASTBinaryOP(AST_IF, cond, t)
+#define newASTIfElse(cond, t, f) newASTTernaryOP(AST_IF_ELSE, cond, t, f)
 
 #endif

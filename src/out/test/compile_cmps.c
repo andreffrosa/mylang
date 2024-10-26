@@ -8,9 +8,11 @@
 #include "test_utils.h"
 
 static ASTNode* ast;
+static SymbolTable* st;
 
 void setUp (void) {
     ast = NULL;
+    st = NULL;
 }
 
 void tearDown (void) {
@@ -47,7 +49,7 @@ void compileTypeEqChain() { // int == bool == void
 }
 
 void compileLtChainWithVar() { // 1 <= n <= 10
-    SymbolTable* st = newSymbolTableDefault();
+    st = newSymbolTableDefault();
     ASTResult res = defineVar(st, AST_TYPE_INT, "n", true, false);
     TEST_ASSERT_TRUE(isOK(res));
 

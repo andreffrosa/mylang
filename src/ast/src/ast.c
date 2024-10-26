@@ -236,6 +236,42 @@ ASTResult binaryCmpExpressionTypeHandler(ASTNode* node) {
     }
 }
 
+ASTResult ternaryCondTypeHandler(ASTNode* node) {
+    assert(node);
+
+    if(node->first->value_type != AST_TYPE_BOOL) {
+        return ERR(AST_RES_ERR_INVALID_LEFT_TYPE);
+    }
+
+    if(node->second->value_type != node->third->value_type) {
+        return ERR(AST_RES_ERR_DIFFERENT_TYPES);
+    }
+
+    if(node->second->value_type == AST_TYPE_VOID) {
+        return ERR(AST_RES_ERR_INVALID_TYPE);
+    }
+
+    return OK(node->second->value_type);
+}
+
+ASTResult ifTypeHandler(ASTNode* node) {
+    assert(node);
+
+    if(node->node_type == AST_IF) {
+        if(node->left->value_type != AST_TYPE_BOOL) {
+            return ERR(AST_RES_ERR_INVALID_LEFT_TYPE);
+        }
+    } else if(node->node_type == AST_IF_ELSE) {
+        if(node->first->value_type != AST_TYPE_BOOL) {
+            return ERR(AST_RES_ERR_INVALID_LEFT_TYPE);
+        }
+    } else {
+        assert(false);
+    }
+
+    return OK(AST_TYPE_VOID);
+}
+
 // Lookup Table
 ASTNodeInfo ASTNodeTable[] = {
     [AST_INT]           = {"AST_INT",            ZEROARY_OP,    false, NULL},
@@ -277,6 +313,9 @@ ASTNodeInfo ASTNodeTable[] = {
     [AST_CMP_GT]        = {"AST_CMP_GT",         BINARY_OP,     false, &binaryCmpExpressionTypeHandler},
     [AST_CMP_GTE]       = {"AST_CMP_GTE",        BINARY_OP,     false, &binaryCmpExpressionTypeHandler},
     [AST_SCOPE]         = {"AST_SCOPE",          UNARY_OP,      true,  &genericStatementTypeHandler},
+    [AST_TERNARY_COND]  = {"AST_TERNARY_COND",   TERNARY_OP,    false, &ternaryCondTypeHandler},
+    [AST_IF]            = {"AST_IF",             BINARY_OP,     true,  &ifTypeHandler},
+    [AST_IF_ELSE]       = {"AST_IF_ELSE",        TERNARY_OP,    true,  &ifTypeHandler},
 };
 
 ASTOpType getNodeOpType(ASTNodeType node_type) {
@@ -344,6 +383,22 @@ ASTResult newASTUnaryOP(const ASTNodeType node_type, const ASTNode* child) {
     }
     node->value_type = (ASTType) res.result_value;
 
+    return OK(node);
+}
+
+ASTResult newASTTernaryOP(ASTNodeType node_type, ASTNode* first, ASTNode* second, ASTNode* third) {
+    assert(first != NULL && second != NULL && third != NULL);
+
+    ASTNode* node = newASTNode(node_type, first->size + second->size + third->size + 1);
+    node->first = first;
+    node->second = second;
+    node->third = third;
+
+    ASTResult res = ASTNodeTable[node_type].type_handler(node);
+    if(isERR(res)) {
+        return ERR_VAL(res.result_type, node);
+    }
+    node->value_type = (ASTType) res.result_value;
     return OK(node);
 }
 
@@ -421,6 +476,11 @@ void deleteASTNode(ASTNode** node) {
         case UNARY_OP:
             deleteASTNode((ASTNode**)&((*node)->child));
             break;
+        case TERNARY_OP:
+            deleteASTNode(&((*node)->first));
+            deleteASTNode(&((*node)->second));
+            deleteASTNode(&((*node)->third));
+            break;
         default:
             assert(false);
     }
@@ -451,6 +511,8 @@ bool equalAST(const ASTNode* ast1, const ASTNode* ast2) {
                     return ast1->t == ast2->t;
                 case AST_ID:
                     return strncmp(getVarId(ast1->id), getVarId(ast2->id), MAX_ID_SIZE) == 0;
+                case AST_NO_OP:
+                    return ast2->node_type == AST_NO_OP;
                 default:
                     assert(false);
             }
@@ -458,6 +520,8 @@ bool equalAST(const ASTNode* ast1, const ASTNode* ast2) {
             return equalAST(ast1->child, ast2->child);
         case BINARY_OP:
             return equalAST(ast1->left, ast2->left) && equalAST(ast1->right, ast2->right);
+        case TERNARY_OP:
+            return equalAST(ast1->first, ast2->first) && equalAST(ast1->second, ast2->second) && equalAST(ast1->third, ast2->third);
         default:
             assert(false);
     }

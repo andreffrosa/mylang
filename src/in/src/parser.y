@@ -61,11 +61,14 @@
 %token '='
 
 // TODO: check priority
+%right '?' ':'
 %left L_SHIFT R_SHIFT
 %left '|' '&' '^' LOGICAL_OR LOGICAL_AND
 %left CMP_EQ CMP_NEQ '<' CMP_LTE '>' CMP_GTE
 %left '+' '-'
 %left '*' '/' '%'
+
+%token IF THEN ELSE
 
 %precedence UMINUS UPLUS SET_POSITIVE SET_NEGATIVE '~' '!'
 
@@ -79,7 +82,7 @@
 
 %token END 0
 
-%type <ast_node> exp stmt stmt_seq pure_exp restr_exp line_stmt scope
+%type <ast_node> exp stmt stmt_seq pure_exp restr_exp line_stmt scope cond
 %type <sval> type
 %type <triple_str> decl
 
@@ -102,13 +105,16 @@ stmt_seq
 
 stmt
    : line_stmt ';'          { $$ = $1; }
+   | ';'                    { $$ = newASTNoOp(); }
    | scope                  { $$ = $1; }
+   | cond                   { $$ = $1; }
    ;
 
 line_stmt
    : exp                    { $$ = $1; }
    | restr_exp              { $$ = $1; }
-   | decl                   { TRY($$, declaration($1.s2, $1.s3, NULL, $1.s1, ctx->st)); }
+// [TODO]: Declarations without assignment are disabled while uninitialization verification is not implemented
+//   | decl                   { TRY($$, declaration($1.s2, $1.s3, NULL, $1.s1, ctx->st)); }
    | decl '=' exp           { TRY($$, declaration($1.s2, $1.s3,   $3, $1.s1, ctx->st)); }
    | PRINT     '(' exp ')'  { $$ = newASTPrint($3); }
    | PRINT_VAR '('  ID ')'  { TRY($$, handlePrintVar($3, ctx->st)); }
@@ -117,8 +123,11 @@ line_stmt
 scope
    : '{' { enterScopeDefault(ctx->st); } stmt_seq '}'
          { leaveScope(ctx->st);
-           const ASTNode* stmts = $3 == NULL ? newASTNoOp() : $3;
-           $$ = newASTScope(stmts);
+           if ($3 == NULL) {
+               $$ = newASTNoOp();
+           } else {
+               $$ = newASTScope($3);
+           }
          }
    ;
 
@@ -127,6 +136,13 @@ decl
    | VAR  ID                { strncpy($$.s1, "", MAX_ID_SIZE); strncpy($$.s2, "var", MAX_ID_SIZE); strncpy($$.s3, $2, MAX_ID_SIZE); }
    | MODIFIER type ID       { strncpy($$.s1, $1, MAX_ID_SIZE); strncpy($$.s2,    $2, MAX_ID_SIZE); strncpy($$.s3, $3, MAX_ID_SIZE); }
    | MODIFIER VAR  ID       { strncpy($$.s1, $1, MAX_ID_SIZE); strncpy($$.s2, "var", MAX_ID_SIZE); strncpy($$.s3, $3, MAX_ID_SIZE); }
+   ;
+
+cond
+   : IF '(' exp ')' scope            { TRY($$, newASTIf($3, $5)); }
+   | IF '(' exp ')' scope ELSE scope { TRY($$, newASTIfElse($3, $5, $7)); }
+   | IF '(' exp ')' scope ELSE cond  { TRY($$, newASTIfElse($3, $5, $7)); }
+//   | IF '(' exp ')' THEN line_stmt';'{ TRY($$, newASTIf($3, $6)); }
    ;
 
 type
@@ -176,6 +192,7 @@ pure_exp
    | exp CMP_LTE exp        { TRY($$, newASTCmpLTE($1, $3)); }
    | exp '>' exp            { TRY($$, newASTCmpGT($1, $3)); }
    | exp CMP_GTE exp        { TRY($$, newASTCmpGTE($1, $3)); }
+   | exp '?' exp ':' exp    { TRY($$, newASTTernaryCond($1, $3, $5)); }
    ;
 
 %%
