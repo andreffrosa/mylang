@@ -5,9 +5,9 @@
 # http://www.linuxjournal.com/content/convert-diff-output-colorized-html
 # Modified by stopyoukid
 #
-# Downloaded from https://gist.github.com/stopyoukid/5888146
+# Adapted from https://gist.github.com/stopyoukid/5888146
 
-html="<html><head><meta charset=\"utf-8\"><title>Pretty Diff</title><style>body {text-align: center;}#wrapper {display: inline-block;margin-top: 1em;min-width: 800px;text-align: left;}h2 {background: #fafafa;background: -moz-linear-gradient(#fafafa, #eaeaea);background: -webkit-linear-gradient(#fafafa, #eaeaea);-ms-filter: \"progid:DXImageTransform.Microsoft.gradient(startColorstr='#fafafa',endColorstr='#eaeaea')\";border: 1px solid #d8d8d8;border-bottom: 0;color: #555;font: 14px sans-serif;overflow: hidden;padding: 10px 6px;text-shadow: 0 1px 0 white;margin: 0;}.file-diff {border: 1px solid #d8d8d8;margin-bottom: 1em;overflow: auto;padding: 0.5em 0;}.file-diff > div {width: 100%:}pre {margin: 0;font-family: \"Bitstream Vera Sans Mono\", Courier, monospace;font-size: 12px;line-height: 1.4em;text-indent: 0.5em;}.file {color: #aaa;}.delete {background-color: #fdd;}.insert {background-color: #dfd;}.info {color: #a0b;}</style></head><body><div id=\"wrapper\">"
+html="<html><head><meta charset=\"utf-8\"><title>Pretty Diff</title><style>body {text-align: center;}#wrapper {display: inline-block;margin-top: 1em;min-width: 800px;text-align: left;}h2 {background: #fafafa;background: -moz-linear-gradient(#fafafa, #eaeaea);background: -webkit-linear-gradient(#fafafa, #eaeaea);-ms-filter: \"progid:DXImageTransform.Microsoft.gradient(startColorstr='#fafafa',endColorstr='#eaeaea')\";border: 1px solid #d8d8d8;border-bottom: 0;color: #555;font: 14px sans-serif;font-weight: bold;overflow: hidden;padding: 10px 6px;text-shadow: 0 1px 0 white;margin: 0;}.file-diff {border: 1px solid #d8d8d8;margin-bottom: 1em;overflow: auto;padding: 0.5em 0;}.file-diff > div {width: 100%:}pre {margin: 0;font-family: \"Bitstream Vera Sans Mono\", Courier, monospace;font-size: 12px;line-height: 1.4em;text-indent: 0.5em;}.file {color: #aaa;}.delete {background-color: #fdd;}.insert {background-color: #dfd;}.info {color: #a0b;}</style></head><body><div id=\"wrapper\">"
 first=1
 diffseen=0
 lastonly=0
