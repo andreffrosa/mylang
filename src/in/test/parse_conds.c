@@ -51,11 +51,89 @@ void parseTernaryCondExp() {
     ASSERT_MATCH_AST("true ? 1 : 2", ast, false);
 }
 
+void parseCondAssignment() {
+    defineVar(st, AST_TYPE_INT, "n", false);
+    defineVar(st, AST_TYPE_INT, "m", false);
+
+    ASTResult res;
+    res = newASTIDReference("n", st);
+    TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* n_node = res.result_value;
+    res = newASTIDReference("m", st);
+    TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* m_node = res.result_value;
+
+    res = newASTTernaryCond(newASTBool(true), n_node, m_node);
+    TEST_ASSERT_TRUE(isOK(res));
+    res = newASTAssignment(newASTParentheses(res.result_value), newASTInt(2));
+    TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* ast = res.result_value;
+
+    ASSERT_MATCH_AST("(true ? n : m) = 2", ast, true);
+}
+
+void parseNestedCondAssignment() {
+    defineVar(st, AST_TYPE_INT, "n", false);
+    defineVar(st, AST_TYPE_INT, "m", false);
+    defineVar(st, AST_TYPE_INT, "k", false);
+
+    ASTResult res;
+    res = newASTIDReference("n", st);
+    TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* n_node = res.result_value;
+    res = newASTIDReference("m", st);
+    TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* m_node = res.result_value;
+    res = newASTIDReference("k", st);
+    TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* k_node = res.result_value;
+
+    res = newASTTernaryCond(newASTBool(true), m_node, k_node);
+    TEST_ASSERT_TRUE(isOK(res));
+    res = newASTTernaryCond(newASTBool(false), n_node, newASTParentheses(res.result_value));
+    TEST_ASSERT_TRUE(isOK(res));
+    res = newASTAssignment(newASTParentheses(res.result_value), newASTInt(2));
+    TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* ast = res.result_value;
+
+    ASSERT_MATCH_AST("(false ? n : (true ? m : k)) = 2", ast, true);
+}
+
+void parseChainedCondAssignment() {
+    defineVar(st, AST_TYPE_INT, "n", false);
+    defineVar(st, AST_TYPE_INT, "m", false);
+    defineVar(st, AST_TYPE_INT, "k", false);
+
+    ASTResult res;
+    res = newASTIDReference("n", st);
+    TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* n_node = res.result_value;
+    res = newASTIDReference("m", st);
+    TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* m_node = res.result_value;
+    res = newASTIDReference("k", st);
+    TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* k_node = res.result_value;
+
+    res = newASTTernaryCond(newASTBool(true), n_node, m_node);
+    TEST_ASSERT_TRUE(isOK(res));
+    res = newASTAssignment(newASTParentheses(res.result_value), newASTInt(2));
+    TEST_ASSERT_TRUE(isOK(res));
+    res = newASTAssignment(k_node, res.result_value);
+    TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* ast = res.result_value;
+
+    ASSERT_MATCH_AST("k = (true ? n : m) = 2", ast, true);
+}
+
 int main() {
     UNITY_BEGIN();
     RUN_TEST(parseIfStmtWithoutBody);
     RUN_TEST(parseIfStmt);
     RUN_TEST(parseIfElseStmt);
     RUN_TEST(parseTernaryCondExp);
+    RUN_TEST(parseCondAssignment);
+    RUN_TEST(parseNestedCondAssignment);
+    RUN_TEST(parseChainedCondAssignment);
     return UNITY_END();
 }

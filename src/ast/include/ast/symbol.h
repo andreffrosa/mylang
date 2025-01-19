@@ -52,17 +52,13 @@ Symbol* lookupVarInScope(const Scope* scope, const char *id);
 
 Symbol* lookupLastVarWithOffset(const SymbolTable *st, unsigned int var_offset);
 
-ASTResult defineVar(SymbolTable* st, const ASTType type, const char* id, bool is_init, bool redef);
+ASTResult defineVar(SymbolTable* st, const ASTType type, const char* id, bool redef);
 
-ASTResult getVarReference(const SymbolTable* st, const char* id, bool is_left);
+ASTResult getVarReference(const SymbolTable* st, const char* id);
 
 const char* getVarId(const Symbol* var);
 
 ASTType getVarType(const Symbol* var);
-
-bool isVarInitialized(const Symbol* var);
-
-void setVarInitialized(Symbol* var);
 
 unsigned int getVarOffset(const Symbol* var);
 

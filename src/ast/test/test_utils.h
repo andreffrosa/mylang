@@ -25,5 +25,11 @@
     deleteASTNode(&ast2_);\
 } while (0)
 
+#define ASSERT_IS_OK(res) TEST_ASSERT_TRUE_MESSAGE(isOK(res), ASTResultTypeToStr(res.result_type))
+
+#define ASSERT_IS_ERR(res, type) do {\
+    TEST_ASSERT_TRUE_MESSAGE(isERR(res), ASTResultTypeToStr(res.result_type)); \
+    TEST_ASSERT_EQUAL_INT_MESSAGE(type, res.result_type, ASTResultTypeToStr(res.result_type)); \
+} while (0)
 
 #endif

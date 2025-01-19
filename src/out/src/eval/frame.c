@@ -8,9 +8,9 @@ int printVar(const Symbol* var, const int* value, IOStream* stream) {
     assert(var != NULL);
     assert(stream != NULL);
 
-    if (!isVarInitialized(var) || value == NULL) {
+    /*if (!isVarInitialized(var) || value == NULL) {
         return IOStreamWritef(stream, "%s %s = -", ASTTypeToStr(getVarType(var)), getVarId(var));
-    }
+    }*/
 
     char buffer[TYPE_VALUE_BUFFER_SIZE];
     ASTTypeValueToStr(getVarType(var), *value, buffer);

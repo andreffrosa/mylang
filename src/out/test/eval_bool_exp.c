@@ -29,7 +29,8 @@ void logicalAndDoesNotShortCircuitIfTrueOnEval() {
     executeASTStatements(stmts, st, frame);
     deleteASTNode(&stmts);
 
-    res = newASTAssignment("z", newASTBool(true), st);
+    ASTNode* id_node = newASTIDReference("z", st).result_value;
+    res = newASTAssignment(id_node, newASTBool(true));
     TEST_ASSERT_TRUE(isOK(res));
     res = newASTLogicalAnd(newASTBool(true), res.result_value);
     TEST_ASSERT_TRUE(isOK(res));
@@ -55,7 +56,8 @@ void logicalAndShortCircuitsIfFalseOnEval() {
     executeASTStatements(stmts, st, frame);
     deleteASTNode(&stmts);
 
-    res = newASTAssignment("z", newASTBool(true), st);
+    ASTNode* id_node = newASTIDReference("z", st).result_value;
+    res = newASTAssignment(id_node, newASTBool(true));
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* restrained_exp = res.result_value;
     res = newASTLogicalAnd(newASTBool(false), restrained_exp);
@@ -92,7 +94,8 @@ void logicalOrDoesNotShortCircuitIfFalseOnEval() {
     executeASTStatements(stmts, st, frame);
     deleteASTNode(&stmts);
 
-    res = newASTAssignment("z", newASTBool(true), st);
+    ASTNode* id_node = newASTIDReference("z", st).result_value;
+    res = newASTAssignment(id_node, newASTBool(true));
     TEST_ASSERT_TRUE(isOK(res));
     res = newASTLogicalOr(newASTBool(false), res.result_value);
     TEST_ASSERT_TRUE(isOK(res));
@@ -118,7 +121,8 @@ void logicalOrShortCircuitsIfTrueOnEval() {
     executeASTStatements(stmts, st, frame);
     deleteASTNode(&stmts);
 
-    res = newASTAssignment("z", newASTBool(true), st);
+    ASTNode* id_node = newASTIDReference("z", st).result_value;
+    res = newASTAssignment(id_node, newASTBool(true));
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* restrained_exp = res.result_value;
     res = newASTLogicalOr(newASTBool(true), restrained_exp);
@@ -197,7 +201,8 @@ void bitwiseAndNeverShortCircuitsOnEval() {
     executeASTStatements(stmts, st, frame);
     deleteASTNode(&stmts);
 
-    res = newASTAssignment("z", newASTBool(true), st);
+    ASTNode* id_node = newASTIDReference("z", st).result_value;
+    res = newASTAssignment(id_node, newASTBool(true));
     TEST_ASSERT_TRUE(isOK(res));
     res = newASTBitwiseAnd(newASTBool(true), res.result_value);
     TEST_ASSERT_TRUE(isOK(res));
@@ -221,7 +226,8 @@ void bitwiseAndNeverShortCircuitsOnEval() {
     executeASTStatements(stmts, st, frame);
     deleteASTNode(&stmts);
 
-    res = newASTAssignment("z", newASTBool(true), st);
+    id_node = newASTIDReference("z", st).result_value;
+    res = newASTAssignment(id_node, newASTBool(true));
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* restrained_exp = res.result_value;
     res = newASTBitwiseAnd(newASTBool(false), restrained_exp);
@@ -248,7 +254,8 @@ void bitwiseOrNeverShortCircuitsOnEval() {
     executeASTStatements(stmts, st, frame);
     deleteASTNode(&stmts);
 
-    res = newASTAssignment("z", newASTBool(true), st);
+    ASTNode* id_node = newASTIDReference("z", st).result_value;
+    res = newASTAssignment(id_node, newASTBool(true));
     TEST_ASSERT_TRUE(isOK(res));
     res = newASTBitwiseOr(newASTBool(false), res.result_value);
     TEST_ASSERT_TRUE(isOK(res));
@@ -272,7 +279,8 @@ void bitwiseOrNeverShortCircuitsOnEval() {
     executeASTStatements(stmts, st, frame);
     deleteASTNode(&stmts);
 
-    res = newASTAssignment("z", newASTBool(true), st);
+    id_node = newASTIDReference("z", st).result_value;
+    res = newASTAssignment(id_node, newASTBool(true));
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* restrained_exp = res.result_value;
     res = newASTBitwiseOr(newASTBool(true), restrained_exp);

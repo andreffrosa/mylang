@@ -21,6 +21,7 @@ typedef struct OutSerializer {
     void (*parseType)(const IOStream* stream, const ASTType type, const bool in_exp);
     void (*typeOf)(const IOStream* stream, const ASTNode* node, const char* node_str);
     void (*print)(const char* exp_str, const ASTType type, const char* id_str, const IOStream* stream);
+    bool (*cond_assign_needs_tmp)();
     bool print_redef_level;
 } OutSerializer;
 

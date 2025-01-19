@@ -13,3 +13,20 @@ if (m == 1) {
 } else {
     print(0);
 }
+
+// if (true) then print(-9);
+
+// Conditional Assignment
+var a = 0;
+var b = 0;
+var c = 0;
+(true  ? a : b) =  2;
+(false ? a : b) = -2;
+(true  ? (false ? a : c) : b) =  3;
+printvar(a); //  2
+printvar(b); // -2
+printvar(c); //  3
+c = ((false ? a : b) = 3 + 4);
+printvar(a); // 2
+printvar(b); // 7
+printvar(c); // 7

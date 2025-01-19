@@ -5,7 +5,6 @@
 #include <errno.h>
 
 #include "ast/ast.h"
-
 #include "out.h"
 
 static inline int getPrecedence(ASTNodeType node_type) {
@@ -120,12 +119,57 @@ void compileTernaryCond(const ASTNode* node, const SymbolTable* st, const OutSer
     }
 }
 
-void compileAssignment(const ASTNode* ast, const SymbolTable* st, const OutSerializer* os, const IOStream* stream) {
-    assert(ast->left->node_type == AST_ID);
+static void compileLVal(const ASTNode* lval, const char* rval, const SymbolTable* st, const OutSerializer* os, const IOStream* stream, bool first, bool is_rval) {
+    assert(lval != NULL);
+    assert(rval != NULL);
 
-    Symbol* var = ast->left->id;
-    IOStreamWritef(stream, "%s = ", getVarId(var));
-    compileASTExpression(ast->right, st, stream, os);
+    if (first && os->cond_assign_needs_tmp() && lval->node_type != AST_ID && !is_rval) {
+        const char* tmp_var_type = ASTTypeToStr(lval->value_type);
+        IOStreamWritef(stream, "_tmp_%s = ", tmp_var_type);
+    }
+
+    bool need_parentheses = (is_rval || !first) && lval->node_type != AST_PARENTHESES;
+
+    if (need_parentheses) { IOStreamWritef(stream, "("); }
+
+    switch (lval->node_type) {
+        case AST_ID: {
+            Symbol* var = lval->id;
+            IOStreamWritef(stream, "%s = %s", getVarId(var), rval);
+        } break;
+        case AST_TERNARY_COND: {
+            // Alternative in C: *(cond ? &a : &b) = rval
+            compileASTExpression(lval->first, st, stream, os);
+            IOStreamWritef(stream, " ? ");
+            compileLVal(lval->second, rval, st, os, stream, false, false);
+            IOStreamWritef(stream, " : ");
+            compileLVal(lval->third, rval, st, os, stream, false, false);
+        } break;
+        case AST_PARENTHESES: {
+            compileLVal(lval->child, rval, st, os, stream, false, false);
+        } break;
+        default:
+            assert(false);
+            break;
+    }
+
+    if (need_parentheses) { IOStreamWritef(stream, ")"); }
+}
+
+void compileAssignment(const ASTNode* ast, const SymbolTable* st, const OutSerializer* os, const IOStream* stream, bool is_rval) {
+    assert(ast->node_type == AST_ID_ASSIGNMENT);
+
+    const ASTNode* lval = ast->left;
+
+    char* ptr = NULL;
+    size_t size = 0;
+    IOStream* s = openIOStreamFromMemmory(&ptr, &size);
+    compileASTExpression(ast->right, st, s, os);
+    IOStreamClose(&s);
+
+    compileLVal(lval, ptr, st, os, stream, true, is_rval);
+
+    free(ptr);
 }
 
 void printId(const IOStream* stream, const Symbol* var, bool print_redef_level) {
@@ -159,11 +203,11 @@ void compileIDDeclaration(Symbol* var, const ASTNode* value, const SymbolTable* 
 
 static inline const char* compare(const ASTNodeType node_type) {
     switch (node_type) {
-        case AST_CMP_EQ: return "==";
+        case AST_CMP_EQ:  return "==";
         case AST_CMP_NEQ: return "!=";
-        case AST_CMP_LT: return "<";
+        case AST_CMP_LT:  return  "<";
         case AST_CMP_LTE: return "<=";
-        case AST_CMP_GT: return ">";
+        case AST_CMP_GT:  return  ">";
         case AST_CMP_GTE: return ">=";
         default:
             assert(false);
@@ -297,9 +341,7 @@ void compileASTExpression(const ASTNode* node, const SymbolTable* st, const IOSt
             compileBinaryOP(node, " || ", st, os, stream);
             break;
         case AST_ID_ASSIGNMENT:
-            IOStreamWritef(stream, "(");
-            compileAssignment(node, st, os, stream);
-            IOStreamWritef(stream, ")");
+            compileAssignment(node, st, os, stream, true);
             break;
         case AST_TYPE_OF: {
             // TODO: [optimization] it is only worth serializing the exp if it has side-effets. otherwise, only the type matters
@@ -386,7 +428,8 @@ void compileIf(const ASTNode* ast, const SymbolTable* st, const IOStream* stream
 }
 
 void compileASTStatements(const ASTNode* ast, const SymbolTable* st, const IOStream* stream, const OutSerializer* os, unsigned int indentation_level, bool print_new_line) {
-    assert(ast != NULL && st != NULL);
+    assert(ast != NULL);
+    assert(st != NULL);
 
     if(ast->node_type == AST_STATEMENT_SEQ) {
         compileASTStatements(ast->left, st, stream, os, indentation_level, print_new_line);
@@ -407,7 +450,7 @@ void compileASTStatements(const ASTNode* ast, const SymbolTable* st, const IOStr
             compileIDDeclaration(var, ast->right, st, stream, os);
             break;
         } case AST_ID_ASSIGNMENT: {
-            compileAssignment(ast, st, os, stream);
+            compileAssignment(ast, st, os, stream, false);
             break;
         } case AST_PRINT: {
             assert(os->print != NULL);

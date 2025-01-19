@@ -64,7 +64,10 @@ typedef enum ASTOpType {
 typedef struct ASTNode {
     ASTNodeType node_type;
     ASTType value_type;
+    
     unsigned int size;
+    bool allowed_lval;
+
     union {
         int n;      // AST_INT
         bool z;     // AST_BOOL
@@ -107,9 +110,9 @@ bool isStmt(const ASTNode* ast);
 
 bool isExp(const ASTNode* ast);
 
-bool isRestrainedExp(const ASTNode* ast);
-
 bool isCmpExp(const ASTNode* ast);
+
+bool requireParentheses(const ASTNode* ast);
 
 ASTOpType getNodeOpType(const ASTNodeType node_type);
 
@@ -142,8 +145,8 @@ const char* nodeTypeToStr(ASTNodeType node_type);
 #define newASTStatementList(stmt, list) (list == NULL ? stmt : newASTBinaryOP(AST_STATEMENT_SEQ, stmt, list).result_value)
 
 ASTResult newASTIDDeclaration(ASTType type, const char* id, const ASTNode* value, bool redef, SymbolTable* st);
-ASTResult newASTIDReference(const char* id, SymbolTable* st);
-ASTResult newASTAssignment(const char* id, const ASTNode* value, SymbolTable* st);
+ASTResult newASTIDReference(const char* id, const SymbolTable* st);
+#define newASTAssignment(l, r) newASTBinaryOP(AST_ID_ASSIGNMENT, l, r)
 
 #define newASTPrint(e) newASTUnaryOP(AST_PRINT, e).result_value
 #define newASTPrintVar(e) newASTUnaryOP(AST_PRINT_VAR, e).result_value

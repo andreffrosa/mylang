@@ -55,7 +55,7 @@ void typeofTypeIsType() {
 
 void typeofIDIsVarType() {
     SymbolTable* st = newSymbolTable(1, 1);
-    defineVar(st, AST_TYPE_BOOL, "n", true, false);
+    defineVar(st, AST_TYPE_BOOL, "n", false);
     ASTResult res = newASTIDReference("n", st);
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* ast = newASTTypeOf(res.result_value);
@@ -73,8 +73,11 @@ void typeofIDIsVarType() {
 
 void typeofValueofRestrainedExpIsCorrectType() {
     SymbolTable* st = newSymbolTable(1, 1);
-    defineVar(st, AST_TYPE_BOOL, "n", false, false);
-    ASTResult res = newASTAssignment("n", newASTBool(true), st);
+    defineVar(st, AST_TYPE_BOOL, "n", false);
+    ASTResult res = newASTIDReference("n", st);
+    TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* id_node = res.result_value;
+    res = newASTAssignment(id_node, newASTBool(true));
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* ast = newASTTypeOf(res.result_value);
 

@@ -50,7 +50,7 @@ void compileTypeEqChain() { // int == bool == void
 
 void compileLtChainWithVar() { // 1 <= n <= 10
     st = newSymbolTableDefault();
-    ASTResult res = defineVar(st, AST_TYPE_INT, "n", true, false);
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     TEST_ASSERT_TRUE(isOK(res));
 
     ast = newASTCmpLTE(newASTInt(1), newASTIDReference("n", st).result_value).result_value;

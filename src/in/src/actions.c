@@ -116,6 +116,13 @@ ASTNode* handleErrors(ASTResult res, int lineno) {
             semanticError(lineno, "Unknown qualifier %s!", qualifier);
             break;
         }
+        case AST_RES_ERR_INVALID_LVAL: {
+            ASTNode* ast = (ASTNode*) res.result_value;
+            assert(ast != NULL);
+            semanticError(lineno, "Invalid l-value %s!", nodeTypeToStr(ast->left->node_type));
+            deleteASTNode(&ast);
+            break;
+        }
         default: {
             semanticError(lineno, "Unknown error %s!", ASTResultTypeToStr(res.result_type));
             assert(false);
@@ -125,35 +132,6 @@ ASTNode* handleErrors(ASTResult res, int lineno) {
 
     return NULL;
 }
-
-/*
-ASTResult declaration(const char* type_str, const char* id, ASTNode* exp, const char* qualifier, SymbolTable* st) {
-    assert(type_str != NULL);
-    assert(id != NULL);
-    assert(qualifier != NULL);
-
-    bool redef;
-    if(strlen(qualifier) == 0) {
-        redef = false;
-    } else if (strcmp("redef", qualifier) == 0) {
-        redef = true;
-    } else {
-        return ERR_VAL(AST_RES_ERR_UNKNOWN_QUALIFIER, qualifier);
-    }
-
-    ASTType type;
-    if (exp != NULL && strncmp("var", type_str, 3) == 0) {
-        type = exp->value_type;
-    } else {
-        ASTResult res = parseASTType(type_str);
-        if (isERR(res)) {
-            return res;
-        }
-        type = (ASTType)res.result_value;
-    }
-
-    return newASTIDDeclaration(type, id, exp, redef, st);
-}*/
 
 ASTResult declaration(const char* type_str, const char* id, ASTNode* exp, const char* qualifier, SymbolTable* st) {
     assert(type_str != NULL);
@@ -200,3 +178,4 @@ ASTResult handlePrintVar(const char* id, SymbolTable* st) {
     ASTNode* id_node = (ASTNode*) res.result_value;
     return OK(newASTPrintVar(id_node));
 }
+

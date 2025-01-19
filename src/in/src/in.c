@@ -55,13 +55,13 @@ ParseResult inParseWithSt(const InContext* ctx, SymbolTable* st) {
     assert(st != NULL);
 
     ASTNode* ast = NULL;
-    
+
     ParseContext parse_ctx = {
         .ast = &ast,
         .st = st,
         .nested_comment_level = 0
     };
-    
+
     bool status = !yyparse(ctx->scanner, &parse_ctx);
 
     if(!status) {

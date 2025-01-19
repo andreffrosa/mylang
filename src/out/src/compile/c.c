@@ -70,10 +70,15 @@ static void typeOf(const IOStream* stream, const ASTNode* node, const char* node
     IOStreamWritef(stream, "(%s, %s)", node_str, str);
 }
 
+static bool cond_assign_needs_tmp() {
+    return false;
+}
+
 const OutSerializer cSerializer = {
     &parseType,
     &typeOf,
     &print,
+    &cond_assign_needs_tmp,
     false
 };
 

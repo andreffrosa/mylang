@@ -20,16 +20,33 @@ Frame* executeAST(const ASTNode* ast, const SymbolTable* st) {
 int evalID(const SymbolTable* st, const Symbol* var, const Frame* frame) {
     assert(st != NULL  && var != NULL && frame != NULL);
 
-    assert(isVarInitialized(var));
+    //assert(isVarInitialized(var));
     unsigned int index = getVarOffset(var);
     return getFrameValue(frame, index);
 }
 
-int evalAssignment(const ASTNode* ast, const SymbolTable* st, Frame* frame) {
-    assert(ast->left->node_type == AST_ID);
-    assert(ast->left->id != NULL);
+static Symbol* evalLVal(const ASTNode* lval, const SymbolTable* st, Frame* frame) {
+    assert(lval != NULL);
 
-    Symbol* var = ast->left->id;
+    if (lval->node_type == AST_ID) {
+        return lval->id;
+    } else if (lval->node_type == AST_TERNARY_COND) {
+        bool cond = evalASTExpression(lval->first, st, frame);
+        return evalLVal(cond ? lval->second : lval->third, st, frame);
+    } else if (lval->node_type == AST_PARENTHESES) {
+        return evalLVal(lval->child, st, frame);
+    } else {
+        assert(false);
+    }
+}
+
+int evalAssignment(const ASTNode* ast, const SymbolTable* st, Frame* frame) {
+    assert(ast != NULL);
+    assert(st != NULL);
+    assert(frame != NULL);
+
+    Symbol* var = evalLVal(ast->left, st, frame);
+
     int value = evalASTExpression(ast->right, st, frame);
     unsigned int index = getVarOffset(var);
     setFrameValue(frame, index, value);
@@ -39,11 +56,11 @@ int evalAssignment(const ASTNode* ast, const SymbolTable* st, Frame* frame) {
 
 static inline bool compare(const ASTNodeType node_type, const int l, const int r) {
     switch (node_type) {
-        case AST_CMP_EQ: return l == r;
+        case AST_CMP_EQ:  return l == r;
         case AST_CMP_NEQ: return l != r;
-        case AST_CMP_LT: return l < r;
+        case AST_CMP_LT:  return l <  r;
         case AST_CMP_LTE: return l <= r;
-        case AST_CMP_GT: return l > r;
+        case AST_CMP_GT:  return l >  r;
         case AST_CMP_GTE: return l >= r;
         default:
             assert(false);
@@ -132,6 +149,7 @@ void executeASTStatements(const ASTNode* ast, const SymbolTable* st, Frame* fram
 
 int evalASTExpression(const ASTNode* node, const SymbolTable* st, Frame* frame) {
     assert(node != NULL);
+
     switch (node->node_type) {
         case AST_INT:
             return node->n;
@@ -178,7 +196,6 @@ int evalASTExpression(const ASTNode* node, const SymbolTable* st, Frame* frame) 
             return (1 - (v < 0))*(~(v)+1) + (v < 0)*v;
         } case AST_ID: {
             Symbol* var = node->id;
-            assert(isVarInitialized(var));
             return evalID(st, var, frame);
         } case AST_LOGICAL_NOT: {
             return !evalASTExpression(node->child, st, frame);

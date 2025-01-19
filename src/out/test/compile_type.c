@@ -98,7 +98,7 @@ void compileTypeofTypeInJava() {
 }
 
 void compileTypeofIDInC() {
-    defineVar(st, AST_TYPE_BOOL, "z", true, false);
+    defineVar(st, AST_TYPE_BOOL, "z", false);
     ASTResult res = newASTIDReference("z", st);
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* ast = newASTTypeOf(res.result_value);
@@ -109,7 +109,7 @@ void compileTypeofIDInC() {
 }
 
 void compileTypeofIDInJava() {
-    defineVar(st, AST_TYPE_BOOL, "z", true, false);
+    defineVar(st, AST_TYPE_BOOL, "z", false);
     ASTResult res = newASTIDReference("z", st);
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* ast = newASTTypeOf(res.result_value);
@@ -120,8 +120,9 @@ void compileTypeofIDInJava() {
 }
 
 void compileTypeofValueofRestrainedExpInC() {
-    defineVar(st, AST_TYPE_BOOL, "z", false, false);
-    ASTResult res = newASTAssignment("z", newASTBool(true), st);
+    defineVar(st, AST_TYPE_BOOL, "z", false);
+    ASTNode* id_node = newASTIDReference("z", st).result_value;
+    ASTResult res = newASTAssignment(id_node, newASTBool(true));
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* ast = newASTTypeOf(res.result_value);
 
@@ -131,8 +132,9 @@ void compileTypeofValueofRestrainedExpInC() {
 }
 
 void compileTypeofValueofRestrainedExpInJava() {
-    defineVar(st, AST_TYPE_BOOL, "z", false, false);
-    ASTResult res = newASTAssignment("z", newASTBool(true), st);
+    defineVar(st, AST_TYPE_BOOL, "z", false);
+    ASTNode* id_node = newASTIDReference("z", st).result_value;
+    ASTResult res = newASTAssignment(id_node, newASTBool(true));
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* ast = newASTTypeOf(res.result_value);
 

@@ -24,11 +24,14 @@ void declarationAssignmentSetsValue() {
 
 void assignmentSetsValue() {
     SymbolTable* st = newSymbolTable(1, 1);
-    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false, false);
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     TEST_ASSERT_TRUE(isOK(res));
     Symbol* var = res.result_value;
 
-    ASTNode* ast = newASTAssignment("n", newASTInt(1), st).result_value;
+    res = newASTIDReference("n", st);
+    TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* id_node = res.result_value;
+    ASTNode* ast = newASTAssignment(id_node, newASTInt(1)).result_value;
 
     Frame* frame = executeAST(ast, st);
 
@@ -42,11 +45,20 @@ void assignmentSetsValue() {
 
 void reassignmentChangesValue() {
     SymbolTable* st = newSymbolTable(1,1);
-    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false, false);
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     TEST_ASSERT_TRUE(isOK(res));
     Symbol* var = res.result_value;
-    ASTNode* stmt1 = newASTAssignment("n", newASTInt(1), st).result_value;
-    ASTNode* stmt2 = newASTAssignment("n", newASTInt(2), st).result_value;
+
+    res = newASTIDReference("n", st);
+    TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* id_node = res.result_value;
+    ASTNode* stmt1 = newASTAssignment(id_node, newASTInt(1)).result_value;
+
+    res = newASTIDReference("n", st);
+    TEST_ASSERT_TRUE(isOK(res));
+    id_node = res.result_value;
+    ASTNode* stmt2 = newASTAssignment(id_node, newASTInt(2)).result_value;
+
     ASTNode* ast = newASTStatementList(stmt1, stmt2);
 
     Frame* frame = executeAST(ast, st);
@@ -79,7 +91,9 @@ void evalRestrainedExpressionReturnsValueAndHasSideEffects() {
     SymbolTable* st = newSymbolTable(2, 1);
 
     ASTNode* stmt1 = newASTIDDeclaration(AST_TYPE_INT, "n", newASTInt(0), false, st).result_value;
-    ASTNode* restr_exp = newASTAssignment("n", newASTAdd(newASTIDReference("n", st).result_value, newASTInt(1)).result_value, st).result_value; // valueof(n=n+1)
+    ASTNode* id_node = newASTIDReference("n", st).result_value;
+    ASTNode* value_node = newASTAdd(newASTIDReference("n", st).result_value, newASTInt(1)).result_value;
+    ASTNode* restr_exp = newASTAssignment(id_node, value_node).result_value; // valueof(n=n+1)
     ASTNode* stmt2 = newASTIDDeclaration(AST_TYPE_INT, "m", restr_exp, false, st).result_value;
     ASTNode* ast = newASTStatementList(stmt1, stmt2);
 

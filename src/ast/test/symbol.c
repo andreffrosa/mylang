@@ -39,14 +39,14 @@ void deleteSymbolTableSetsVarNull() {
 
 void newVarHasZeroRedefLevel() {
     st = newSymbolTable(TABLE_CAPACITY, SCOPE_CAPACITY);
-    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false, false);
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     TEST_ASSERT_TRUE(isOK(res));
     TEST_ASSERT_EQUAL_INT(0, getVarRedefLevel(res.result_value));
 }
 
 void variablesAreRetrievableAfterResizeOfTable() {
     st = newSymbolTable(TABLE_CAPACITY, SCOPE_CAPACITY);
-    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false, false);
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     TEST_ASSERT_TRUE(isOK(res));
     enterScope(st, SCOPE_CAPACITY);
 
@@ -59,9 +59,9 @@ void variablesAreRetrievableAfterResizeOfTable() {
 
 void variablesAreRetrievableAfterResizeOfScope() {
     st = newSymbolTable(TABLE_CAPACITY, SCOPE_CAPACITY);
-    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false, false);
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     TEST_ASSERT_TRUE(isOK(res));
-    res = defineVar(st, AST_TYPE_INT, "m", false, false);
+    res = defineVar(st, AST_TYPE_INT, "m", false);
     TEST_ASSERT_TRUE(isOK(res));
 
     Scope* scope = getCurrentScope(st);
@@ -79,17 +79,17 @@ void defineVarIncreasesMaxOffsetAndTotalSymbolAmount() {
     st = newSymbolTable(TABLE_CAPACITY, SCOPE_CAPACITY);
     ASTResult res;
 
-    res = defineVar(st, AST_TYPE_INT, "n", false, false);
+    res = defineVar(st, AST_TYPE_INT, "n", false);
     TEST_ASSERT_TRUE(isOK(res));
     TEST_ASSERT_EQUAL_INT(0, getMaxOffset(st));
     TEST_ASSERT_EQUAL_INT(1, getTotalSymbolAmount(st));
 
-    res = defineVar(st, AST_TYPE_INT, "m", false, false);
+    res = defineVar(st, AST_TYPE_INT, "m", false);
     TEST_ASSERT_TRUE(isOK(res));
     TEST_ASSERT_EQUAL_INT(1, getMaxOffset(st));
     TEST_ASSERT_EQUAL_INT(2, getTotalSymbolAmount(st));
 
-    res = defineVar(st, AST_TYPE_INT, "k", false, false);
+    res = defineVar(st, AST_TYPE_INT, "k", false);
     TEST_ASSERT_TRUE(isOK(res));
     TEST_ASSERT_EQUAL_INT(2, getMaxOffset(st));
     TEST_ASSERT_EQUAL_INT(3, getTotalSymbolAmount(st));
@@ -97,7 +97,7 @@ void defineVarIncreasesMaxOffsetAndTotalSymbolAmount() {
 
 void lookupDefinedVarReturnsVar() {
     st = newSymbolTable(TABLE_CAPACITY, SCOPE_CAPACITY);
-    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false, false);
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     TEST_ASSERT_TRUE(isOK(res));
 
     Symbol* var = lookupVar(st, "n");
@@ -107,7 +107,7 @@ void lookupDefinedVarReturnsVar() {
 
 void lookupVarDefinedInParentScopeReturnsVar() {
     st = newSymbolTable(TABLE_CAPACITY, SCOPE_CAPACITY);
-    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false, false);
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     TEST_ASSERT_TRUE(isOK(res));
 
     enterScope(st, SCOPE_CAPACITY);
@@ -120,7 +120,7 @@ void lookupVarDefinedInParentScopeReturnsVar() {
 void lookupVarDefinedInChildScopeReturnsErr() {
     st = newSymbolTable(TABLE_CAPACITY, SCOPE_CAPACITY);
     enterScope(st, SCOPE_CAPACITY);
-    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false, false);
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     TEST_ASSERT_TRUE(isOK(res));
     TEST_ASSERT_TRUE(leaveScope(st));
 
@@ -131,10 +131,10 @@ void lookupVarDefinedInChildScopeReturnsErr() {
 
 void redefineVarInSameScopeWithoutRedefReturnsErr() {
     st = newSymbolTable(TABLE_CAPACITY, SCOPE_CAPACITY);
-    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false, false);
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     TEST_ASSERT_TRUE(isOK(res));
 
-    res = defineVar(st, AST_TYPE_INT, "n", false, false);
+    res = defineVar(st, AST_TYPE_INT, "n", false);
     TEST_ASSERT_TRUE(isERR(res));
     TEST_ASSERT_EQUAL_INT(AST_RES_ERR_ID_ALREADY_DEFINED, res.result_type);
     TEST_ASSERT_EQUAL_STRING("n", res.result_value);
@@ -142,10 +142,10 @@ void redefineVarInSameScopeWithoutRedefReturnsErr() {
 
 void redefineVarInSameScopeWithRedefReturnsErr() {
     st = newSymbolTable(TABLE_CAPACITY, SCOPE_CAPACITY);
-    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false, false);
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     TEST_ASSERT_TRUE(isOK(res));
 
-    res = defineVar(st, AST_TYPE_INT, "n", false, true);
+    res = defineVar(st, AST_TYPE_INT, "n", true);
     TEST_ASSERT_TRUE(isERR(res));
     TEST_ASSERT_EQUAL_INT(AST_RES_ERR_ID_ALREADY_DEFINED, res.result_type);
     TEST_ASSERT_EQUAL_STRING("n", res.result_value);
@@ -154,7 +154,7 @@ void redefineVarInSameScopeWithRedefReturnsErr() {
 void defineNewVarWithRedefReturnsErr() {
     st = newSymbolTable(TABLE_CAPACITY, SCOPE_CAPACITY);
 
-    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false, true);
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", true);
     TEST_ASSERT_TRUE(isERR(res));
     TEST_ASSERT_EQUAL_INT(AST_RES_ERR_ID_NOT_DEFINED, res.result_type);
     TEST_ASSERT_EQUAL_STRING("n", res.result_value);
@@ -162,12 +162,12 @@ void defineNewVarWithRedefReturnsErr() {
 
 void redefinedVarInChildScopeWithoutRedefReturnsErr() {
     st = newSymbolTable(TABLE_CAPACITY, SCOPE_CAPACITY);
-    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false, false);
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     TEST_ASSERT_TRUE(isOK(res));
 
     enterScope(st, SCOPE_CAPACITY);
 
-    res = defineVar(st, AST_TYPE_INT, "n", false, false);
+    res = defineVar(st, AST_TYPE_INT, "n", false);
     TEST_ASSERT_TRUE(isERR(res));
     TEST_ASSERT_EQUAL_INT(AST_RES_ERR_ID_ALREADY_DEFINED, res.result_type);
     TEST_ASSERT_EQUAL_STRING("n", res.result_value);
@@ -175,12 +175,12 @@ void redefinedVarInChildScopeWithoutRedefReturnsErr() {
 
 void redefineVarInChildScopeWithRedefRetursOk() {
     st = newSymbolTable(TABLE_CAPACITY, SCOPE_CAPACITY);
-    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false, false);
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     TEST_ASSERT_TRUE(isOK(res));
 
     enterScope(st, SCOPE_CAPACITY);
 
-    res = defineVar(st, AST_TYPE_INT, "n", false, true);
+    res = defineVar(st, AST_TYPE_INT, "n", true);
     TEST_ASSERT_TRUE(isOK(res));
     Symbol* var = res.result_value;
 
@@ -189,21 +189,21 @@ void redefineVarInChildScopeWithRedefRetursOk() {
 
 void redefinedVarsInNestedScopesHaveHigherRedefLevel() {
     st = newSymbolTable(TABLE_CAPACITY, SCOPE_CAPACITY);
-    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false, false);
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     TEST_ASSERT_TRUE(isOK(res));
     Symbol* var = res.result_value;
     TEST_ASSERT_EQUAL_INT(0, getVarRedefLevel(var));
 
     enterScope(st, SCOPE_CAPACITY);
 
-    res = defineVar(st, AST_TYPE_INT, "n", false, true);
+    res = defineVar(st, AST_TYPE_INT, "n", true);
     TEST_ASSERT_TRUE(isOK(res));
     var = res.result_value;
     TEST_ASSERT_EQUAL_INT(1, getVarRedefLevel(var));
 
     enterScope(st, SCOPE_CAPACITY);
 
-    res = defineVar(st, AST_TYPE_INT, "n", false, true);
+    res = defineVar(st, AST_TYPE_INT, "n", true);
     TEST_ASSERT_TRUE(isOK(res));
     var = res.result_value;
     TEST_ASSERT_EQUAL_INT(2, getVarRedefLevel(var));
@@ -211,14 +211,14 @@ void redefinedVarsInNestedScopesHaveHigherRedefLevel() {
 
 void redefinedVarsInConcurrentScopesHaveSameRedefLevel() {
     st = newSymbolTable(TABLE_CAPACITY, SCOPE_CAPACITY);
-    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false, false);
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     TEST_ASSERT_TRUE(isOK(res));
     Symbol* var = res.result_value;
     TEST_ASSERT_EQUAL_INT(0, getVarRedefLevel(var));
 
     enterScope(st, SCOPE_CAPACITY);
 
-    res = defineVar(st, AST_TYPE_INT, "n", false, true);
+    res = defineVar(st, AST_TYPE_INT, "n", true);
     TEST_ASSERT_TRUE(isOK(res));
     var = res.result_value;
     TEST_ASSERT_EQUAL_INT(1, getVarRedefLevel(var));
@@ -226,7 +226,7 @@ void redefinedVarsInConcurrentScopesHaveSameRedefLevel() {
     TEST_ASSERT_TRUE(leaveScope(st));
     enterScope(st, SCOPE_CAPACITY);
 
-    res = defineVar(st, AST_TYPE_INT, "n", false, true);
+    res = defineVar(st, AST_TYPE_INT, "n", true);
     TEST_ASSERT_TRUE(isOK(res));
     var = res.result_value;
     TEST_ASSERT_EQUAL_INT(1, getVarRedefLevel(var));
@@ -245,7 +245,7 @@ void getInvalidScopeIndexReturnsErr() {
 
 void getLeftReferenceOfUndefinedVarReturnsErr() {
     st = newSymbolTable(TABLE_CAPACITY, SCOPE_CAPACITY);
-    ASTResult res = getVarReference(st, "n", true);
+    ASTResult res = getVarReference(st, "n");
     TEST_ASSERT_TRUE(isERR(res));
     TEST_ASSERT_EQUAL_INT(AST_RES_ERR_ID_NOT_DEFINED, res.result_type);
     TEST_ASSERT_EQUAL_STRING("n", res.result_value);
@@ -253,53 +253,55 @@ void getLeftReferenceOfUndefinedVarReturnsErr() {
 
 void getLeftReferenceOfDefinedVarReturnsOk() {
     st = newSymbolTable(TABLE_CAPACITY, SCOPE_CAPACITY);
-    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false, false);
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     TEST_ASSERT_TRUE(isOK(res));
     Symbol* var = res.result_value;
-    res = getVarReference(st, "n", true);
+    res = getVarReference(st, "n");
     TEST_ASSERT_TRUE(isOK(res));
     TEST_ASSERT_EQUAL_PTR(var, res.result_value);
 }
 
 void getRightReferenceOfUndefinedVarReturnsErr() {
     st = newSymbolTable(TABLE_CAPACITY, SCOPE_CAPACITY);
-    ASTResult res = getVarReference(st, "n", false);
+    ASTResult res = getVarReference(st, "n");
     TEST_ASSERT_TRUE(isERR(res));
     TEST_ASSERT_EQUAL_INT(AST_RES_ERR_ID_NOT_DEFINED, res.result_type);
     TEST_ASSERT_EQUAL_STRING("n", res.result_value);
 }
 
+/*
 void getRightReferenceOfDefinedUninitializedVarReturnsErr() {
     st = newSymbolTable(TABLE_CAPACITY, SCOPE_CAPACITY);
-    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false, false);
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     TEST_ASSERT_TRUE(isOK(res));
-    res = getVarReference(st, "n", false);
+    res = getVarReference(st, "n");
     TEST_ASSERT_TRUE(isERR(res));
     TEST_ASSERT_EQUAL_INT(AST_RES_ERR_ID_NOT_INIT, res.result_type);
     TEST_ASSERT_EQUAL_STRING("n", res.result_value);
 }
+*/
 
 void getRightReferenceOfDefinedInitializedVarReturnsOk() {
     st = newSymbolTable(TABLE_CAPACITY, SCOPE_CAPACITY);
-    ASTResult res = defineVar(st, AST_TYPE_INT, "n", true, false);
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     TEST_ASSERT_TRUE(isOK(res));
     Symbol* var = res.result_value;
-    res = getVarReference(st, "n", false);
+    res = getVarReference(st, "n");
     TEST_ASSERT_TRUE(isOK(res));
     TEST_ASSERT_EQUAL_PTR(var, res.result_value);
 }
 
 void offsetOfVarsInNestedScopesIncreases() {
     st = newSymbolTable(TABLE_CAPACITY, SCOPE_CAPACITY);
-    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false, false);
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     TEST_ASSERT_TRUE(isOK(res));
     Symbol* var_n = res.result_value;
     enterScope(st, SCOPE_CAPACITY);
-    res = defineVar(st, AST_TYPE_INT, "m", false, false);
+    res = defineVar(st, AST_TYPE_INT, "m", false);
     TEST_ASSERT_TRUE(isOK(res));
     Symbol* var_m = res.result_value;
     enterScope(st, SCOPE_CAPACITY);
-    res = defineVar(st, AST_TYPE_INT, "k", false, false);
+    res = defineVar(st, AST_TYPE_INT, "k", false);
     TEST_ASSERT_TRUE(isOK(res));
     Symbol* var_k = res.result_value;
 
@@ -310,16 +312,16 @@ void offsetOfVarsInNestedScopesIncreases() {
 
 void offsetOfVarsInConcurrentScopesIsEqual() {
     st = newSymbolTable(TABLE_CAPACITY, SCOPE_CAPACITY);
-    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false, false);
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     TEST_ASSERT_TRUE(isOK(res));
     Symbol* var_n = res.result_value;
     enterScope(st, SCOPE_CAPACITY);
-    res = defineVar(st, AST_TYPE_INT, "m", false, false);
+    res = defineVar(st, AST_TYPE_INT, "m", false);
     TEST_ASSERT_TRUE(isOK(res));
     Symbol* var_m = res.result_value;
     TEST_ASSERT_TRUE(leaveScope(st));
     enterScope(st, SCOPE_CAPACITY);
-    res = defineVar(st, AST_TYPE_INT, "k", false, false);
+    res = defineVar(st, AST_TYPE_INT, "k", false);
     TEST_ASSERT_TRUE(isOK(res));
     Symbol* var_k = res.result_value;
 
@@ -338,7 +340,7 @@ void cloneEmptyTableReturnsNewEmptyTable() {
 
 void cloneTableReturnsIdenticalTable() {
     st = newSymbolTable(TABLE_CAPACITY, SCOPE_CAPACITY);
-    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false, false);
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     TEST_ASSERT_TRUE(isOK(res));
     Symbol* src_var = res.result_value;
 
@@ -354,15 +356,15 @@ void cloneTableReturnsIdenticalTable() {
 
 void cloneTableWithNestedScopesReturnsIdenticalTable() {
     st = newSymbolTable(TABLE_CAPACITY, SCOPE_CAPACITY);
-    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false, false);
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     TEST_ASSERT_TRUE(isOK(res));
     Symbol* src_n = res.result_value;
     enterScope(st, SCOPE_CAPACITY);
-    res = defineVar(st, AST_TYPE_INT, "m", false, false);
+    res = defineVar(st, AST_TYPE_INT, "m", false);
     TEST_ASSERT_TRUE(isOK(res));
     Symbol* src_m = res.result_value;
     enterScope(st, SCOPE_CAPACITY);
-    res = defineVar(st, AST_TYPE_INT, "k", false, false);
+    res = defineVar(st, AST_TYPE_INT, "k", false);
     TEST_ASSERT_TRUE(isOK(res));
     Symbol* src_k = res.result_value;
 
@@ -384,16 +386,16 @@ void cloneTableWithNestedScopesReturnsIdenticalTable() {
 
 void cloneTableWithConcurrentScopesReturnsIdenticalTable() {
     st = newSymbolTable(TABLE_CAPACITY, SCOPE_CAPACITY);
-    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false, false);
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     TEST_ASSERT_TRUE(isOK(res));
     Symbol* src_n = res.result_value;
     Scope* src_m_scope = enterScope(st, SCOPE_CAPACITY);
-    res = defineVar(st, AST_TYPE_INT, "m", false, false);
+    res = defineVar(st, AST_TYPE_INT, "m", false);
     TEST_ASSERT_TRUE(isOK(res));
     Symbol* src_m = res.result_value;
     TEST_ASSERT_TRUE(leaveScope(st));
     enterScope(st, SCOPE_CAPACITY);
-    res = defineVar(st, AST_TYPE_INT, "k", false, false);
+    res = defineVar(st, AST_TYPE_INT, "k", false);
     TEST_ASSERT_TRUE(isOK(res));
     Symbol* src_k = res.result_value;
 
@@ -437,7 +439,7 @@ int main() {
     RUN_TEST(getLeftReferenceOfUndefinedVarReturnsErr);
     RUN_TEST(getLeftReferenceOfDefinedVarReturnsOk);
     RUN_TEST(getRightReferenceOfUndefinedVarReturnsErr);
-    RUN_TEST(getRightReferenceOfDefinedUninitializedVarReturnsErr);
+    //RUN_TEST(getRightReferenceOfDefinedUninitializedVarReturnsErr);
     RUN_TEST(getRightReferenceOfDefinedInitializedVarReturnsOk);
     RUN_TEST(offsetOfVarsInNestedScopesIncreases);
     RUN_TEST(offsetOfVarsInConcurrentScopesIsEqual);

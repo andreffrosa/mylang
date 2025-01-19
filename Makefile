@@ -5,7 +5,7 @@ endif
 
 .PHONY: build build-win debug run test clean cov
 
-all: clean build run
+all: clean debug run
 
 build:
 #	cmake -S . -B build -DCMAKE_VERBOSE_MAKEFILE=ON
@@ -14,6 +14,10 @@ build:
 
 debug:
 	cmake -S . -B build -DCMAKE_BUILD_TYPE:STRING=Debug
+	cmake --build build --clean-first
+
+debug-no-test:
+	cmake -S . -B build -DCMAKE_BUILD_TYPE:STRING=Debug -DBUILD_TESTS=OFF
 	cmake --build build --clean-first
 
 cov: 
@@ -25,7 +29,7 @@ run: debug
 	./build/src/cli/mylang $(ARGS)
 
 test: debug
-	ctest --test-dir build --output-on-failure
+	ctest --test-dir build --output-on-failure --progress --parallel 0
 
 valgrind: debug
 	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --verbose --log-file=valgrind-out.txt $(ARGS)

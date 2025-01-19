@@ -18,11 +18,12 @@ void tearDown (void) {
     deleteSymbolTable(&st);
 }
 
-
+/*
 void parseIDDeclaration() {
     ASTNode* ast = newASTIDDeclaration(AST_TYPE_INT, "n", NULL, false, st).result_value;
     ASSERT_MATCH_AST("int n", ast, false);
 }
+*/
 
 void parseIDDeclarationAssignement() {
     ASTNode* ast = newASTIDDeclaration(AST_TYPE_INT, "n", newASTInt(1), false, st).result_value;
@@ -30,8 +31,9 @@ void parseIDDeclarationAssignement() {
 }
 
 void parseAssignement() {
-    defineVar(st, AST_TYPE_INT, "n", false, false);
-    ASTNode* ast = newASTAssignment("n", newASTInt(1), st).result_value;
+    defineVar(st, AST_TYPE_INT, "n", false);
+    ASTNode* n_node = newASTIDReference("n", st).result_value;
+    ASTNode* ast = newASTAssignment(n_node, newASTInt(1)).result_value;
     ASSERT_MATCH_AST("n = 1", ast, true);
 }
 
@@ -42,17 +44,19 @@ void parseSingleStatement() {
 
 void parseMultipleStatements() {
     ASTNode* stmt1 = newASTIDDeclaration(AST_TYPE_INT, "n", newASTInt(0), false, st).result_value;
-    ASTNode* stmt2 = newASTAssignment("n", newASTInt(1), st).result_value;
+    ASTNode* n_node = newASTIDReference("n", st).result_value;
+    ASTNode* stmt2 = newASTAssignment(n_node, newASTInt(1)).result_value;
     ASTNode* ast = newASTStatementList(stmt1, stmt2);
     ASSERT_MATCH_AST("int n = 0; n = 1;", ast, false);
 }
 
 void parseRestrainedExpression() {
-    defineVar(st, AST_TYPE_INT, "n", true, false);
+    defineVar(st, AST_TYPE_INT, "n", false);
 
     ASTNode* id = newASTIDReference("n", st).result_value;
     ASTNode* v = newASTAdd(id, newASTInt(1)).result_value;
-    ASTNode* ast = newASTAssignment("n", v, st).result_value;
+    id = newASTIDReference("n", st).result_value;
+    ASTNode* ast = newASTAssignment(id, v).result_value;
     ASSERT_MATCH_AST("valueof(n = n + 1)", ast, true);
 }
 

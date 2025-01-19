@@ -41,13 +41,11 @@ const char* compileExp(const ASTNode* ast, const SymbolTable* st) {
     return ptr;
 }
 
-
 #define ASSERT_COMPILE_STMT_EQUALS(ast, os, str) {\
     const char* txt = compileStmt(ast, os, st);\
     TEST_ASSERT_NOT_NULL(txt);\
     TEST_ASSERT_EQUAL_STRING(str, txt);\
     free((void*)txt);\
-    deleteASTNode(&ast);\
 }
 
 #define ASSERT_COMPILE_EXP_EQUALS(ast, str) {\
@@ -55,7 +53,6 @@ const char* compileExp(const ASTNode* ast, const SymbolTable* st) {
     TEST_ASSERT_NOT_NULL(txt);\
     TEST_ASSERT_EQUAL_STRING(str, txt);\
     free((void*)txt);\
-    deleteASTNode(&ast);\
 }
 
 #endif

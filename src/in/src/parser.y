@@ -96,8 +96,7 @@
 
 program
    : stmt_seq END                      { *(ctx->ast) = $1; YYACCEPT; }
-//   | program error END                 { yyerrok; }
-
+   //| program error END                 { yyerrok; }
    // If the program is a single statement, it does not require a trailling ';'
    | line_stmt END                     { *(ctx->ast) = $1; YYACCEPT; } 
    ;
@@ -119,7 +118,7 @@ line_stmt
 //[TODO]: Declarations without assignment are disabled while uninitialization verification is not implemented
 //   | decl                              { TRY($$, declaration($1.s1, $1.s2, NULL, $1.s3, ctx->st)); }
    | decl '=' exp                      { TRY($$, declaration($1.s1, $1.s2,   $3, $1.s3, ctx->st)); }
-   | PRINT'('const_exp')'              { $$ = newASTPrint($3); }
+   | PRINT'('exp')'                    { $$ = newASTPrint($3); }
    | PRINT_VAR '(' ID ')'              { TRY($$, handlePrintVar($3, ctx->st)); }
    ;
 
@@ -139,7 +138,10 @@ cond_stmt
    : IF'('const_exp')'scope                { TRY($$, newASTIf($3, $5)); }
    | IF'('const_exp')'scope ELSE scope     { TRY($$, newASTIfElse($3, $5, $7)); }
    | IF'('const_exp')'scope ELSE cond_stmt { TRY($$, newASTIfElse($3, $5, $7)); }
-   | IF'('const_exp')'THEN line_stmt ';'   { TRY($$, newASTIf($3, $6)); }
+//   | IF'('const_exp')'THEN line_stmt ';'   { TRY($$, newASTIf($3, $6)); }
+//   | IF'('const_exp')' '?' line_stmt ';'   { TRY($$, newASTIf($3, $6)); }
+//   | IF'('const_exp')'THEN line_stmt ELSE line_stmt ';' { TRY($$, newASTIfElse($3, $6, $8)); }
+//   | IF'('const_exp')' '?' line_stmt  ':' line_stmt ';' { TRY($$, newASTIfElse($3, $6, $8)); }
    ;
 
 exp
@@ -148,7 +150,8 @@ exp
    ;
 
 assign_exp
-   : ID '=' exp                        { TRY($$, newASTAssignment($1, $3, ctx->st)); }
+   : const_exp '=' exp                 { TRY($$, newASTAssignment($1, $3)); }
+   | '(' assign_exp ')'                { $$ = $2; }
    ;
 
 const_exp
@@ -165,7 +168,7 @@ primitive_exp
    | BOOL_LITERAL                      { $$ = newASTBool($1); }
    | TYPE                              { TRY($$, typeFromStr($1)) }
    | ID                                { TRY($$, newASTIDReference($1, ctx->st)); }
-   | '(' const_exp ')'                 { $$ = isCmpExp($2) ? newASTParentheses($2) : $2; }
+   | '(' const_exp ')'                 { $$ = requireParentheses($2) ? newASTParentheses($2) : $2; }
    | OPEN_ABS const_exp CLOSE_ABS      { TRY($$, newASTAbs($2)); }
    | VALUE_OF '(' exp ')'              { $$ = $3; }
    | TYPE_OF  '(' exp ')'              { $$ = newASTTypeOf($3); }

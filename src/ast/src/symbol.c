@@ -9,7 +9,6 @@
 typedef struct Symbol {
     char id[MAX_ID_SIZE];
     ASTType type;
-    bool is_init : 1;
     unsigned int offset;
     unsigned int redef_level;
 } Symbol;
@@ -248,12 +247,11 @@ unsigned int getScopeIndex(const Scope* scope) {
 
 Symbol* newSymbol() { return malloc(sizeof(Symbol)); }
 
-Symbol* initSymbol(Symbol* var, ASTType type, const char* id, bool is_init, unsigned int redef_level) {
+Symbol* initSymbol(Symbol* var, ASTType type, const char* id, unsigned int redef_level) {
     assert(var != NULL);
     var->type = type;
     strncpy(var->id, id, MAX_ID_SIZE);
     var->offset = 0;
-    var->is_init = is_init;
     var->redef_level = redef_level;
     return var;
 }
@@ -319,8 +317,8 @@ Symbol* lookupLastVarWithOffset(const SymbolTable *st, unsigned int var_offset) 
     return NULL;
 }
 
-static Symbol* insertVarInCurrentScope(SymbolTable* st, ASTType type, const char* id, bool is_init, unsigned int redef_level) {
-    Symbol* var = initSymbol(newSymbol(), type, id, is_init, redef_level);
+static Symbol* insertVarInCurrentScope(SymbolTable* st, ASTType type, const char* id, unsigned int redef_level) {
+    Symbol* var = initSymbol(newSymbol(), type, id, redef_level);
 
     resizeScopeIfNeeded(st->current_scope);
 
@@ -339,29 +337,29 @@ static Symbol* insertVarInCurrentScope(SymbolTable* st, ASTType type, const char
     return var;
 }
 
-ASTResult defineVar(SymbolTable* st, ASTType type, const char* id, bool is_init, bool redef) {
+ASTResult defineVar(SymbolTable* st, ASTType type, const char* id, bool redef) {
     assert(st != NULL);
     assert(id != NULL);
 
     struct SymbolScopePair prev_def = lookupVarWithScope(st, id);
     if (prev_def.symbol != NULL) {
-        if (!redef || prev_def.scope == st->current_scope) {  // TODO: split into two different error types???
+        if (!redef || prev_def.scope == st->current_scope) {
             return ERR_VAL(AST_RES_ERR_ID_ALREADY_DEFINED, id);
         }
 
-        Symbol* var = insertVarInCurrentScope(st, type, id, is_init, prev_def.symbol->redef_level + 1);
+        Symbol* var = insertVarInCurrentScope(st, type, id, prev_def.symbol->redef_level + 1);
         return OK(var);
     } else {
         if (redef) {
             return ERR_VAL(AST_RES_ERR_ID_NOT_DEFINED, id);
         }
 
-        Symbol* var = insertVarInCurrentScope(st, type, id, is_init, 0);
+        Symbol* var = insertVarInCurrentScope(st, type, id, 0);
         return OK(var);
     }
 }
 
-ASTResult getVarReference(const SymbolTable* st, const char* id, bool is_left) {
+ASTResult getVarReference(const SymbolTable* st, const char* id) {
     assert(st != NULL);
     assert(id != NULL);
 
@@ -370,9 +368,9 @@ ASTResult getVarReference(const SymbolTable* st, const char* id, bool is_left) {
         return ERR_VAL(AST_RES_ERR_ID_NOT_DEFINED, id);
     }
 
-    if (!is_left && !isVarInitialized(var)) {
+    /*if (!is_left && !isVarInitialized(var)) {
         return ERR_VAL(AST_RES_ERR_ID_NOT_INIT, id);
-    }
+    }*/
 
     return OK(var);
 }
@@ -385,16 +383,6 @@ const char* getVarId(const Symbol* var) {
 ASTType getVarType(const Symbol* var) {
     assert(var != NULL);
     return var->type;
-}
-
-bool isVarInitialized(const Symbol* var) {
-    assert(var != NULL);
-    return var->is_init;
-}
-
-void setVarInitialized(Symbol* var) {
-    assert(var != NULL);
-    var->is_init = true;
 }
 
 unsigned int getVarOffset(const Symbol* var) {
