@@ -38,7 +38,7 @@ void parseLogicalNot() {
     ASSERT_MATCH_AST_EXP("!true", ast);
 
     ast = newASTLogicalNot(newASTLogicalNot(newASTBool(true)).result_value).result_value;
-    ASSERT_MATCH_AST_EXP("!!true", ast);
+    ASSERT_MATCH_AST_EXP("! !true", ast);
 }
 
 void logicalNotHasHigherPrecedence() {

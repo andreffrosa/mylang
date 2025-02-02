@@ -6,7 +6,9 @@
 #include "ast.h"
 
 #define ASSERT_IS_VALID_AST_NODE(ast, node_type_, op_type, size_) do {\
-    TEST_ASSERT_EQUAL_INT(node_type_, ast->node_type);\
+    char str_[200];\
+    sprintf(str_, "%s != %s", nodeTypeToStr(node_type_), nodeTypeToStr(ast->node_type));\
+    TEST_ASSERT_EQUAL_INT_MESSAGE(node_type_, ast->node_type, str_);\
     TEST_ASSERT_EQUAL_INT(op_type, getNodeOpType(ast->node_type));\
     TEST_ASSERT_EQUAL_INT(size_, ast->size);\
 } while(0)

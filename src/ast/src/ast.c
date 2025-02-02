@@ -114,7 +114,7 @@ ASTResult assignmentTypeHandler(ASTNode* node) {
 }
 
 ASTResult anyUnaryExpressionTypeHandler(ASTNode* node) {
-        return OK(node->child->value_type);
+    return OK(node->child->value_type);
 }
 
 #pragma GCC diagnostic push
@@ -281,19 +281,28 @@ ASTResult ifTypeHandler(ASTNode* node) {
     return OK(AST_TYPE_VOID);
 }
 
+#define boolToPTR(z) ((z) ? (void*)0x1 : (void*)0x0)
+
 ASTResult parenthesesLvalChecker(ASTNode* node) {
-    return OK(node->child->allowed_lval);
+    return OK(boolToPTR(node->child->allowed_lval));
 }
 
 ASTResult ternaryCondLvalChecker(ASTNode* node) {
-    return OK(node->second->allowed_lval && node->third->allowed_lval);
+    return OK(boolToPTR(node->second->allowed_lval && node->third->allowed_lval));
 }
 
 ASTResult assignmentLvalChecker(ASTNode* node) {
     if (!node->left->allowed_lval) {
         return ERR(AST_RES_ERR_INVALID_LVAL);
     }
-    return OK(false);
+    return OK(boolToPTR(false));
+}
+
+ASTResult unaryAssignmentLvalChecker(ASTNode* node) {
+    if (!node->child->allowed_lval) {
+        return ERR(AST_RES_ERR_INVALID_LVAL);
+    }
+    return OK(boolToPTR(false));
 }
 
 // Lookup Table
@@ -322,7 +331,7 @@ ASTNodeInfo ASTNodeTable[] = {
     [AST_ID]             = {"AST_ID",             ZEROARY_OP, false, NULL, NULL},
     [AST_ID_DECLARATION] = {"AST_ID_DECLARATION", UNARY_OP,   true,  &genericStatementTypeHandler, NULL},
     [AST_ID_DECL_ASSIGN] = {"AST_ID_DECL_ASSIGN", BINARY_OP,  true,  &declAssignmentTypeHandler, NULL},
-    [AST_ID_ASSIGNMENT]  = {"AST_ID_ASSIGNMENT",  BINARY_OP,  true,  &assignmentTypeHandler, &assignmentLvalChecker},
+    [AST_ID_ASSIGNMENT]  = {"AST_ID_ASSIGNMENT",  BINARY_OP,  false, &assignmentTypeHandler, &assignmentLvalChecker},
     [AST_STATEMENT_SEQ]  = {"AST_STATEMENT_SEQ",  BINARY_OP,  true,  &genericStatementTypeHandler, NULL},
     [AST_PRINT]          = {"AST_PRINT",          UNARY_OP,   true,  &genericStatementTypeHandler, NULL},
     [AST_PRINT_VAR]      = {"AST_PRINT_VAR",      UNARY_OP,   true,  &genericStatementTypeHandler, NULL},
@@ -340,6 +349,11 @@ ASTNodeInfo ASTNodeTable[] = {
     [AST_TERNARY_COND]   = {"AST_TERNARY_COND",   TERNARY_OP, false, &ternaryCondTypeHandler, &ternaryCondLvalChecker},
     [AST_IF]             = {"AST_IF",             BINARY_OP,  true,  &ifTypeHandler, NULL},
     [AST_IF_ELSE]        = {"AST_IF_ELSE",        TERNARY_OP, true,  &ifTypeHandler, NULL},
+    [AST_INC]            = {"AST_INC",            UNARY_OP,   false, &unaryExpressionTypeHandler, NULL},
+    [AST_DEC]            = {"AST_DEC",            UNARY_OP,   false, &unaryExpressionTypeHandler, NULL},
+    [AST_LOGICAL_TOGGLE] = {"AST_LOGICAL_TOGGLE", UNARY_OP,   false, &unaryBooleanExpressionTypeHandler, NULL},
+    [AST_BITWISE_TOGGLE] = {"AST_BITWISE_TOGGLE", UNARY_OP,   false, &unaryBitwiseExpressionTypeHandler, NULL},
+    [AST_COMPD_ASSIGN]   = {"AST_COMPD_ASSIGN",   UNARY_OP,   false, &anyUnaryExpressionTypeHandler, NULL},
 };
 
 ASTOpType getNodeOpType(ASTNodeType node_type) {
@@ -409,6 +423,7 @@ ASTResult newASTUnaryOP(const ASTNodeType node_type, const ASTNode* child) {
 
     ASTNode* node = newASTNode(node_type, child->size + 1);
     node->child = child;
+    node->is_prefix = false;
 
     ASTResult res = ASTNodeTable[node_type].type_handler(node);
     if(isERR(res)) {
@@ -475,7 +490,8 @@ ASTResult newASTIDReference(const char* id, const SymbolTable* st) {
 }
 
 ASTResult newASTIDDeclaration(ASTType type, const char* id, const ASTNode* value, bool redef, SymbolTable* st) {
-    assert(id != NULL && st != NULL);
+    assert(id != NULL);
+    assert(st != NULL);
 
     if (type == AST_TYPE_VOID) {
         return ERR_VAL(AST_RES_ERR_INVALID_TYPE, ASTTypeToStr(type));
@@ -500,6 +516,113 @@ ASTNode* newASTNoOp() {
     ASTNode* node = newASTNode(AST_NO_OP, 1);
     node->value_type = AST_TYPE_VOID;
     return node;
+}
+
+ASTResult newASTUnaryCompoundAssign(ASTNodeType node_type, const ASTNode* lval, bool is_prefix) {
+    assert(lval != NULL);
+
+    if (!lval->allowed_lval) {
+        return ERR_VAL(AST_RES_ERR_INVALID_LVAL, lval);
+    }
+
+    ASTResult res;
+    switch (node_type) {
+        case AST_INC:
+            res = newASTAdd(lval, newASTInt(1));
+            break;
+        case AST_DEC:
+            res = newASTAdd(lval, newASTInt(-1));
+            break;
+        case AST_LOGICAL_TOGGLE:
+            res = newASTLogicalNot(lval);
+            break;
+        case AST_BITWISE_TOGGLE:
+            res = newASTBitwiseNot(lval);
+            break;
+        default:
+            assert(false);
+            break;
+    }
+
+    if (isERR(res)) {
+        assert(res.result_type != AST_RES_ERR_INVALID_RIGHT_TYPE);
+        if (res.result_type == AST_RES_ERR_INVALID_LEFT_TYPE) {
+            res.result_type = AST_RES_ERR_INVALID_CHILD_TYPE;
+        }
+        return res;
+    }
+
+    res = newASTAssignment(copyAST(lval), res.result_value);
+    if (isERR(res)) {
+        return res;
+    }
+
+    res = newASTUnaryOP(node_type, res.result_value);
+    if (isERR(res)) {
+        return res;
+    }
+    ASTNode* node = res.result_value;
+    node->is_prefix = is_prefix;
+
+    return OK(node);
+}
+
+ASTResult newASTCompoundAssignment(ASTNodeType node_type, const ASTNode* lval, ASTNode* value) {
+    assert(lval != NULL);
+    assert(value != NULL);
+
+    ASTResult res;
+    switch (node_type) {
+        case AST_ADD:
+            res = newASTAdd(lval, value);
+            break;
+        case AST_SUB:
+            res = newASTSub(lval, value);
+            break;
+        case AST_MUL:
+            res = newASTMul(lval, value);
+            break;
+        case AST_DIV:
+            res = newASTDiv(lval, value);
+            break;
+        case AST_MOD:
+            res = newASTMod(lval, value);
+            break;
+        case AST_BITWISE_AND:
+            res = newASTBitwiseAnd(lval, value);
+            break;
+        case AST_BITWISE_OR:
+            res = newASTBitwiseOr(lval, value);
+            break;
+        case AST_BITWISE_XOR:
+            res = newASTBitwiseXor(lval, value);
+            break;
+        case AST_L_SHIFT:
+            res = newASTLeftShift(lval, value);
+            break;
+        case AST_R_SHIFT:
+            res = newASTRightShift(lval, value);
+            break;
+        case AST_LOGICAL_AND:
+            res = newASTLogicalAnd(lval, value);
+            break;
+        case AST_LOGICAL_OR:
+            res = newASTLogicalOr(lval, value);
+            break;
+        default:
+            assert(false);
+    }
+
+    if (isERR(res)) {
+        return res;
+    }
+
+    res = newASTAssignment(copyAST(lval), res.result_value);
+    if (isERR(res)) {
+        return res;
+    }
+
+    return newASTUnaryOP(AST_COMPD_ASSIGN, res.result_value);
 }
 
 void deleteASTNode(ASTNode** node) {
@@ -576,4 +699,43 @@ bool isExp(const ASTNode* ast) {
 bool requireParentheses(const ASTNode* ast) {
     assert(ast != NULL);
     return isCmpExp(ast) || (ast->node_type == AST_TERNARY_COND && ast->allowed_lval);
+}
+
+ASTNode* copyAST(const ASTNode* src_ast) {
+    assert(src_ast != NULL);
+
+    switch(getNodeOpType(src_ast->node_type)) {
+        case ZEROARY_OP: {
+            switch (src_ast->node_type) {
+                case AST_INT:
+                    return newASTInt(src_ast->n);
+                case AST_BOOL:
+                    return newASTBool(src_ast->z);
+                case AST_TYPE:
+                    return newASTType(src_ast->t);
+                case AST_ID:
+                    return newASTID(src_ast->id);
+                case AST_NO_OP:
+                    return newASTNoOp();
+                default:
+                    assert(false);
+            }
+        } case UNARY_OP: {
+            ASTResult res = newASTUnaryOP(src_ast->node_type, copyAST(src_ast->child));
+            assert(isOK(res));
+            return res.result_value;
+        }
+        case BINARY_OP: {
+            ASTResult res = newASTBinaryOP(src_ast->node_type, copyAST(src_ast->left), copyAST(src_ast->right));
+            assert(isOK(res));
+            return res.result_value;
+        }
+        case TERNARY_OP: {
+            ASTResult res = newASTTernaryOP(src_ast->node_type, copyAST(src_ast->first), copyAST(src_ast->second), copyAST(src_ast->third));
+            assert(isOK(res));
+            return res.result_value;
+        }
+        default:
+            assert(false);
+    }
 }

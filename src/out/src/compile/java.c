@@ -85,15 +85,20 @@ static void typeOf(const IOStream* stream, const ASTNode* node, const char* node
     free(ptr);
 }
 
-static bool cond_assign_needs_tmp() {
+static bool condAssignNeedsTmp() {
     return true;
+}
+
+static bool hasCompdAssign(ASTNodeType node_type) {
+    return node_type != AST_LOGICAL_AND && node_type != AST_LOGICAL_OR;
 }
 
 const OutSerializer javaSerializer = {
     &parseType,
     &typeOf,
     &print,
-    &cond_assign_needs_tmp,
+    &condAssignNeedsTmp,
+    &hasCompdAssign,
     true
 };
 

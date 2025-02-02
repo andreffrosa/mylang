@@ -119,7 +119,12 @@ ASTNode* handleErrors(ASTResult res, int lineno) {
         case AST_RES_ERR_INVALID_LVAL: {
             ASTNode* ast = (ASTNode*) res.result_value;
             assert(ast != NULL);
-            semanticError(lineno, "Invalid l-value %s!", nodeTypeToStr(ast->left->node_type));
+            if (ast->node_type == AST_ID_ASSIGNMENT) { 
+                semanticError(lineno, "Invalid l-value %s!", nodeTypeToStr(ast->left->node_type));
+            } else {
+                printf("Invalid l-value for unknown node %s!", nodeTypeToStr(ast->node_type));
+                assert(false);
+            }
             deleteASTNode(&ast);
             break;
         }
@@ -178,4 +183,3 @@ ASTResult handlePrintVar(const char* id, SymbolTable* st) {
     ASTNode* id_node = (ASTNode*) res.result_value;
     return OK(newASTPrintVar(id_node));
 }
-

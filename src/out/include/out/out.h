@@ -21,13 +21,14 @@ typedef struct OutSerializer {
     void (*parseType)(const IOStream* stream, const ASTType type, const bool in_exp);
     void (*typeOf)(const IOStream* stream, const ASTNode* node, const char* node_str);
     void (*print)(const char* exp_str, const ASTType type, const char* id_str, const IOStream* stream);
-    bool (*cond_assign_needs_tmp)();
+    bool (*condAssignNeedsTmp)();
+    bool (*hasCompdAssign)(ASTNodeType node_type);
     bool print_redef_level;
 } OutSerializer;
 
 void outCompileAST(const ASTNode* ast, const SymbolTable* st, const IOStream* stream, const OutSerializer* os, unsigned int indentation_level);
 
-void compileASTExpression(const ASTNode* ast, const SymbolTable* st, const IOStream* stream, const OutSerializer* os);
+void compileASTExpression(const ASTNode* ast, const SymbolTable* st, const IOStream* stream, const OutSerializer* os, bool is_rval);
 
 void compileASTStatements(const ASTNode* ast, const SymbolTable* st, const IOStream* stream, const OutSerializer* os, unsigned int indentation_level, bool print_new_line);
 

@@ -38,7 +38,7 @@ void testIDReference() {
     defineVar(st, AST_TYPE_INT, "n", false);
     ASTNode* id_node = newASTIDReference("n", st).result_value;
     ast = newASTAdd(id_node, newASTInt(1)).result_value;
-    ASSERT_COMPILE_EXP_EQUALS(ast, "n + 1");
+    ASSERT_COMPILE_EXP_EQUALS(ast, &cSerializer, "n + 1");
 }
 
 void testStatementSequence() {
@@ -70,21 +70,21 @@ void testPrintC() {
 
 void testBoolPrintC() {
     ast = newASTPrint(newASTBool(true));
-    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "printf(\"%s\\n\", (true ? \"true\" : \"false\"));\n");
+    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "printf(\"%s\\n\", true ? \"true\" : \"false\");\n");
     deleteASTNode(&ast);
 
     ast = newASTLogicalAnd(newASTBool(true), newASTBool(false)).result_value;
     ast = newASTPrint(ast);
-    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "printf(\"%s\\n\", (true && false ? \"true\" : \"false\"));\n");
+    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "printf(\"%s\\n\", true && false ? \"true\" : \"false\");\n");
     deleteASTNode(&ast);
 
     defineVar(st, AST_TYPE_BOOL, "z", false);
     ast = newASTPrint(newASTIDReference("z", st).result_value);
-    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "printf(\"%s\\n\", (z ? \"true\" : \"false\"));\n");
+    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "printf(\"%s\\n\", z ? \"true\" : \"false\");\n");
     deleteASTNode(&ast);
 
     ast = newASTPrintVar(newASTIDReference("z", st).result_value);
-    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "printf(\"z = %s\\n\", (z ? \"true\" : \"false\"));\n");
+    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "printf(\"z = %s\\n\", z ? \"true\" : \"false\");\n");
 }
 
 void testPrintJava() {
@@ -201,6 +201,181 @@ void compileRedefVarInJavaInsertsRedefLevel() {
     ASSERT_COMPILE_STMT_EQUALS(ast, &javaSerializer, str);
 }
 
+void compileInc() {
+    defineVar(st, AST_TYPE_INT, "n", false);
+
+    ast = newASTInc(newASTIDReference("n", st).result_value, true).result_value;
+    ASSERT_COMPILE_EXP_EQUALS(ast, &cSerializer, "++n");
+    deleteASTNode(&ast);
+
+    ast = newASTInc(newASTIDReference("n", st).result_value, false).result_value;
+    ASSERT_COMPILE_EXP_EQUALS(ast, &cSerializer, "n++");
+}
+
+void compileDec() {
+    defineVar(st, AST_TYPE_INT, "n", false);
+
+    ast = newASTDec(newASTIDReference("n", st).result_value, true).result_value;
+    ASSERT_COMPILE_EXP_EQUALS(ast, &cSerializer, "--n");
+    deleteASTNode(&ast);
+
+    ast = newASTDec(newASTIDReference("n", st).result_value, false).result_value;
+    ASSERT_COMPILE_EXP_EQUALS(ast, &cSerializer, "n--");
+}
+
+void compileLogicalToggle() {
+    defineVar(st, AST_TYPE_BOOL, "z", false);
+
+    ast = newASTLogicalToggle(newASTIDReference("z", st).result_value, true).result_value;
+    ASSERT_COMPILE_EXP_EQUALS(ast, &cSerializer, "(z = !z)");
+    deleteASTNode(&ast);
+
+    ast = newASTLogicalToggle(newASTIDReference("z", st).result_value, false).result_value;
+    ASSERT_COMPILE_EXP_EQUALS(ast, &cSerializer, "!((z = !z))");
+}
+
+void compileBitwiseToggle() {
+    defineVar(st, AST_TYPE_INT, "n", false);
+
+    ast = newASTBitwiseToggle(newASTIDReference("n", st).result_value, true).result_value;
+    ASSERT_COMPILE_EXP_EQUALS(ast, &cSerializer, "(n = ~n)");
+    deleteASTNode(&ast);
+
+    ast = newASTBitwiseToggle(newASTIDReference("n", st).result_value, false).result_value;
+    ASSERT_COMPILE_EXP_EQUALS(ast, &cSerializer, "~((n = ~n))");
+}
+
+void compileCompoundAssignmentAdd() {
+    defineVar(st, AST_TYPE_INT, "n", false);
+    ast = newASTCompoundAssignment(AST_ADD, newASTIDReference("n", st).result_value, newASTInt(2)).result_value;
+    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "n += 2;\n");
+}
+
+void compileCompoundAssignmentLogicalAndInC() {
+    defineVar(st, AST_TYPE_BOOL, "z", false);
+    ast = newASTCompoundAssignment(AST_LOGICAL_AND, newASTIDReference("z", st).result_value, newASTBool(true)).result_value;
+    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "z &&= true;\n");
+}
+
+void compileCompoundAssignmentLogicalAndInJava() {
+    defineVar(st, AST_TYPE_BOOL, "z", false);
+    ast = newASTCompoundAssignment(AST_LOGICAL_AND, newASTIDReference("z", st).result_value, newASTBool(true)).result_value;
+    ASSERT_COMPILE_EXP_EQUALS(ast, &javaSerializer, "(z = z && true)");
+}
+
+void compileConditionalInc() {
+    defineVar(st, AST_TYPE_INT, "n", false);
+    defineVar(st, AST_TYPE_INT, "m", false);
+
+    ASTNode* n_node = newASTIDReference("n", st).result_value;
+    ASTNode* m_node = newASTIDReference("m", st).result_value;
+    ASTNode* cond = newASTParentheses(newASTTernaryCond(newASTBool(true), n_node, m_node).result_value);
+
+    ast = newASTInc(copyAST(cond), true).result_value;
+    ASSERT_COMPILE_EXP_EQUALS(ast, &cSerializer, "(true ? (n = (true ? n : m) + 1) : (m = (true ? n : m) + 1))");
+    deleteASTNode(&ast);
+
+    ast = newASTInc(cond, false).result_value;
+    ASSERT_COMPILE_EXP_EQUALS(ast, &cSerializer, "((true ? (n = (true ? n : m) + 1) : (m = (true ? n : m) + 1))) + -1");
+}
+
+void compileConditionalDec() {
+    defineVar(st, AST_TYPE_INT, "n", false);
+    defineVar(st, AST_TYPE_INT, "m", false);
+
+    ASTNode* n_node = newASTIDReference("n", st).result_value;
+    ASTNode* m_node = newASTIDReference("m", st).result_value;
+    ASTNode* cond = newASTParentheses(newASTTernaryCond(newASTBool(true), n_node, m_node).result_value);
+
+    ast = newASTDec(copyAST(cond), true).result_value;
+    ASSERT_COMPILE_EXP_EQUALS(ast, &cSerializer, "(true ? (n = (true ? n : m) + -1) : (m = (true ? n : m) + -1))");
+    deleteASTNode(&ast);
+
+    ast = newASTDec(cond, false).result_value;
+    ASSERT_COMPILE_EXP_EQUALS(ast, &cSerializer, "((true ? (n = (true ? n : m) + -1) : (m = (true ? n : m) + -1))) + 1");
+}
+
+void compileConditionalLogicalToggle() {
+    defineVar(st, AST_TYPE_BOOL, "n", false);
+    defineVar(st, AST_TYPE_BOOL, "m", false);
+
+    ASTNode* n_node = newASTIDReference("n", st).result_value;
+    ASTNode* m_node = newASTIDReference("m", st).result_value;
+    ASTNode* cond = newASTParentheses(newASTTernaryCond(newASTBool(true), n_node, m_node).result_value);
+
+    ast = newASTLogicalToggle(copyAST(cond), true).result_value;
+    ASSERT_COMPILE_EXP_EQUALS(ast, &cSerializer, "(true ? (n = !(true ? n : m)) : (m = !(true ? n : m)))");
+    deleteASTNode(&ast);
+
+    ast = newASTLogicalToggle(cond, false).result_value;
+    ASSERT_COMPILE_EXP_EQUALS(ast, &cSerializer, "!(true ? (n = !(true ? n : m)) : (m = !(true ? n : m)))");
+}
+
+void compileConditionalBitwiseToggle() {
+    defineVar(st, AST_TYPE_BOOL, "n", false);
+    defineVar(st, AST_TYPE_BOOL, "m", false);
+
+    ASTNode* n_node = newASTIDReference("n", st).result_value;
+    ASTNode* m_node = newASTIDReference("m", st).result_value;
+    ASTNode* cond = newASTParentheses(newASTTernaryCond(newASTBool(true), n_node, m_node).result_value);
+
+    ast = newASTBitwiseToggle(copyAST(cond), true).result_value;
+    ASSERT_COMPILE_EXP_EQUALS(ast, &cSerializer, "(true ? (n = !(true ? n : m)) : (m = !(true ? n : m)))");
+    deleteASTNode(&ast);
+
+    ast = newASTBitwiseToggle(cond, false).result_value;
+    ASSERT_COMPILE_EXP_EQUALS(ast, &cSerializer, "!(true ? (n = !(true ? n : m)) : (m = !(true ? n : m)))");
+
+}
+
+void compileConditionalCompoundAssignmentAddInC() {
+    defineVar(st, AST_TYPE_INT, "n", false);
+    defineVar(st, AST_TYPE_INT, "m", false);
+
+    ASTNode* n_node = newASTIDReference("n", st).result_value;
+    ASTNode* m_node = newASTIDReference("m", st).result_value;
+    ast = newASTTernaryCond(newASTBool(true), n_node, m_node).result_value;
+
+    ast = newASTCompoundAssignment(AST_ADD, newASTParentheses(ast), newASTInt(2)).result_value;
+    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "(true ? (n += 2) : (m += 2));\n");
+}
+
+void compileConditionalCompoundAssignmentAddInJava() {
+    defineVar(st, AST_TYPE_INT, "n", false);
+    defineVar(st, AST_TYPE_INT, "m", false);
+
+    ASTNode* n_node = newASTIDReference("n", st).result_value;
+    ASTNode* m_node = newASTIDReference("m", st).result_value;
+    ast = newASTTernaryCond(newASTBool(true), n_node, m_node).result_value;
+
+    ast = newASTCompoundAssignment(AST_ADD, newASTParentheses(ast), newASTInt(2)).result_value;
+    ASSERT_COMPILE_STMT_EQUALS(ast, &javaSerializer, "_tmp_int = (true ? (n += 2) : (m += 2));\n");
+}
+
+void compileConditionalCompoundAssignmentLogicalAndInC() {
+    defineVar(st, AST_TYPE_BOOL, "n", false);
+    defineVar(st, AST_TYPE_BOOL, "m", false);
+
+    ASTNode* n_node = newASTIDReference("n", st).result_value;
+    ASTNode* m_node = newASTIDReference("m", st).result_value;
+    ast = newASTTernaryCond(newASTBool(true), n_node, m_node).result_value;
+
+    ast = newASTCompoundAssignment(AST_LOGICAL_AND, newASTParentheses(ast), newASTBool(true)).result_value;
+    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "(true ? (n &&= true) : (m &&= true));\n");
+}
+
+void compileConditionalCompoundAssignmentLogicalAndInJava() {
+    defineVar(st, AST_TYPE_BOOL, "n", false);
+    defineVar(st, AST_TYPE_BOOL, "m", false);
+
+    ASTNode* n_node = newASTIDReference("n", st).result_value;
+    ASTNode* m_node = newASTIDReference("m", st).result_value;
+    ast = newASTTernaryCond(newASTBool(true), n_node, m_node).result_value;
+
+    ast = newASTCompoundAssignment(AST_LOGICAL_AND, newASTParentheses(ast), newASTBool(true)).result_value;
+    ASSERT_COMPILE_STMT_EQUALS(ast, &javaSerializer, "_tmp_bool = (true ? (n = (true ? n : m) && true) : (m = (true ? n : m) && true));\n");
+}
+
 int main() {
     UNITY_BEGIN();
     RUN_TEST(testVarDeclaration);
@@ -217,5 +392,20 @@ int main() {
     RUN_TEST(compileBoolVarsInJava);
     RUN_TEST(compileRedefVarInCDoesNotInsertRedefLevel);
     RUN_TEST(compileRedefVarInJavaInsertsRedefLevel);
+    RUN_TEST(compileInc);
+    RUN_TEST(compileDec);
+    RUN_TEST(compileLogicalToggle);
+    RUN_TEST(compileBitwiseToggle);
+    RUN_TEST(compileCompoundAssignmentAdd);
+    RUN_TEST(compileCompoundAssignmentLogicalAndInC);
+    RUN_TEST(compileCompoundAssignmentLogicalAndInJava);
+    RUN_TEST(compileConditionalInc);
+    RUN_TEST(compileConditionalDec);
+    RUN_TEST(compileConditionalLogicalToggle);
+    RUN_TEST(compileConditionalBitwiseToggle);
+    RUN_TEST(compileConditionalCompoundAssignmentAddInC);
+    RUN_TEST(compileConditionalCompoundAssignmentAddInJava);
+    RUN_TEST(compileConditionalCompoundAssignmentLogicalAndInC);
+    RUN_TEST(compileConditionalCompoundAssignmentLogicalAndInJava);
     return UNITY_END();
 }

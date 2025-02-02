@@ -68,6 +68,78 @@ void parseDeclarationAssignmentWithTypeInference() {
     ASSERT_MATCH_AST("var z = true", ast, false);
 }
 
+void parsePrefixInc() {
+    defineVar(st, AST_TYPE_INT, "n", false);
+    ASTNode* ast = newASTInc(newASTIDReference("n", st).result_value, true).result_value;
+    ASSERT_MATCH_AST("++n", ast, true);
+}
+
+void parsePostfixInc() {
+    defineVar(st, AST_TYPE_INT, "n", false);
+    ASTNode* ast = newASTInc(newASTIDReference("n", st).result_value, false).result_value;
+    ASSERT_MATCH_AST("n++", ast, true);
+}
+
+void parsePrefixDec() {
+    defineVar(st, AST_TYPE_INT, "n", false);
+    ASTNode* ast = newASTDec(newASTIDReference("n", st).result_value, true).result_value;
+    ASSERT_MATCH_AST("--n", ast, true);
+}
+
+void parsePostfixDec() {
+    defineVar(st, AST_TYPE_INT, "n", false);
+    ASTNode* ast = newASTDec(newASTIDReference("n", st).result_value, false).result_value;
+    ASSERT_MATCH_AST("n--", ast, true);
+}
+
+void parsePrefixLogicalToggle() {
+    defineVar(st, AST_TYPE_BOOL, "z", false);
+    ASTNode* ast = newASTLogicalToggle(newASTIDReference("z", st).result_value, true).result_value;
+    ASSERT_MATCH_AST("!!z", ast, true);
+}
+
+void parsePostfixLogicalToggle() {
+    defineVar(st, AST_TYPE_BOOL, "z", false);
+    ASTNode* ast = newASTLogicalToggle(newASTIDReference("z", st).result_value, false).result_value;
+    ASSERT_MATCH_AST("z!!", ast, true);
+}
+
+void parsePrefixBitwiseToggle() {
+    defineVar(st, AST_TYPE_INT, "n", false);
+    ASTNode* ast = newASTBitwiseToggle(newASTIDReference("n", st).result_value, true).result_value;
+    ASSERT_MATCH_AST("~~n", ast, true);
+}
+
+void parsePostfixBitwiseToggle() {
+    defineVar(st, AST_TYPE_INT, "n", false);
+    ASTNode* ast = newASTBitwiseToggle(newASTIDReference("n", st).result_value, false).result_value;
+    ASSERT_MATCH_AST("n~~", ast, true);
+}
+
+void parseCompoundAssignmentAdd() {
+    defineVar(st, AST_TYPE_INT, "n", false);
+    ASTNode* ast = newASTCompoundAssignment(AST_ADD, newASTIDReference("n", st).result_value, newASTInt(2)).result_value;
+    ASSERT_MATCH_AST("n += 2", ast, true);
+}
+
+void parseCompoundAssignmentMul() {
+    defineVar(st, AST_TYPE_INT, "n", false);
+    ASTNode* ast = newASTCompoundAssignment(AST_MUL, newASTIDReference("n", st).result_value, newASTInt(2)).result_value;
+    ASSERT_MATCH_AST("n *= 2", ast, true);
+}
+
+void parseCompoundAssignmentBitwiseAnd() {
+    defineVar(st, AST_TYPE_BOOL, "z", false);
+    ASTNode* ast = newASTCompoundAssignment(AST_BITWISE_AND, newASTIDReference("z", st).result_value, newASTBool(true)).result_value;
+    ASSERT_MATCH_AST("z &= true", ast, true);
+}
+
+void parseCompoundAssignmentLogicalAnd() {
+    defineVar(st, AST_TYPE_BOOL, "z", false);
+    ASTNode* ast = newASTCompoundAssignment(AST_LOGICAL_AND, newASTIDReference("z", st).result_value, newASTBool(true)).result_value;
+    ASSERT_MATCH_AST("z &&= true", ast, true);
+}
+
 int main() {
     UNITY_BEGIN();
 //    RUN_TEST(parseIDDeclaration);
@@ -77,5 +149,17 @@ int main() {
     RUN_TEST(parseMultipleStatements);
     RUN_TEST(parseRestrainedExpression);
     RUN_TEST(parseDeclarationAssignmentWithTypeInference);
+    RUN_TEST(parsePrefixInc);
+    RUN_TEST(parsePostfixInc);
+    RUN_TEST(parsePrefixDec);
+    RUN_TEST(parsePostfixDec);
+    RUN_TEST(parsePrefixLogicalToggle);
+    RUN_TEST(parsePostfixLogicalToggle);
+    RUN_TEST(parsePrefixBitwiseToggle);
+    RUN_TEST(parsePostfixBitwiseToggle);
+    RUN_TEST(parseCompoundAssignmentAdd);
+    RUN_TEST(parseCompoundAssignmentMul);
+    RUN_TEST(parseCompoundAssignmentBitwiseAnd);
+    RUN_TEST(parseCompoundAssignmentLogicalAnd);
     return UNITY_END();
 }

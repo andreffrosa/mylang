@@ -66,6 +66,12 @@
 //%right '=' // TODO: rethink
 %token '='
 
+%token ADD_ASS SUB_ASS MUL_ASS DIV_ASS MOD_ASS
+ BITWISE_AND_ASS BITWISE_OR_ASS BITWISE_XOR_ASS BITWISE_NOT_ASS LSHIFT_ASS RSHIFT_ASS
+ LOGICAL_AND_ASS LOGICAL_OR_ASS
+%token INC DEC LOGICAL_TOGGLE BITWISE_TOGGLE
+
+
 // TODO: check priority
 %right '?' ':'
 %left L_SHIFT R_SHIFT
@@ -152,6 +158,26 @@ exp
 assign_exp
    : const_exp '=' exp                 { TRY($$, newASTAssignment($1, $3)); }
    | '(' assign_exp ')'                { $$ = $2; }
+   | const_exp INC                     { TRY($$, newASTInc($1, false)); }
+   | INC const_exp                     { TRY($$, newASTInc($2,  true)); }
+   | const_exp DEC                     { TRY($$, newASTDec($1, false)); }
+   | DEC const_exp                     { TRY($$, newASTDec($2,  true)); }
+   | const_exp LOGICAL_TOGGLE          { TRY($$, newASTLogicalToggle($1, false)); }
+   | LOGICAL_TOGGLE const_exp          { TRY($$, newASTLogicalToggle($2,  true)); }
+   | const_exp BITWISE_TOGGLE          { TRY($$, newASTBitwiseToggle($1, false)); }
+   | BITWISE_TOGGLE const_exp          { TRY($$, newASTBitwiseToggle($2,  true)); }
+   | const_exp ADD_ASS exp             { TRY($$, newASTCompoundAssignment(AST_ADD, $1, $3)); }
+   | const_exp SUB_ASS exp             { TRY($$, newASTCompoundAssignment(AST_SUB, $1, $3)); }
+   | const_exp MUL_ASS exp             { TRY($$, newASTCompoundAssignment(AST_MUL, $1, $3)); }
+   | const_exp DIV_ASS exp             { TRY($$, newASTCompoundAssignment(AST_DIV, $1, $3)); }
+   | const_exp MOD_ASS exp             { TRY($$, newASTCompoundAssignment(AST_MOD, $1, $3)); }
+   | const_exp BITWISE_AND_ASS exp     { TRY($$, newASTCompoundAssignment(AST_BITWISE_AND, $1, $3)); }
+   | const_exp BITWISE_OR_ASS exp      { TRY($$, newASTCompoundAssignment(AST_BITWISE_OR, $1,  $3)); }
+   | const_exp BITWISE_XOR_ASS exp     { TRY($$, newASTCompoundAssignment(AST_BITWISE_XOR, $1, $3)); }
+   | const_exp LSHIFT_ASS exp          { TRY($$, newASTCompoundAssignment(AST_L_SHIFT, $1, $3)); }
+   | const_exp RSHIFT_ASS exp          { TRY($$, newASTCompoundAssignment(AST_R_SHIFT, $1, $3)); }
+   | const_exp LOGICAL_AND_ASS exp     { TRY($$, newASTCompoundAssignment(AST_LOGICAL_AND, $1, $3)); }
+   | const_exp LOGICAL_OR_ASS exp      { TRY($$, newASTCompoundAssignment(AST_LOGICAL_OR, $1, $3)); }
    ;
 
 const_exp

@@ -54,6 +54,23 @@ whitespace      [ \t\r]
 "<="                    { return CMP_LTE; }
 ">="                    { return CMP_GTE; }
 
+"+="                    { return ADD_ASS; }
+"-="                    { return SUB_ASS; }
+"*="                    { return MUL_ASS; }
+"/="                    { return DIV_ASS; }
+"%="                    { return MOD_ASS; }
+"&="                    { return BITWISE_AND_ASS; }
+"|="                    { return BITWISE_OR_ASS; }
+"^="                    { return BITWISE_XOR_ASS; }
+"<<="                   { return LSHIFT_ASS; }
+">>="                   { return RSHIFT_ASS; }
+"&&="                   { return LOGICAL_AND_ASS; }
+"||="                   { return LOGICAL_OR_ASS; }
+"++"                    { return INC; }
+"--"                    { return DEC; }
+"!!"                    { return LOGICAL_TOGGLE; }
+"~~"                    { return BITWISE_TOGGLE; }
+
 %{/**** KEYWORDS ****/%}
 "var"                   { strncpy(yylval_param->sval, yytext, MAX_ID_SIZE); return VAR; }
 

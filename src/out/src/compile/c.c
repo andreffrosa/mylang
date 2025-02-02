@@ -41,7 +41,7 @@ static void print(const char* exp_str, const ASTType type, const char* id_str, c
             IOStreamWritef(stream, "%%d\\n\", %s)", exp_str);
             break;
         case AST_TYPE_BOOL:
-            IOStreamWritef(stream, "%%s\\n\", (%s ? \"true\" : \"false\"))", exp_str);
+            IOStreamWritef(stream, "%%s\\n\", %s ? \"true\" : \"false\")", exp_str);
             break;
         default:
             assert(false);
@@ -70,15 +70,23 @@ static void typeOf(const IOStream* stream, const ASTNode* node, const char* node
     IOStreamWritef(stream, "(%s, %s)", node_str, str);
 }
 
-static bool cond_assign_needs_tmp() {
+static bool condAssignNeedsTmp() {
     return false;
 }
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+static bool hasCompdAssign(ASTNodeType node_type) {
+    return true;
+}
+#pragma GCC diagnostic pop
 
 const OutSerializer cSerializer = {
     &parseType,
     &typeOf,
     &print,
-    &cond_assign_needs_tmp,
+    &condAssignNeedsTmp,
+    &hasCompdAssign,
     false
 };
 

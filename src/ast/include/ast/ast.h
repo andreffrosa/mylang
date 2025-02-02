@@ -50,6 +50,11 @@ typedef enum ASTNodeType {
     AST_TERNARY_COND,
     AST_IF,
     AST_IF_ELSE,
+    AST_INC,
+    AST_DEC,
+    AST_LOGICAL_TOGGLE,
+    AST_BITWISE_TOGGLE,
+    AST_COMPD_ASSIGN,
     AST_NODE_TYPES_COUNT  // Count of AST node types
 } ASTNodeType;
 
@@ -79,8 +84,9 @@ typedef struct ASTNode {
         };
         struct {    // UNARY_OP
             const struct ASTNode* child;
+            bool is_prefix:1; // inc and dec
         };
-        struct { // TERNARY_OP
+        struct {    // TERNARY_OP
             struct ASTNode* first;
             struct ASTNode* second;
             struct ASTNode* third;
@@ -118,6 +124,8 @@ ASTOpType getNodeOpType(const ASTNodeType node_type);
 
 const char* nodeTypeToStr(ASTNodeType node_type);
 
+ASTNode* copyAST(const ASTNode* src_ast);
+
 #define newASTAdd(l, r) newASTBinaryOP(AST_ADD, l, r)
 #define newASTSub(l, r) newASTBinaryOP(AST_SUB, l, r)
 #define newASTMul(l, r) newASTBinaryOP(AST_MUL, l, r)
@@ -147,6 +155,12 @@ const char* nodeTypeToStr(ASTNodeType node_type);
 ASTResult newASTIDDeclaration(ASTType type, const char* id, const ASTNode* value, bool redef, SymbolTable* st);
 ASTResult newASTIDReference(const char* id, const SymbolTable* st);
 #define newASTAssignment(l, r) newASTBinaryOP(AST_ID_ASSIGNMENT, l, r)
+ASTResult newASTUnaryCompoundAssign(ASTNodeType node_type, const ASTNode* lval, bool is_prefix);
+ASTResult newASTCompoundAssignment(ASTNodeType node_type, const ASTNode* lval, ASTNode* value);
+#define newASTInc(e, p) newASTUnaryCompoundAssign(AST_INC, e, p)
+#define newASTDec(e, p) newASTUnaryCompoundAssign(AST_DEC, e, p)
+#define newASTLogicalToggle(e, p) newASTUnaryCompoundAssign(AST_LOGICAL_TOGGLE, e, p)
+#define newASTBitwiseToggle(e, p) newASTUnaryCompoundAssign(AST_BITWISE_TOGGLE, e, p)
 
 #define newASTPrint(e) newASTUnaryOP(AST_PRINT, e).result_value
 #define newASTPrintVar(e) newASTUnaryOP(AST_PRINT_VAR, e).result_value

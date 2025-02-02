@@ -52,7 +52,7 @@ void compileTernaryCondExp() {
     ast = newASTTernaryCond(newASTBool(true), newASTInt(1), newASTInt(-1)).result_value;
 
     const char* str = "true ? 1 : -1";
-    ASSERT_COMPILE_EXP_EQUALS(ast, str);
+    ASSERT_COMPILE_EXP_EQUALS(ast, &cSerializer, str);
 }
 
 void compileNestedTernaryCondExpsInsertsParentheses() {
@@ -60,21 +60,21 @@ void compileNestedTernaryCondExpsInsertsParentheses() {
     ast = newASTTernaryCond(cond, newASTInt(1), newASTInt(-1)).result_value;
 
     const char* str = "(true ? true : false) ? 1 : -1";
-    ASSERT_COMPILE_EXP_EQUALS(ast, str);
+    ASSERT_COMPILE_EXP_EQUALS(ast, &cSerializer, str);
     deleteASTNode(&ast);
 
     ASTNode* exp = newASTTernaryCond(newASTBool(true), newASTInt(1), newASTInt(2)).result_value;
     ast = newASTTernaryCond(newASTBool(true), exp, newASTInt(-1)).result_value;
 
     str = "true ? (true ? 1 : 2) : -1";
-    ASSERT_COMPILE_EXP_EQUALS(ast, str);
+    ASSERT_COMPILE_EXP_EQUALS(ast, &cSerializer, str);
     deleteASTNode(&ast);
 
     exp = newASTTernaryCond(newASTBool(true), newASTInt(-1), newASTInt(-2)).result_value;
     ast = newASTTernaryCond(newASTBool(true), newASTInt(1), exp).result_value;
 
     str = "true ? 1 : (true ? -1 : -2)";
-    ASSERT_COMPILE_EXP_EQUALS(ast, str);
+    ASSERT_COMPILE_EXP_EQUALS(ast, &cSerializer, str);
 }
 
 void compileCondAssignment() {

@@ -36,6 +36,7 @@ static Symbol* evalLVal(const ASTNode* lval, const SymbolTable* st, Frame* frame
     } else if (lval->node_type == AST_PARENTHESES) {
         return evalLVal(lval->child, st, frame);
     } else {
+        printf("evalLVal not defined for %s\n", nodeTypeToStr(lval->node_type));
         assert(false);
     }
 }
@@ -99,9 +100,6 @@ void executeASTStatements(const ASTNode* ast, const SymbolTable* st, Frame* fram
             int value = evalASTExpression(ast->right, st, frame);
             unsigned int index = getVarOffset(var);
             setFrameValue(frame, index, value);
-            break;
-        } case AST_ID_ASSIGNMENT: {
-            evalAssignment(ast, st, frame);
             break;
         } case AST_STATEMENT_SEQ: {
             executeASTStatements(ast->left, st, frame);
@@ -213,6 +211,20 @@ int evalASTExpression(const ASTNode* node, const SymbolTable* st, Frame* frame) 
             return true;
         } case AST_ID_ASSIGNMENT: {
             return evalAssignment(node, st, frame);
+        } case AST_INC: {
+            int n = evalASTExpression(node->child, st, frame);
+            return node->is_prefix ? n : n - 1;
+        } case AST_DEC: {
+            int n = evalASTExpression(node->child, st, frame);
+            return node->is_prefix ? n : n + 1;
+        } case AST_LOGICAL_TOGGLE: {
+            bool z = evalASTExpression(node->child, st, frame);
+            return node->is_prefix ? z : !z;
+        } case AST_BITWISE_TOGGLE: {
+            int n = evalASTExpression(node->child, st, frame);
+            return node->is_prefix ? n : (node->child->value_type == AST_TYPE_BOOL ? !n : ~ n);
+        } case AST_COMPD_ASSIGN: {
+            return evalASTExpression(node->child, st, frame);
         } case AST_TYPE_OF: {
             // TODO: [optimization] check if it needs eval (only needs if has side-effects)
             evalASTExpression(node->child, st, frame);

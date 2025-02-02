@@ -260,6 +260,312 @@ void testEqualASTLeafs() {
     ASSERT_NOT_EQUAL_AST(newASTID(n_var), newASTID(m_var));
 }
 
+void prefixIncOfLvalReturnsOk() {
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
+    ASSERT_IS_OK(res);
+
+    res = newASTIDReference("n", st);
+    ASSERT_IS_OK(res);
+    res = newASTInc(res.result_value, true);
+
+    ASSERT_IS_OK(res);
+    ASTNode* ast = res.result_value;
+
+    ASSERT_IS_VALID_AST_NODE(ast, AST_INC, UNARY_OP, 6);
+
+    deleteASTNode(&ast);
+}
+
+void prefixIncOfNonLvalReturnsErr() {
+    ASTResult res = newASTInc(newASTInt(1), true);
+    ASSERT_IS_ERR(res, AST_RES_ERR_INVALID_LVAL);
+
+    ASTNode* ast = res.result_value;
+    deleteASTNode(&ast);
+}
+
+void postfixIncOfLvalReturnsOk() {
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
+    ASSERT_IS_OK(res);
+
+    res = newASTIDReference("n", st);
+    ASSERT_IS_OK(res);
+    res = newASTInc(res.result_value, false);
+
+    ASSERT_IS_OK(res);
+    ASTNode* ast = res.result_value;
+
+    ASSERT_IS_VALID_AST_NODE(ast, AST_INC, UNARY_OP, 6);
+
+    deleteASTNode(&ast);
+}
+
+void postfixIncOfNonLvalReturnsErr() {
+    ASTResult res = newASTInc(newASTInt(1), false);
+    ASSERT_IS_ERR(res, AST_RES_ERR_INVALID_LVAL);
+
+    ASTNode* ast = res.result_value;
+    deleteASTNode(&ast);
+}
+
+void prefixIncOfNonIntReturnsErr() {
+    ASTResult res = defineVar(st, AST_TYPE_BOOL, "z", false);
+    ASSERT_IS_OK(res);
+
+    res = newASTIDReference("z", st);
+    ASSERT_IS_OK(res);
+    res = newASTInc(res.result_value, true);
+    ASSERT_IS_ERR(res, AST_RES_ERR_INVALID_CHILD_TYPE);
+
+    ASTNode* ast = res.result_value;
+    deleteASTNode(&ast);
+}
+
+void postfixIncOfNonIntReturnsErr() {
+    ASTResult res = defineVar(st, AST_TYPE_BOOL, "z", false);
+    ASSERT_IS_OK(res);
+
+    res = newASTIDReference("z", st);
+    ASSERT_IS_OK(res);
+    res = newASTInc(res.result_value, false);
+    ASSERT_IS_ERR(res, AST_RES_ERR_INVALID_CHILD_TYPE);
+
+    ASTNode* ast = res.result_value;
+    deleteASTNode(&ast);
+}
+
+void prefixLogicalToggleOfLvalReturnsOk() {
+    ASTResult res = defineVar(st, AST_TYPE_BOOL, "z", false);
+    ASSERT_IS_OK(res);
+
+    res = newASTIDReference("z", st);
+    ASSERT_IS_OK(res);
+    res = newASTLogicalToggle(res.result_value, true);
+
+    ASSERT_IS_OK(res);
+    ASTNode* ast = res.result_value;
+
+    ASSERT_IS_VALID_AST_NODE(ast, AST_LOGICAL_TOGGLE, UNARY_OP, 5);
+
+    deleteASTNode(&ast);
+}
+
+void prefixLogicalToggleOfNonLvalReturnsErr() {
+    ASTResult res = newASTLogicalToggle(newASTBool(true), true);
+    ASSERT_IS_ERR(res, AST_RES_ERR_INVALID_LVAL);
+
+    ASTNode* ast = res.result_value;
+    deleteASTNode(&ast);
+}
+
+void postfixLogicalToggleOfLvalReturnsOk() {
+    ASTResult res = defineVar(st, AST_TYPE_BOOL, "z", false);
+    ASSERT_IS_OK(res);
+
+    res = newASTIDReference("z", st);
+    ASSERT_IS_OK(res);
+    res = newASTLogicalToggle(res.result_value, false);
+
+    ASSERT_IS_OK(res);
+    ASTNode* ast = res.result_value;
+
+    ASSERT_IS_VALID_AST_NODE(ast, AST_LOGICAL_TOGGLE, UNARY_OP, 5);
+
+    deleteASTNode(&ast);
+}
+
+void postfixLogicalToggleOfNonLvalReturnsErr() {
+    ASTResult res = newASTLogicalToggle(newASTBool(true), false);
+    ASSERT_IS_ERR(res, AST_RES_ERR_INVALID_LVAL);
+
+    ASTNode* ast = res.result_value;
+    deleteASTNode(&ast);
+}
+
+void prefixLogicalToggleOfNonBoolReturnsErr() {
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
+    ASSERT_IS_OK(res);
+
+    res = newASTIDReference("n", st);
+    ASSERT_IS_OK(res);
+    res = newASTLogicalToggle(res.result_value, true);
+    ASSERT_IS_ERR(res, AST_RES_ERR_INVALID_CHILD_TYPE);
+
+    ASTNode* ast = res.result_value;
+    deleteASTNode(&ast);
+}
+
+void postfixLogicalToggleOfNonBoolReturnsErr() {
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
+    ASSERT_IS_OK(res);
+
+    res = newASTIDReference("n", st);
+    ASSERT_IS_OK(res);
+    res = newASTLogicalToggle(res.result_value, true);
+    ASSERT_IS_ERR(res, AST_RES_ERR_INVALID_CHILD_TYPE);
+
+    ASTNode* ast = res.result_value;
+    deleteASTNode(&ast);
+}
+
+void prefixBitwiseToggleOfLvalReturnsOk() {
+    ASTResult res = defineVar(st, AST_TYPE_BOOL, "z", false);
+    ASSERT_IS_OK(res);
+
+    res = newASTIDReference("z", st);
+    ASSERT_IS_OK(res);
+    res = newASTBitwiseToggle(res.result_value, true);
+
+    ASSERT_IS_OK(res);
+    ASTNode* ast = res.result_value;
+
+    ASSERT_IS_VALID_AST_NODE(ast, AST_BITWISE_TOGGLE, UNARY_OP, 5);
+
+    deleteASTNode(&ast);
+}
+
+void prefixBitwiseToggleOfNonLvalReturnsErr() {
+    ASTResult res = newASTBitwiseToggle(newASTBool(true), true);
+    ASSERT_IS_ERR(res, AST_RES_ERR_INVALID_LVAL);
+
+    ASTNode* ast = res.result_value;
+    deleteASTNode(&ast);
+}
+
+void postfixBitwiseToggleOfLvalReturnsOk() {
+    ASTResult res = defineVar(st, AST_TYPE_BOOL, "z", false);
+    ASSERT_IS_OK(res);
+
+    res = newASTIDReference("z", st);
+    ASSERT_IS_OK(res);
+    res = newASTBitwiseToggle(res.result_value, false);
+
+    ASSERT_IS_OK(res);
+    ASTNode* ast = res.result_value;
+
+    ASSERT_IS_VALID_AST_NODE(ast, AST_BITWISE_TOGGLE, UNARY_OP, 5);
+
+    deleteASTNode(&ast);
+}
+
+void postfixBitwiseToggleOfNonLvalReturnsErr() {
+    ASTResult res = newASTBitwiseToggle(newASTBool(true), false);
+    ASSERT_IS_ERR(res, AST_RES_ERR_INVALID_LVAL);
+
+    ASTNode* ast = res.result_value;
+    deleteASTNode(&ast);
+}
+
+void bitwiseToggleOfIntReturnsOK() {
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
+    ASSERT_IS_OK(res);
+
+    res = newASTIDReference("n", st);
+    ASSERT_IS_OK(res);
+    res = newASTBitwiseToggle(res.result_value, false);
+
+    ASSERT_IS_OK(res);
+    ASTNode* ast = res.result_value;
+
+    ASSERT_IS_VALID_AST_NODE(ast, AST_BITWISE_TOGGLE, UNARY_OP, 5);
+
+    deleteASTNode(&ast);
+}
+
+void compoundAssignmentOfNonLvalReturnsErr() {
+    ASTResult res = newASTCompoundAssignment(AST_ADD, newASTInt(1), newASTInt(2));
+    ASSERT_IS_ERR(res, AST_RES_ERR_INVALID_LVAL);
+
+    ASTNode* ast = res.result_value;
+    deleteASTNode(&ast);
+}
+
+void compoundAssignmentAddOfIntReturnsOK() {
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
+    ASSERT_IS_OK(res);
+
+    res = newASTIDReference("n", st);
+    ASSERT_IS_OK(res);
+    res = newASTCompoundAssignment(AST_ADD, res.result_value, newASTInt(2));
+
+    ASSERT_IS_OK(res);
+    ASTNode* ast = res.result_value;
+    ASSERT_IS_VALID_AST_NODE(ast, AST_COMPD_ASSIGN, UNARY_OP, 6);
+
+    deleteASTNode(&ast);
+}
+
+void compoundAssignmentAddOfNonIntVarReturnsErr() {
+    ASTResult res = defineVar(st, AST_TYPE_BOOL, "z", false);
+    ASSERT_IS_OK(res);
+
+    res = newASTIDReference("z", st);
+    ASSERT_IS_OK(res);
+    res = newASTCompoundAssignment(AST_ADD, res.result_value, newASTInt(1));
+
+    ASSERT_IS_ERR(res, AST_RES_ERR_INVALID_LEFT_TYPE);
+
+    ASTNode* ast = res.result_value;
+    deleteASTNode(&ast);
+}
+
+void compoundAssignmentAddOfNonIntValueReturnsErr() {
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
+    ASSERT_IS_OK(res);
+
+    res = newASTIDReference("n", st);
+    ASSERT_IS_OK(res);
+    res = newASTCompoundAssignment(AST_ADD, res.result_value, newASTBool(true));
+
+    ASSERT_IS_ERR(res, AST_RES_ERR_INVALID_RIGHT_TYPE);
+
+    ASTNode* ast = res.result_value;
+    deleteASTNode(&ast);
+}
+
+void compoundAssignmentLogicalAndOfBoolReturnsOK() {
+    ASTResult res = defineVar(st, AST_TYPE_BOOL, "z", false);
+    ASSERT_IS_OK(res);
+
+    res = newASTIDReference("z", st);
+    ASSERT_IS_OK(res);
+    res = newASTCompoundAssignment(AST_LOGICAL_AND, res.result_value, newASTBool(true));
+
+    ASSERT_IS_OK(res);
+    ASTNode* ast = res.result_value;
+    ASSERT_IS_VALID_AST_NODE(ast, AST_COMPD_ASSIGN, UNARY_OP, 6);
+
+    deleteASTNode(&ast);
+}
+
+void compoundAssignmentLogicalAndOfNonBoolVarReturnsErr() {
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
+    ASSERT_IS_OK(res);
+
+    res = newASTIDReference("n", st);
+    ASSERT_IS_OK(res);
+    res = newASTCompoundAssignment(AST_LOGICAL_AND, res.result_value, newASTBool(true));
+
+    ASSERT_IS_ERR(res, AST_RES_ERR_INVALID_LEFT_TYPE);
+
+    ASTNode* ast = res.result_value;
+    deleteASTNode(&ast);
+}
+
+void compoundAssignmentLogicalAndOfNonBoolValueReturnsErr() {
+    ASTResult res = defineVar(st, AST_TYPE_BOOL, "z", false);
+    ASSERT_IS_OK(res);
+
+    res = newASTIDReference("z", st);
+    ASSERT_IS_OK(res);
+    res = newASTCompoundAssignment(AST_LOGICAL_AND, res.result_value, newASTInt(1));
+
+    ASSERT_IS_ERR(res, AST_RES_ERR_INVALID_RIGHT_TYPE);
+
+    ASTNode* ast = res.result_value;
+    deleteASTNode(&ast);
+}
+
 int main() {
     UNITY_BEGIN();
     RUN_TEST(idReferenceOfUndefinedVarReturnsErr);
@@ -280,5 +586,29 @@ int main() {
     RUN_TEST(newASTStatementListWithAnotherStatement);
     RUN_TEST(newASTStatementListWithStatementList);
     RUN_TEST(testEqualASTLeafs);
+    RUN_TEST(prefixIncOfLvalReturnsOk);
+    RUN_TEST(prefixIncOfNonLvalReturnsErr);
+    RUN_TEST(postfixIncOfLvalReturnsOk);
+    RUN_TEST(postfixIncOfNonLvalReturnsErr);
+    RUN_TEST(prefixIncOfNonIntReturnsErr);
+    RUN_TEST(postfixIncOfNonIntReturnsErr);
+    RUN_TEST(prefixLogicalToggleOfLvalReturnsOk);
+    RUN_TEST(prefixLogicalToggleOfNonLvalReturnsErr);
+    RUN_TEST(postfixLogicalToggleOfLvalReturnsOk);
+    RUN_TEST(postfixLogicalToggleOfNonLvalReturnsErr);
+    RUN_TEST(prefixLogicalToggleOfNonBoolReturnsErr);
+    RUN_TEST(postfixLogicalToggleOfNonBoolReturnsErr);
+    RUN_TEST(prefixBitwiseToggleOfLvalReturnsOk);
+    RUN_TEST(prefixBitwiseToggleOfNonLvalReturnsErr);
+    RUN_TEST(postfixBitwiseToggleOfLvalReturnsOk);
+    RUN_TEST(postfixBitwiseToggleOfNonLvalReturnsErr);
+    RUN_TEST(bitwiseToggleOfIntReturnsOK);
+    RUN_TEST(compoundAssignmentOfNonLvalReturnsErr);
+    RUN_TEST(compoundAssignmentAddOfIntReturnsOK);
+    RUN_TEST(compoundAssignmentAddOfNonIntVarReturnsErr);
+    RUN_TEST(compoundAssignmentAddOfNonIntValueReturnsErr);
+    RUN_TEST(compoundAssignmentLogicalAndOfBoolReturnsOK);
+    RUN_TEST(compoundAssignmentLogicalAndOfNonBoolVarReturnsErr);
+    RUN_TEST(compoundAssignmentLogicalAndOfNonBoolValueReturnsErr);
     return UNITY_END();
 }

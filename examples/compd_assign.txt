@@ -1,0 +1,32 @@
+int n = 0;
+++n;
+n++;
+
+bool z = false;
+print(!!z);
+print(z!!);
+printvar(z);
+
+print(z &&= true);
+
+int w = 0;
+print(~~w);
+print(w~~);
+printvar(w);
+
+int x = 12;
+x %= 3;
+printvar(x);
+
+x = 0;
+w = 0;
+(true ? x : w) += 3;
+printvar(x);
+printvar(w);
+
+var a = true;
+var b = true;
+(true ? a : b) &&= false;
+printvar(a);
+printvar(b);
+

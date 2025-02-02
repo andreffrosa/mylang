@@ -293,7 +293,7 @@ void unaryPrecedenceIsEqual() {
 
     ast = newASTSetPositive(newASTUSub(newASTInt(1)).result_value).result_value;
     ast = newASTUAdd(ast).result_value;
-    ASSERT_MATCH_AST_EXP("++|-1", ast);
+    ASSERT_MATCH_AST_EXP("+ +|-1", ast);
 
     ast = newASTUAdd(newASTUSub(newASTInt(1)).result_value).result_value;
     ast = newASTSetPositive(ast).result_value;
@@ -305,7 +305,7 @@ void unaryPrecedenceIsEqual() {
 
     ast = newASTUSub(newASTUSub(newASTInt(1)).result_value).result_value;
     ast = newASTSetPositive(ast).result_value;
-    ASSERT_MATCH_AST_EXP("+|--1", ast);
+    ASSERT_MATCH_AST_EXP("+|- -1", ast);
 
     ast = newASTSetPositive(newASTUSub(newASTInt(1)).result_value).result_value;
     ast = newASTUSub(ast).result_value;
@@ -317,11 +317,11 @@ void unaryPrecedenceIsEqual() {
 
     ast = newASTSetNegative(newASTUSub(newASTInt(1)).result_value).result_value;
     ast = newASTUSub(ast).result_value;
-    ASSERT_MATCH_AST_EXP("--|-1", ast);
+    ASSERT_MATCH_AST_EXP("- -|-1", ast);
 
     ast = newASTUSub(newASTUSub(newASTInt(1)).result_value).result_value;
     ast = newASTSetNegative(ast).result_value;
-    ASSERT_MATCH_AST_EXP("-|--1", ast);
+    ASSERT_MATCH_AST_EXP("-|- -1", ast);
 
     ast = newASTSetPositive(newASTBitwiseNot(newASTInt(1)).result_value).result_value;
     ASSERT_MATCH_AST_EXP("+|~1", ast);
