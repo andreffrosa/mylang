@@ -65,7 +65,7 @@ void testPrintC() {
     deleteASTNode(&ast);
 
     ast = newASTPrintVar(newASTIDReference("n", st).result_value);
-    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "printf(\"n = %d\\n\", n);\n");
+    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "printf(\"int n = %d\\n\", n);\n");
 }
 
 void testBoolPrintC() {
@@ -84,7 +84,7 @@ void testBoolPrintC() {
     deleteASTNode(&ast);
 
     ast = newASTPrintVar(newASTIDReference("z", st).result_value);
-    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "printf(\"z = %s\\n\", z ? \"true\" : \"false\");\n");
+    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "printf(\"bool z = %s\\n\", z ? \"true\" : \"false\");\n");
 }
 
 void testPrintJava() {
@@ -103,7 +103,7 @@ void testPrintJava() {
     deleteASTNode(&ast);
 
     ast = newASTPrintVar(newASTIDReference("n", st).result_value);
-    ASSERT_COMPILE_STMT_EQUALS(ast, &javaSerializer, "System.out.println(\"n = \" + n);\n");
+    ASSERT_COMPILE_STMT_EQUALS(ast, &javaSerializer, "System.out.println(\"int n = \" + n);\n");
 }
 
 void testBoolPrintJava() {
@@ -122,7 +122,7 @@ void testBoolPrintJava() {
     deleteASTNode(&ast);
 
     ast = newASTPrintVar(newASTIDReference("z", st).result_value);
-    ASSERT_COMPILE_STMT_EQUALS(ast, &javaSerializer, "System.out.println(\"z = \" + z);\n");
+    ASSERT_COMPILE_STMT_EQUALS(ast, &javaSerializer, "System.out.println(\"bool z = \" + z);\n");
 }
 
 void compileDeclarationWithChainedAssignment() {

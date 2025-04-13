@@ -26,7 +26,7 @@ static const char* ASTTypeCoverter[] = {
 static void print(const char* exp_str, const ASTType type, const char* id_str, const IOStream* stream) {
     IOStreamWritef(stream, "System.out.println(");
     if(id_str != NULL) {
-        IOStreamWritef(stream, "\"%s = \" + ", id_str);
+        IOStreamWritef(stream, "\"%s %s = \" + ", ASTTypeToStr(type), id_str);
     }
 
     if(type == AST_TYPE_TYPE) {
