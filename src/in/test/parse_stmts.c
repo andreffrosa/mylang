@@ -32,7 +32,11 @@ void parseIDDeclarationAssignement() {
 
 void parseAssignement() {
     defineVar(st, AST_TYPE_INT, "n", false);
-    ASTNode* n_node = newASTIDReference("n", st).result_value;
+
+    ASTResult res = getVarReference(st, "n");
+    ASSERT_IS_OK(res);
+    ASTNode* n_node = newASTID(res.result_value);
+
     ASTNode* ast = newASTAssignment(n_node, newASTInt(1)).result_value;
     ASSERT_MATCH_AST("n = 1", ast, true);
 }
@@ -44,7 +48,9 @@ void parseSingleStatement() {
 
 void parseMultipleStatements() {
     ASTNode* stmt1 = newASTIDDeclaration(AST_TYPE_INT, "n", newASTInt(0), false, st).result_value;
-    ASTNode* n_node = newASTIDReference("n", st).result_value;
+    ASTResult res = getVarReference(st, "n");
+    ASSERT_IS_OK(res);
+    ASTNode* n_node = newASTID(res.result_value);
     ASTNode* stmt2 = newASTAssignment(n_node, newASTInt(1)).result_value;
     ASTNode* ast = newASTStatementList(stmt1, stmt2);
     ASSERT_MATCH_AST("int n = 0; n = 1;", ast, false);
@@ -53,10 +59,12 @@ void parseMultipleStatements() {
 void parseRestrainedExpression() {
     defineVar(st, AST_TYPE_INT, "n", false);
 
-    ASTNode* id = newASTIDReference("n", st).result_value;
-    ASTNode* v = newASTAdd(id, newASTInt(1)).result_value;
-    id = newASTIDReference("n", st).result_value;
-    ASTNode* ast = newASTAssignment(id, v).result_value;
+    ASTResult res = getVarReference(st, "n");
+    ASSERT_IS_OK(res);
+    ASTNode* n_node = newASTID(res.result_value);
+    ASTNode* v = newASTAdd(n_node, newASTInt(1)).result_value;
+    n_node = newASTID(res.result_value);
+    ASTNode* ast = newASTAssignment(n_node, v).result_value;
     ASSERT_MATCH_AST("valueof(n = n + 1)", ast, true);
 }
 
@@ -70,73 +78,109 @@ void parseDeclarationAssignmentWithTypeInference() {
 
 void parsePrefixInc() {
     defineVar(st, AST_TYPE_INT, "n", false);
-    ASTNode* ast = newASTInc(newASTIDReference("n", st).result_value, true).result_value;
+    ASTResult res = getVarReference(st, "n");
+    ASSERT_IS_OK(res);
+    ASTNode* n_node = newASTID(res.result_value);
+    ASTNode* ast = newASTInc(n_node, true).result_value;
     ASSERT_MATCH_AST("++n", ast, true);
 }
 
 void parsePostfixInc() {
     defineVar(st, AST_TYPE_INT, "n", false);
-    ASTNode* ast = newASTInc(newASTIDReference("n", st).result_value, false).result_value;
+    ASTResult res = getVarReference(st, "n");
+    ASSERT_IS_OK(res);
+    ASTNode* n_node = newASTID(res.result_value);
+    ASTNode* ast = newASTInc(n_node, false).result_value;
     ASSERT_MATCH_AST("n++", ast, true);
 }
 
 void parsePrefixDec() {
     defineVar(st, AST_TYPE_INT, "n", false);
-    ASTNode* ast = newASTDec(newASTIDReference("n", st).result_value, true).result_value;
+    ASTResult res = getVarReference(st, "n");
+    ASSERT_IS_OK(res);
+    ASTNode* n_node = newASTID(res.result_value);
+    ASTNode* ast = newASTDec(n_node, true).result_value;
     ASSERT_MATCH_AST("--n", ast, true);
 }
 
 void parsePostfixDec() {
     defineVar(st, AST_TYPE_INT, "n", false);
-    ASTNode* ast = newASTDec(newASTIDReference("n", st).result_value, false).result_value;
+    ASTResult res = getVarReference(st, "n");
+    ASSERT_IS_OK(res);
+    ASTNode* n_node = newASTID(res.result_value);
+    ASTNode* ast = newASTDec(n_node, false).result_value;
     ASSERT_MATCH_AST("n--", ast, true);
 }
 
 void parsePrefixLogicalToggle() {
     defineVar(st, AST_TYPE_BOOL, "z", false);
-    ASTNode* ast = newASTLogicalToggle(newASTIDReference("z", st).result_value, true).result_value;
+    ASTResult res = getVarReference(st, "z");
+    ASSERT_IS_OK(res);
+    ASTNode* z_node = newASTID(res.result_value);
+    ASTNode* ast = newASTLogicalToggle(z_node, true).result_value;
     ASSERT_MATCH_AST("!!z", ast, true);
 }
 
 void parsePostfixLogicalToggle() {
     defineVar(st, AST_TYPE_BOOL, "z", false);
-    ASTNode* ast = newASTLogicalToggle(newASTIDReference("z", st).result_value, false).result_value;
+    ASTResult res = getVarReference(st, "z");
+    ASSERT_IS_OK(res);
+    ASTNode* z_node = newASTID(res.result_value);
+    ASTNode* ast = newASTLogicalToggle(z_node, false).result_value;
     ASSERT_MATCH_AST("z!!", ast, true);
 }
 
 void parsePrefixBitwiseToggle() {
     defineVar(st, AST_TYPE_INT, "n", false);
-    ASTNode* ast = newASTBitwiseToggle(newASTIDReference("n", st).result_value, true).result_value;
+    ASTResult res = getVarReference(st, "n");
+    ASSERT_IS_OK(res);
+    ASTNode* n_node = newASTID(res.result_value);
+    ASTNode* ast = newASTBitwiseToggle(n_node, true).result_value;
     ASSERT_MATCH_AST("~~n", ast, true);
 }
 
 void parsePostfixBitwiseToggle() {
     defineVar(st, AST_TYPE_INT, "n", false);
-    ASTNode* ast = newASTBitwiseToggle(newASTIDReference("n", st).result_value, false).result_value;
+    ASTResult res = getVarReference(st, "n");
+    ASSERT_IS_OK(res);
+    ASTNode* n_node = newASTID(res.result_value);
+    ASTNode* ast = newASTBitwiseToggle(n_node, false).result_value;
     ASSERT_MATCH_AST("n~~", ast, true);
 }
 
 void parseCompoundAssignmentAdd() {
     defineVar(st, AST_TYPE_INT, "n", false);
-    ASTNode* ast = newASTCompoundAssignment(AST_ADD, newASTIDReference("n", st).result_value, newASTInt(2)).result_value;
+    ASTResult res = getVarReference(st, "n");
+    ASSERT_IS_OK(res);
+    ASTNode* n_node = newASTID(res.result_value);
+    ASTNode* ast = newASTCompoundAssignment(AST_ADD, n_node, newASTInt(2)).result_value;
     ASSERT_MATCH_AST("n += 2", ast, true);
 }
 
 void parseCompoundAssignmentMul() {
     defineVar(st, AST_TYPE_INT, "n", false);
-    ASTNode* ast = newASTCompoundAssignment(AST_MUL, newASTIDReference("n", st).result_value, newASTInt(2)).result_value;
+    ASTResult res = getVarReference(st, "n");
+    ASSERT_IS_OK(res);
+    ASTNode* n_node = newASTID(res.result_value);
+    ASTNode* ast = newASTCompoundAssignment(AST_MUL, n_node, newASTInt(2)).result_value;
     ASSERT_MATCH_AST("n *= 2", ast, true);
 }
 
 void parseCompoundAssignmentBitwiseAnd() {
     defineVar(st, AST_TYPE_BOOL, "z", false);
-    ASTNode* ast = newASTCompoundAssignment(AST_BITWISE_AND, newASTIDReference("z", st).result_value, newASTBool(true)).result_value;
+    ASTResult res = getVarReference(st, "z");
+    ASSERT_IS_OK(res);
+    ASTNode* z_node = newASTID(res.result_value);
+    ASTNode* ast = newASTCompoundAssignment(AST_BITWISE_AND, z_node, newASTBool(true)).result_value;
     ASSERT_MATCH_AST("z &= true", ast, true);
 }
 
 void parseCompoundAssignmentLogicalAnd() {
     defineVar(st, AST_TYPE_BOOL, "z", false);
-    ASTNode* ast = newASTCompoundAssignment(AST_LOGICAL_AND, newASTIDReference("z", st).result_value, newASTBool(true)).result_value;
+    ASTResult res = getVarReference(st, "z");
+    ASSERT_IS_OK(res);
+    ASTNode* z_node = newASTID(res.result_value);
+    ASTNode* ast = newASTCompoundAssignment(AST_LOGICAL_AND, z_node, newASTBool(true)).result_value;
     ASSERT_MATCH_AST("z &&= true", ast, true);
 }
 

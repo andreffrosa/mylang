@@ -44,9 +44,11 @@ void newASTIDReferenceHasDeclaredType() {
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* decl = (ASTNode*) res.result_value;
     //setVarInitialized(decl->child->id);
-    res = newASTIDReference(ID, st);
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* ref = (ASTNode*) res.result_value;
+
+    res = getVarReference(st, ID);
+    ASSERT_IS_OK(res);
+    ASTNode* ref = newASTID(res.result_value);
+
     ASSERT_EQUAL_VALUE_TYPE(ref, expected_type);
     deleteASTNode(&decl);
     deleteASTNode(&ref);
@@ -54,12 +56,14 @@ void newASTIDReferenceHasDeclaredType() {
 
 void newASTAssignmentExpressionHasSameTypeAsVar() {
     ASTResult res = defineVar(st, AST_TYPE_TYPE, ID, false);
-    TEST_ASSERT_TRUE(isOK(res));
+    ASSERT_IS_OK(res);
 
-    res = newASTIDReference(ID, st);
-    TEST_ASSERT_TRUE(isOK(res));
+    res = getVarReference(st, ID);
+    ASSERT_IS_OK(res);
+    ASTNode* id_node = newASTID(res.result_value);
+
     ASTNode* val_node = newASTInt(1);
-    res = newASTAssignment(res.result_value, val_node);
+    res = newASTAssignment(id_node, val_node);
     TEST_ASSERT_TRUE(isERR(res));
     TEST_ASSERT_EQUAL_INT(AST_RES_ERR_DIFFERENT_TYPES, res.result_type);
     ASTNode* ast = res.result_value;
@@ -68,11 +72,11 @@ void newASTAssignmentExpressionHasSameTypeAsVar() {
 
 void newASTAssignmentOnlyAcceptsExpressions() {
     ASTResult res = defineVar(st, AST_TYPE_TYPE, ID, false);
-    TEST_ASSERT_TRUE(isOK(res));
+    ASSERT_IS_OK(res);
 
-    res = newASTIDReference(ID, st);
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* id_node = res.result_value;
+    res = getVarReference(st, ID);
+    ASSERT_IS_OK(res);
+    ASTNode* id_node = newASTID(res.result_value);
     ASTNode* val_node = newASTNoOp();
     res = newASTAssignment(id_node, val_node);
     TEST_ASSERT_TRUE(isERR(res));
@@ -83,13 +87,13 @@ void newASTAssignmentOnlyAcceptsExpressions() {
 
 void newASTAssignmentHasSameType() {
     ASTResult res = defineVar(st, AST_TYPE_INT, ID, false);
-    TEST_ASSERT_TRUE(isOK(res));
+    ASSERT_IS_OK(res);
 
-    res = newASTIDReference(ID, st);
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* id_node = res.result_value;
+    res = getVarReference(st, ID);
+    ASSERT_IS_OK(res);
+    ASTNode* id_node = newASTID(res.result_value);
     res = newASTAssignment(id_node, newASTInt(1));
-    TEST_ASSERT_TRUE(isOK(res));
+    ASSERT_IS_OK(res);
     ASTNode* ast = (ASTNode*) res.result_value;
     ASSERT_EQUAL_VALUE_TYPE(ast, AST_TYPE_INT);
     deleteASTNode(&ast);
@@ -196,10 +200,10 @@ void typeofHasTypeType() {
     deleteASTNode(&ast);
 
     ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
-    TEST_ASSERT_TRUE(isOK(res));
-    res = newASTIDReference(ID, st);
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* id_node = res.result_value;
+    ASSERT_IS_OK(res);
+    res = getVarReference(st, ID);
+    ASSERT_IS_OK(res);
+    ASTNode* id_node = newASTID(res.result_value);
     ast = newASTTypeOf(newASTAssignment(id_node, newASTInt(1)).result_value);
     TEST_ASSERT_EQUAL_INT(AST_TYPE_TYPE, ast->value_type);
     deleteASTNode(&ast);

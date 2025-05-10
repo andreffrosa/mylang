@@ -56,12 +56,12 @@ void parseCondAssignment() {
     defineVar(st, AST_TYPE_INT, "m", false);
 
     ASTResult res;
-    res = newASTIDReference("n", st);
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* n_node = res.result_value;
-    res = newASTIDReference("m", st);
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* m_node = res.result_value;
+    res = getVarReference(st, "n");
+    ASSERT_IS_OK(res);
+    ASTNode* n_node = newASTID(res.result_value);
+    res = getVarReference(st, "m");
+    ASSERT_IS_OK(res);
+    ASTNode* m_node = newASTID(res.result_value);
 
     res = newASTTernaryCond(newASTBool(true), n_node, m_node);
     TEST_ASSERT_TRUE(isOK(res));
@@ -78,15 +78,15 @@ void parseNestedCondAssignment() {
     defineVar(st, AST_TYPE_INT, "k", false);
 
     ASTResult res;
-    res = newASTIDReference("n", st);
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* n_node = res.result_value;
-    res = newASTIDReference("m", st);
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* m_node = res.result_value;
-    res = newASTIDReference("k", st);
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* k_node = res.result_value;
+    res = getVarReference(st, "n");
+    ASSERT_IS_OK(res);
+    ASTNode* n_node = newASTID(res.result_value);
+    res = getVarReference(st, "m");
+    ASSERT_IS_OK(res);
+    ASTNode* m_node = newASTID(res.result_value);
+    res = getVarReference(st, "k");
+    ASSERT_IS_OK(res);
+    ASTNode* k_node = newASTID(res.result_value);
 
     res = newASTTernaryCond(newASTBool(true), m_node, k_node);
     TEST_ASSERT_TRUE(isOK(res));
@@ -105,15 +105,15 @@ void parseChainedCondAssignment() {
     defineVar(st, AST_TYPE_INT, "k", false);
 
     ASTResult res;
-    res = newASTIDReference("n", st);
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* n_node = res.result_value;
-    res = newASTIDReference("m", st);
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* m_node = res.result_value;
-    res = newASTIDReference("k", st);
-    TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* k_node = res.result_value;
+    res = getVarReference(st, "n");
+    ASSERT_IS_OK(res);
+    ASTNode* n_node = newASTID(res.result_value);
+    res = getVarReference(st, "m");
+    ASSERT_IS_OK(res);
+    ASTNode* m_node = newASTID(res.result_value);
+    res = getVarReference(st, "k");
+    ASSERT_IS_OK(res);
+    ASTNode* k_node = newASTID(res.result_value);
 
     res = newASTTernaryCond(newASTBool(true), n_node, m_node);
     TEST_ASSERT_TRUE(isOK(res));

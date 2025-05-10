@@ -98,10 +98,9 @@ void compileTypeofTypeInJava() {
 }
 
 void compileTypeofIDInC() {
-    defineVar(st, AST_TYPE_BOOL, "z", false);
-    ASTResult res = newASTIDReference("z", st);
+    ASTResult res = defineVar(st, AST_TYPE_BOOL, "z", false);
     TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* ast = newASTTypeOf(res.result_value);
+    ASTNode* ast = newASTTypeOf(newASTID(res.result_value));
 
     ASSERT_COMPILE_EXP_EQUALS(ast, &cSerializer, "(z, _TYPE_BOOL)");
 
@@ -109,10 +108,9 @@ void compileTypeofIDInC() {
 }
 
 void compileTypeofIDInJava() {
-    defineVar(st, AST_TYPE_BOOL, "z", false);
-    ASTResult res = newASTIDReference("z", st);
+    ASTResult res = defineVar(st, AST_TYPE_BOOL, "z", false);
     TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* ast = newASTTypeOf(res.result_value);
+    ASTNode* ast = newASTTypeOf(newASTID(res.result_value));
 
     ASSERT_COMPILE_EXP_EQUALS(ast, &javaSerializer, "(z ? _Type.BOOL : _Type.BOOL)");
 
@@ -120,9 +118,11 @@ void compileTypeofIDInJava() {
 }
 
 void compileTypeofValueofRestrainedExpInC() {
-    defineVar(st, AST_TYPE_BOOL, "z", false);
-    ASTNode* id_node = newASTIDReference("z", st).result_value;
-    ASTResult res = newASTAssignment(id_node, newASTBool(true));
+    ASTResult res = defineVar(st, AST_TYPE_BOOL, "z", false);
+    TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* id_node = newASTID(res.result_value);
+
+    res = newASTAssignment(id_node, newASTBool(true));
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* ast = newASTTypeOf(res.result_value);
 
@@ -132,9 +132,11 @@ void compileTypeofValueofRestrainedExpInC() {
 }
 
 void compileTypeofValueofRestrainedExpInJava() {
-    defineVar(st, AST_TYPE_BOOL, "z", false);
-    ASTNode* id_node = newASTIDReference("z", st).result_value;
-    ASTResult res = newASTAssignment(id_node, newASTBool(true));
+    ASTResult res = defineVar(st, AST_TYPE_BOOL, "z", false);
+    TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* id_node = newASTID(res.result_value);
+
+    res = newASTAssignment(id_node, newASTBool(true));
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* ast = newASTTypeOf(res.result_value);
 

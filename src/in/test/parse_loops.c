@@ -27,7 +27,11 @@ void parseDoWhileLoop() {
 void parseForLoop() {
     SymbolTable* st_ = newSymbolTable(1, 1);
     ASTNode* init = newASTIDDeclaration(AST_TYPE_INT, "i", newASTInt(0), false, st_).result_value;
-    ASTNode* id_node = newASTIDReference("i", st_).result_value;
+
+    ASTResult res = getVarReference(st_, "i");
+    ASSERT_IS_OK(res);
+    ASTNode* id_node = newASTID(res.result_value);
+
     ASTNode* cond = newASTCmpLT(id_node, newASTInt(10)).result_value;
     ASTNode* update = newASTInc(copyAST(id_node), false).result_value;
     ASTNode* ast = newASTFor(init, cond, update, newASTNoOp()).result_value;

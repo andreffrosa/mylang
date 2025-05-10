@@ -13,7 +13,7 @@ typedef enum ASTType {
 
 extern const char* ASTTypeMap[];
 
-ASTResult parseASTType(const char* type_str);
+ASTResult typeFromStr(const char* type_str);
 
 #define ASTTypeToStr(type) (type >= AST_TYPE_COUNT ? "" : ASTTypeMap[type])
 

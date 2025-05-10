@@ -68,13 +68,15 @@ void eqChainHasSingleEval() {
     executeASTStatements(stmts, st, frame);
     deleteASTNode(&stmts);
 
-    res = newASTIDReference("n", st);
+
+    res = getVarReference(st, "n");
     TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* id_node = res.result_value;
+    ASTNode* id_node = newASTID(res.result_value);
+
     ASTNode* value_node = newASTAdd(id_node, newASTInt(1)).result_value;
-    res = newASTIDReference("n", st);
+    res = getVarReference(st, "n");
     TEST_ASSERT_TRUE(isOK(res));
-    id_node = res.result_value;
+    id_node = newASTID(res.result_value);
     res = newASTAssignment(id_node, value_node);
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* restrained_exp = res.result_value;
@@ -101,13 +103,13 @@ void eqChainShortCircuitsIfFalseOnEval() {
     executeASTStatements(stmts, st, frame);
     deleteASTNode(&stmts);
 
-    res = newASTIDReference("n", st);
+    res = getVarReference(st, "n");
     TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* id_node = res.result_value;
+    ASTNode* id_node = newASTID(res.result_value);
     ASTNode* value_node = newASTAdd(id_node, newASTInt(1)).result_value;
-    res = newASTIDReference("n", st);
+    res = getVarReference(st, "n");
     TEST_ASSERT_TRUE(isOK(res));
-    id_node = res.result_value;
+     id_node = newASTID(res.result_value);
     res = newASTAssignment(id_node, value_node);
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* restrained_exp = res.result_value;

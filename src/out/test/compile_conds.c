@@ -78,10 +78,12 @@ void compileNestedTernaryCondExpsInsertsParentheses() {
 }
 
 void compileCondAssignment() {
-    defineVar(st, AST_TYPE_INT, "n", false);
-    defineVar(st, AST_TYPE_INT, "m", false);
-    ASTNode* n_node = newASTIDReference("n", st).result_value;
-    ASTNode* m_node = newASTIDReference("m", st).result_value;
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
+    TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* n_node = newASTID(res.result_value);
+    res = defineVar(st, AST_TYPE_INT, "m", false);
+    TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* m_node = newASTID(res.result_value);
     ASTNode* cond = newASTTernaryCond(newASTBool(true), n_node, m_node).result_value;
     ast = newASTAssignment(newASTParentheses(cond), newASTInt(2)).result_value;
 
@@ -93,12 +95,15 @@ void compileCondAssignment() {
 }
 
 void compileNestedCondAssignment() {
-    defineVar(st, AST_TYPE_INT, "n", false);
-    defineVar(st, AST_TYPE_INT, "m", false);
-    defineVar(st, AST_TYPE_INT, "k", false);
-    ASTNode* n_node = newASTIDReference("n", st).result_value;
-    ASTNode* m_node = newASTIDReference("m", st).result_value;
-    ASTNode* k_node = newASTIDReference("k", st).result_value;
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
+    TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* n_node = newASTID(res.result_value);
+    res = defineVar(st, AST_TYPE_INT, "m", false);
+    TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* m_node = newASTID(res.result_value);
+    res = defineVar(st, AST_TYPE_INT, "k", false);
+    TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* k_node = newASTID(res.result_value);
     ast = newASTTernaryCond(newASTBool(true), m_node, k_node).result_value;
     ast = newASTTernaryCond(newASTBool(false), n_node, newASTParentheses(ast)).result_value;
     ast = newASTAssignment(newASTParentheses(ast), newASTInt(2)).result_value;
@@ -111,12 +116,15 @@ void compileNestedCondAssignment() {
 }
 
 void compileChainedCondAssignment() {
-    defineVar(st, AST_TYPE_INT, "n", false);
-    defineVar(st, AST_TYPE_INT, "m", false);
-    defineVar(st, AST_TYPE_INT, "k", false);
-    ASTNode* n_node = newASTIDReference("n", st).result_value;
-    ASTNode* m_node = newASTIDReference("m", st).result_value;
-    ASTNode* k_node = newASTIDReference("k", st).result_value;
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
+    TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* n_node = newASTID(res.result_value);
+    res = defineVar(st, AST_TYPE_INT, "m", false);
+    TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* m_node = newASTID(res.result_value);
+    res = defineVar(st, AST_TYPE_INT, "k", false);
+    TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* k_node = newASTID(res.result_value);
     ast = newASTTernaryCond(newASTBool(true), n_node, m_node).result_value;
     ast = newASTAssignment(newASTParentheses(ast), newASTInt(2)).result_value;
     ast = newASTAssignment(k_node, ast).result_value;

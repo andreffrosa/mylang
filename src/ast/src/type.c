@@ -3,8 +3,6 @@
 #include <assert.h>
 #include <string.h>
 
-#include "error.h"
-
 #include "type.h"
 
 // Lookup table
@@ -15,7 +13,7 @@ const char* ASTTypeMap[] = {
     [AST_TYPE_BOOL] = "bool",
 };
 
-ASTResult parseASTType(const char* type_str) {
+ASTResult typeFromStr(const char* type_str) {
     assert(type_str != NULL);
 
     for(int i = 0; i < AST_TYPE_COUNT; i ++) {

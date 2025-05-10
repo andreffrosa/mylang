@@ -32,4 +32,6 @@
     inDelete(&_ctx);\
 } while (0)
 
+#define ASSERT_IS_OK(res) TEST_ASSERT_TRUE_MESSAGE(isOK(res), ASTResultTypeToStr(res.result_type))
+
 #endif

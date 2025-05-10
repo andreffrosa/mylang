@@ -123,8 +123,6 @@ bool isExp(const ASTNode* ast);
 
 bool isCmpExp(const ASTNode* ast);
 
-bool requireParentheses(const ASTNode* ast);
-
 ASTOpType getNodeOpType(const ASTNodeType node_type);
 
 const char* nodeTypeToStr(ASTNodeType node_type);
@@ -157,8 +155,8 @@ ASTNode* copyAST(const ASTNode* src_ast);
 
 #define newASTStatementList(stmt, list) (list == NULL ? stmt : newASTBinaryOP(AST_STATEMENT_SEQ, stmt, list).result_value)
 
+ASTNode* newASTID(Symbol* id);
 ASTResult newASTIDDeclaration(ASTType type, const char* id, const ASTNode* value, bool redef, SymbolTable* st);
-ASTResult newASTIDReference(const char* id, const SymbolTable* st);
 #define newASTAssignment(l, r) newASTBinaryOP(AST_ID_ASSIGNMENT, l, r)
 ASTResult newASTUnaryCompoundAssign(ASTNodeType node_type, const ASTNode* lval, bool is_prefix);
 ASTResult newASTCompoundAssignment(ASTNodeType node_type, const ASTNode* lval, ASTNode* value);
@@ -171,7 +169,7 @@ ASTResult newASTCompoundAssignment(ASTNodeType node_type, const ASTNode* lval, A
 #define newASTPrintVar(e) newASTUnaryOP(AST_PRINT_VAR, e).result_value
 #define newASTTypeOf(e) newASTUnaryOP(AST_TYPE_OF, e).result_value
 
-#define newASTParentheses(e) newASTUnaryOP(AST_PARENTHESES, e).result_value
+ASTNode* newASTParentheses(ASTNode* ast);
 
 #define newASTCmpEQ(l, r) newASTBinaryOP(AST_CMP_EQ, l, r)
 #define newASTCmpNEQ(l, r) newASTBinaryOP(AST_CMP_NEQ, l, r)

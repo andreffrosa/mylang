@@ -15,9 +15,9 @@ static unsigned int n_index = 0;
 
 void setUp (void) {
     st = newSymbolTable(2, 2);
-    defineVar(st, AST_TYPE_INT, "n", false);
+    Symbol* var = defineVar(st, AST_TYPE_INT, "n", false).result_value;
     n_index = getVarOffset(lookupVar(st, "n"));
-    n_node = newASTIDReference("n", st).result_value;
+    n_node = newASTID(var);
 }
 
 void tearDown (void) {
@@ -74,7 +74,7 @@ void evalDoWhileLoop() {
 
 void evalForLoopWithFalseConditionExecutesZeroTimes() {
     ASTNode* init = newASTIDDeclaration(AST_TYPE_INT, "i", newASTInt(0), false, st).result_value;
-    ASTNode* i_node = newASTIDReference("i", st).result_value;
+    ASTNode* i_node = newASTID(getVarReference(st, "i").result_value);
     ASTNode* cond = newASTBool(false);
     ASTNode* update = newASTInc(copyAST(i_node), false).result_value;
     ASTNode* body = newASTScope(newASTAssignment(n_node, copyAST(i_node)).result_value);
@@ -87,7 +87,7 @@ void evalForLoopWithFalseConditionExecutesZeroTimes() {
 
 void evalForLoop() {
     ASTNode* init = newASTIDDeclaration(AST_TYPE_INT, "i", newASTInt(0), false, st).result_value;
-    ASTNode* i_node = newASTIDReference("i", st).result_value;
+    ASTNode* i_node = newASTID(getVarReference(st, "i").result_value);
     ASTNode* cond = newASTCmpLT(i_node, newASTInt(ITERATION_COUNT)).result_value;
     ASTNode* update = newASTInc(copyAST(i_node), false).result_value;
     ASTNode* body = newASTScope(newASTAssignment(n_node, copyAST(i_node)).result_value);
@@ -112,7 +112,7 @@ void evalBreakWhileLoop() {
 
 void evalContinueWhileLoop() {
     ASTNode* init = newASTIDDeclaration(AST_TYPE_INT, "i", newASTInt(0), false, st).result_value;
-    ASTNode* i_node = newASTIDReference("i", st).result_value;
+    ASTNode* i_node = newASTID(getVarReference(st, "i").result_value);
     ASTNode* cond = newASTCmpLT(newASTInc(copyAST(i_node), false).result_value, newASTInt(ITERATION_COUNT)).result_value;
     ASTNode* body = newASTCmpGTE(copyAST(i_node), newASTInt(ITERATION_COUNT / 2)).result_value;
     body = newASTIf(body, newASTContinue()).result_value;
@@ -139,7 +139,7 @@ void evalBreakDoWhileLoop() {
 
 void evalContinueDoWhileLoop() {
     ASTNode* init = newASTIDDeclaration(AST_TYPE_INT, "i", newASTInt(0), false, st).result_value;
-    ASTNode* i_node = newASTIDReference("i", st).result_value;
+    ASTNode* i_node = newASTID(getVarReference(st, "i").result_value);
     ASTNode* cond = newASTCmpLT(newASTInc(copyAST(i_node), false).result_value, newASTInt(ITERATION_COUNT)).result_value;
     ASTNode* x = newASTCmpGTE(copyAST(i_node), newASTInt(ITERATION_COUNT / 2)).result_value;
     x = newASTIf(x, newASTContinue()).result_value;
@@ -154,7 +154,7 @@ void evalContinueDoWhileLoop() {
 
 void evalBreakForLoop() {
     ASTNode* init = newASTIDDeclaration(AST_TYPE_INT, "i", newASTInt(0), false, st).result_value;
-    ASTNode* i_node = newASTIDReference("i", st).result_value;
+    ASTNode* i_node = newASTID(getVarReference(st, "i").result_value);
     ASTNode* cond = newASTCmpLT(i_node, newASTInt(ITERATION_COUNT)).result_value;
     ASTNode* update = newASTInc(copyAST(i_node), false).result_value;
     ASTNode* x = newASTCmpEQ(copyAST(i_node), newASTInt(ITERATION_COUNT / 2)).result_value;
@@ -170,7 +170,7 @@ void evalBreakForLoop() {
 
 void evalContinueForLoop() {
     ASTNode* init = newASTIDDeclaration(AST_TYPE_INT, "i", newASTInt(0), false, st).result_value;
-    ASTNode* i_node = newASTIDReference("i", st).result_value;
+    ASTNode* i_node = newASTID(getVarReference(st, "i").result_value);
     ASTNode* cond = newASTCmpLT(i_node, newASTInt(ITERATION_COUNT)).result_value;
     ASTNode* update = newASTInc(copyAST(i_node), false).result_value;
     ASTNode* x = newASTCmpGTE(copyAST(i_node), newASTInt(ITERATION_COUNT / 2)).result_value;

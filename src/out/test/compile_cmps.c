@@ -52,8 +52,9 @@ void compileLtChainWithVar() { // 1 <= n <= 10
     st = newSymbolTableDefault();
     ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* n_node = newASTID(res.result_value);
 
-    ast = newASTCmpLTE(newASTInt(1), newASTIDReference("n", st).result_value).result_value;
+    ast = newASTCmpLTE(newASTInt(1), n_node).result_value;
     ast = newASTCmpLTE(ast, newASTInt(10)).result_value;
 
     ASSERT_COMPILE_EXP_EQUALS(ast, &cSerializer, "1 <= n && n <= 10");

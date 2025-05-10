@@ -14,10 +14,12 @@ void semanticError(int lineno, const char* s, ...);
 
 ASTNode* handleErrors(ASTResult res, int lineno);
 
-ASTResult typeFromStr(const char* type_str);
-
 ASTResult declaration(const char* type_str, const char* id, ASTNode* exp, const char* modifier, SymbolTable* st);
 
 ASTResult handlePrintVar(const char* id, SymbolTable* st);
+
+ASTResult parseType(const char* type_str);
+
+ASTResult parseIDReference(SymbolTable* st, const char* id);
 
 #endif

@@ -156,7 +156,7 @@ ASTResult declaration(const char* type_str, const char* id, ASTNode* exp, const 
     if (exp != NULL && strncmp("var", type_str, 3) == 0) {
         type = exp->value_type;
     } else {
-        ASTResult res = parseASTType(type_str);
+        ASTResult res = typeFromStr(type_str);
         if (isERR(res)) {
             return res;
         }
@@ -166,8 +166,8 @@ ASTResult declaration(const char* type_str, const char* id, ASTNode* exp, const 
     return newASTIDDeclaration(type, id, exp, redef, st);
 }
 
-ASTResult typeFromStr(const char* type_str) {
-    ASTResult res = parseASTType(type_str);
+ASTResult parseType(const char* type_str) {
+    ASTResult res = typeFromStr(type_str);
     if (isERR(res)) {
         return res;
     }
@@ -176,10 +176,25 @@ ASTResult typeFromStr(const char* type_str) {
 }
 
 ASTResult handlePrintVar(const char* id, SymbolTable* st) {
-    ASTResult res = newASTIDReference(id, st);
+    ASTResult res = parseIDReference(st, id);
     if(isERR(res)) {
         return res;
     }
     ASTNode* id_node = (ASTNode*) res.result_value;
     return OK(newASTPrintVar(id_node));
+}
+
+ASTResult parseIDReference(SymbolTable* st, const char* id) {
+    assert(st != NULL);
+    assert(id != NULL);
+
+    ASTResult res = getVarReference(st, id);
+    if (isERR(res)) {
+        return res;
+    }
+
+    Symbol* var = res.result_value;
+    ASTNode* ast = newASTID(var);
+
+    return OK(ast);
 }

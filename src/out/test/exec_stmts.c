@@ -28,9 +28,9 @@ void assignmentSetsValue() {
     TEST_ASSERT_TRUE(isOK(res));
     Symbol* var = res.result_value;
 
-    res = newASTIDReference("n", st);
+    res = getVarReference(st, "n");
     TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* id_node = res.result_value;
+    ASTNode* id_node = newASTID(res.result_value);
     ASTNode* ast = newASTAssignment(id_node, newASTInt(1)).result_value;
 
     Frame* frame = executeAST(ast, st);
@@ -49,14 +49,14 @@ void reassignmentChangesValue() {
     TEST_ASSERT_TRUE(isOK(res));
     Symbol* var = res.result_value;
 
-    res = newASTIDReference("n", st);
+    res = getVarReference(st, "n");
     TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* id_node = res.result_value;
+    ASTNode* id_node = newASTID(res.result_value);
     ASTNode* stmt1 = newASTAssignment(id_node, newASTInt(1)).result_value;
 
-    res = newASTIDReference("n", st);
+    res = getVarReference(st, "n");
     TEST_ASSERT_TRUE(isOK(res));
-    id_node = res.result_value;
+    id_node = newASTID(res.result_value);
     ASTNode* stmt2 = newASTAssignment(id_node, newASTInt(2)).result_value;
 
     ASTNode* ast = newASTStatementList(stmt1, stmt2);
@@ -74,7 +74,7 @@ void reassignmentChangesValue() {
 void assignEvalIDGivesSameValue() {
     SymbolTable* st = newSymbolTable(1,1);
     ASTNode* stmt1 = newASTIDDeclaration(AST_TYPE_INT, "n", newASTInt(1), false, st).result_value;
-    ASTNode* stmt2 = newASTIDDeclaration(AST_TYPE_INT, "m", newASTIDReference("n", st).result_value, false, st).result_value;
+    ASTNode* stmt2 = newASTIDDeclaration(AST_TYPE_INT, "m", newASTID(getVarReference(st, "n").result_value), false, st).result_value;
     ASTNode* ast = newASTStatementList(stmt1, stmt2);
 
     Frame* frame = executeAST(ast, st);
@@ -91,8 +91,10 @@ void evalRestrainedExpressionReturnsValueAndHasSideEffects() {
     SymbolTable* st = newSymbolTable(2, 1);
 
     ASTNode* stmt1 = newASTIDDeclaration(AST_TYPE_INT, "n", newASTInt(0), false, st).result_value;
-    ASTNode* id_node = newASTIDReference("n", st).result_value;
-    ASTNode* value_node = newASTAdd(newASTIDReference("n", st).result_value, newASTInt(1)).result_value;
+    ASTResult res = getVarReference(st, "n");
+    TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* id_node = newASTID(res.result_value);
+    ASTNode* value_node = newASTAdd(copyAST(id_node), newASTInt(1)).result_value;
     ASTNode* restr_exp = newASTAssignment(id_node, value_node).result_value; // valueof(n=n+1)
     ASTNode* stmt2 = newASTIDDeclaration(AST_TYPE_INT, "m", restr_exp, false, st).result_value;
     ASTNode* ast = newASTStatementList(stmt1, stmt2);
@@ -111,13 +113,13 @@ void evalRestrainedExpressionReturnsValueAndHasSideEffects() {
 
 void evalInc() {
     SymbolTable* st = newSymbolTable(1, 2);
-    defineVar(st, AST_TYPE_INT, "n", false);
+    Symbol* n_var = defineVar(st, AST_TYPE_INT, "n", false).result_value;
     unsigned int n_index = getVarOffset(lookupVar(st, "n"));
-    defineVar(st, AST_TYPE_INT, "m", false);
+    Symbol* m_var = defineVar(st, AST_TYPE_INT, "m", false).result_value;
     unsigned int m_index = getVarOffset(lookupVar(st, "m"));
 
-    ASTNode* ast = newASTInc(newASTIDReference("n", st).result_value, true).result_value;
-    ast = newASTAssignment(newASTIDReference("m", st).result_value, ast).result_value;
+    ASTNode* ast = newASTInc(newASTID(n_var), true).result_value;
+    ast = newASTAssignment(newASTID(m_var), ast).result_value;
 
     Frame* frame = newFrame(getMaxOffset(st) + 1);
     setFrameValue(frame, n_index, 0);
@@ -130,8 +132,8 @@ void evalInc() {
     deleteFrame(&frame);
     deleteASTNode(&ast);
 
-    ast = newASTInc(newASTIDReference("n", st).result_value, false).result_value;
-    ast = newASTAssignment(newASTIDReference("m", st).result_value, ast).result_value;
+    ast = newASTInc(newASTID(n_var), false).result_value;
+    ast = newASTAssignment(newASTID(m_var), ast).result_value;
 
     frame = newFrame(getMaxOffset(st) + 1);
     setFrameValue(frame, n_index, 0);
@@ -149,13 +151,13 @@ void evalInc() {
 
 void evalDec() {
     SymbolTable* st = newSymbolTable(1, 2);
-    defineVar(st, AST_TYPE_INT, "n", false);
+    Symbol* n_var = defineVar(st, AST_TYPE_INT, "n", false).result_value;
     unsigned int n_index = getVarOffset(lookupVar(st, "n"));
-    defineVar(st, AST_TYPE_INT, "m", false);
+    Symbol* m_var = defineVar(st, AST_TYPE_INT, "m", false).result_value;
     unsigned int m_index = getVarOffset(lookupVar(st, "m"));
 
-    ASTNode* ast = newASTDec(newASTIDReference("n", st).result_value, true).result_value;
-    ast = newASTAssignment(newASTIDReference("m", st).result_value, ast).result_value;
+    ASTNode* ast = newASTDec(newASTID(n_var), true).result_value;
+    ast = newASTAssignment(newASTID(m_var), ast).result_value;
 
     Frame* frame = newFrame(getMaxOffset(st) + 1);
     setFrameValue(frame, n_index, 0);
@@ -168,8 +170,8 @@ void evalDec() {
     deleteFrame(&frame);
     deleteASTNode(&ast);
 
-    ast = newASTDec(newASTIDReference("n", st).result_value, false).result_value;
-    ast = newASTAssignment(newASTIDReference("m", st).result_value, ast).result_value;
+    ast = newASTDec(newASTID(n_var), false).result_value;
+    ast = newASTAssignment(newASTID(m_var), ast).result_value;
 
     frame = newFrame(getMaxOffset(st) + 1);
     setFrameValue(frame, n_index, 0);
@@ -187,13 +189,13 @@ void evalDec() {
 
 void evalLogicalToggle() {
     SymbolTable* st = newSymbolTable(1, 2);
-    defineVar(st, AST_TYPE_BOOL, "z", false);
+    Symbol* z_var = defineVar(st, AST_TYPE_BOOL, "z", false).result_value;
     unsigned int z_index = getVarOffset(lookupVar(st, "z"));
-    defineVar(st, AST_TYPE_BOOL, "s", false);
+    Symbol* s_var = defineVar(st, AST_TYPE_BOOL, "s", false).result_value;
     unsigned int s_index = getVarOffset(lookupVar(st, "s"));
 
-    ASTNode* ast = newASTLogicalToggle(newASTIDReference("z", st).result_value, true).result_value;
-    ast = newASTAssignment(newASTIDReference("s", st).result_value, ast).result_value;
+    ASTNode* ast = newASTLogicalToggle(newASTID(z_var), true).result_value;
+    ast = newASTAssignment(newASTID(s_var), ast).result_value;
 
     Frame* frame = newFrame(getMaxOffset(st) + 1);
     setFrameValue(frame, z_index, false);
@@ -206,8 +208,8 @@ void evalLogicalToggle() {
     deleteFrame(&frame);
     deleteASTNode(&ast);
 
-    ast = newASTLogicalToggle(newASTIDReference("z", st).result_value, false).result_value;
-    ast = newASTAssignment(newASTIDReference("s", st).result_value, ast).result_value;
+    ast = newASTLogicalToggle(newASTID(z_var), false).result_value;
+    ast = newASTAssignment(newASTID(s_var), ast).result_value;
 
     frame = newFrame(getMaxOffset(st) + 1);
     setFrameValue(frame, z_index, false);
@@ -225,13 +227,13 @@ void evalLogicalToggle() {
 
 void evalBitwiseToggleOfInt() {
     SymbolTable* st = newSymbolTable(1, 2);
-    defineVar(st, AST_TYPE_INT, "n", false);
+    Symbol* n_var = defineVar(st, AST_TYPE_INT, "n", false).result_value;
     unsigned int n_index = getVarOffset(lookupVar(st, "n"));
-    defineVar(st, AST_TYPE_INT, "m", false);
+    Symbol* m_var = defineVar(st, AST_TYPE_INT, "m", false).result_value;
     unsigned int m_index = getVarOffset(lookupVar(st, "m"));
 
-    ASTNode* ast = newASTBitwiseToggle(newASTIDReference("n", st).result_value, true).result_value;
-    ast = newASTAssignment(newASTIDReference("m", st).result_value, ast).result_value;
+    ASTNode* ast = newASTBitwiseToggle(newASTID(n_var), true).result_value;
+    ast = newASTAssignment(newASTID(m_var), ast).result_value;
 
     Frame* frame = newFrame(getMaxOffset(st) + 1);
     setFrameValue(frame, n_index, 0);
@@ -244,8 +246,8 @@ void evalBitwiseToggleOfInt() {
     deleteFrame(&frame);
     deleteASTNode(&ast);
 
-    ast = newASTBitwiseToggle(newASTIDReference("n", st).result_value, false).result_value;
-    ast = newASTAssignment(newASTIDReference("m", st).result_value, ast).result_value;
+    ast = newASTBitwiseToggle(newASTID(n_var), false).result_value;
+    ast = newASTAssignment(newASTID(m_var), ast).result_value;
 
     frame = newFrame(getMaxOffset(st) + 1);
     setFrameValue(frame, n_index, 0);
@@ -263,13 +265,13 @@ void evalBitwiseToggleOfInt() {
 
 void evalBitwiseToggleOfBool() {
     SymbolTable* st = newSymbolTable(1, 2);
-    defineVar(st, AST_TYPE_BOOL, "z", false);
+    Symbol* z_node = defineVar(st, AST_TYPE_BOOL, "z", false).result_value;
     unsigned int z_index = getVarOffset(lookupVar(st, "z"));
-    defineVar(st, AST_TYPE_BOOL, "s", false);
+    Symbol* s_node = defineVar(st, AST_TYPE_BOOL, "s", false).result_value;
     unsigned int s_index = getVarOffset(lookupVar(st, "s"));
 
-    ASTNode* ast = newASTBitwiseToggle(newASTIDReference("z", st).result_value, true).result_value;
-    ast = newASTAssignment(newASTIDReference("s", st).result_value, ast).result_value;
+    ASTNode* ast = newASTBitwiseToggle(newASTID(z_node), true).result_value;
+    ast = newASTAssignment(newASTID(s_node), ast).result_value;
 
     Frame* frame = newFrame(getMaxOffset(st) + 1);
     setFrameValue(frame, z_index, false);
@@ -282,8 +284,8 @@ void evalBitwiseToggleOfBool() {
     deleteFrame(&frame);
     deleteASTNode(&ast);
 
-    ast = newASTBitwiseToggle(newASTIDReference("z", st).result_value, false).result_value;
-    ast = newASTAssignment(newASTIDReference("s", st).result_value, ast).result_value;
+    ast = newASTBitwiseToggle(newASTID(z_node), false).result_value;
+    ast = newASTAssignment(newASTID(s_node), ast).result_value;
 
     frame = newFrame(getMaxOffset(st) + 1);
     setFrameValue(frame, z_index, false);
@@ -301,10 +303,10 @@ void evalBitwiseToggleOfBool() {
 
 void evalCompoundAssignmentAdd() {
     SymbolTable* st = newSymbolTable(1, 2);
-    defineVar(st, AST_TYPE_INT, "n", false);
+    Symbol* n_var = defineVar(st, AST_TYPE_INT, "n", false).result_value;
     unsigned int index = getVarOffset(lookupVar(st, "n"));
 
-    ASTNode* ast = newASTCompoundAssignment(AST_ADD, newASTIDReference("n", st).result_value, newASTInt(2)).result_value;
+    ASTNode* ast = newASTCompoundAssignment(AST_ADD, newASTID(n_var), newASTInt(2)).result_value;
 
     Frame* frame = newFrame(getMaxOffset(st) + 1);
     setFrameValue(frame, index, 0);
@@ -320,10 +322,10 @@ void evalCompoundAssignmentAdd() {
 
 void evalCompoundAssignmentLogicalAnd() {
     SymbolTable* st = newSymbolTable(1, 2);
-    defineVar(st, AST_TYPE_INT, "z", false);
+    Symbol* z_var = defineVar(st, AST_TYPE_INT, "z", false).result_value;
     unsigned int index = getVarOffset(lookupVar(st, "z"));
 
-    ASTNode* ast = newASTCompoundAssignment(AST_LOGICAL_AND, newASTIDReference("z", st).result_value, newASTBool(true)).result_value;
+    ASTNode* ast = newASTCompoundAssignment(AST_LOGICAL_AND, newASTID(z_var), newASTBool(true)).result_value;
 
     Frame* frame = newFrame(getMaxOffset(st) + 1);
     setFrameValue(frame, index, false);
@@ -339,16 +341,16 @@ void evalCompoundAssignmentLogicalAnd() {
 
 void evalConditionalInc() {
     SymbolTable* st = newSymbolTable(1, 2);
-    defineVar(st, AST_TYPE_INT, "n", false);
+    Symbol* n_var = defineVar(st, AST_TYPE_INT, "n", false).result_value;
     unsigned int n_index = getVarOffset(lookupVar(st, "n"));
-    defineVar(st, AST_TYPE_INT, "m", false);
+    Symbol* m_var = defineVar(st, AST_TYPE_INT, "m", false).result_value;
     unsigned int m_index = getVarOffset(lookupVar(st, "m"));
-    defineVar(st, AST_TYPE_INT, "r", false);
+    Symbol* r_var = defineVar(st, AST_TYPE_INT, "r", false).result_value;
     unsigned int r_index = getVarOffset(lookupVar(st, "r"));
 
-    ASTNode* n_node = newASTIDReference("n", st).result_value;
-    ASTNode* m_node = newASTIDReference("m", st).result_value;
-    ASTNode* r_node = newASTIDReference("r", st).result_value;
+    ASTNode* n_node = newASTID(n_var);
+    ASTNode* m_node = newASTID(m_var);
+    ASTNode* r_node = newASTID(r_var);
     ASTNode* cond = newASTParentheses(newASTTernaryCond(newASTBool(true), n_node, m_node).result_value);
 
     ASTNode* ast = newASTAssignment(r_node, newASTInc(copyAST(cond), true).result_value).result_value;
@@ -367,7 +369,7 @@ void evalConditionalInc() {
     deleteFrame(&frame);
     deleteASTNode(&ast);
 
-    r_node = newASTIDReference("r", st).result_value;
+    r_node = newASTID(r_var);
     ast = newASTAssignment(r_node, newASTInc(cond, false).result_value).result_value;
 
     frame = newFrame(getMaxOffset(st) + 1);
@@ -388,16 +390,17 @@ void evalConditionalInc() {
 
 void evalConditionalDec() {
     SymbolTable* st = newSymbolTable(1, 2);
-    defineVar(st, AST_TYPE_INT, "n", false);
+    Symbol* n_var = defineVar(st, AST_TYPE_INT, "n", false).result_value;
     unsigned int n_index = getVarOffset(lookupVar(st, "n"));
-    defineVar(st, AST_TYPE_INT, "m", false);
+    Symbol* m_var = defineVar(st, AST_TYPE_INT, "m", false).result_value;
     unsigned int m_index = getVarOffset(lookupVar(st, "m"));
-    defineVar(st, AST_TYPE_INT, "r", false);
+    Symbol* r_var = defineVar(st, AST_TYPE_INT, "r", false).result_value;
     unsigned int r_index = getVarOffset(lookupVar(st, "r"));
 
-    ASTNode* n_node = newASTIDReference("n", st).result_value;
-    ASTNode* m_node = newASTIDReference("m", st).result_value;
-    ASTNode* r_node = newASTIDReference("r", st).result_value;
+    ASTNode* n_node = newASTID(n_var);
+    ASTNode* m_node = newASTID(m_var);
+    ASTNode* r_node = newASTID(r_var);
+
     ASTNode* cond = newASTParentheses(newASTTernaryCond(newASTBool(true), n_node, m_node).result_value);
 
     ASTNode* ast = newASTAssignment(r_node, newASTDec(copyAST(cond), true).result_value).result_value;
@@ -416,7 +419,7 @@ void evalConditionalDec() {
     deleteFrame(&frame);
     deleteASTNode(&ast);
 
-    r_node = newASTIDReference("r", st).result_value;
+    r_node = newASTID(r_var);
     ast = newASTAssignment(r_node, newASTDec(cond, false).result_value).result_value;
 
     frame = newFrame(getMaxOffset(st) + 1);
@@ -437,16 +440,16 @@ void evalConditionalDec() {
 
 void evalConditionalLogicalToggle() {
     SymbolTable* st = newSymbolTable(1, 2);
-    defineVar(st, AST_TYPE_BOOL, "n", false);
+    Symbol* n_var = defineVar(st, AST_TYPE_BOOL, "n", false).result_value;
     unsigned int n_index = getVarOffset(lookupVar(st, "n"));
-    defineVar(st, AST_TYPE_BOOL, "m", false);
+    Symbol* m_var = defineVar(st, AST_TYPE_BOOL, "m", false).result_value;
     unsigned int m_index = getVarOffset(lookupVar(st, "m"));
-    defineVar(st, AST_TYPE_BOOL, "r", false);
+    Symbol* r_var = defineVar(st, AST_TYPE_BOOL, "r", false).result_value;
     unsigned int r_index = getVarOffset(lookupVar(st, "r"));
 
-    ASTNode* n_node = newASTIDReference("n", st).result_value;
-    ASTNode* m_node = newASTIDReference("m", st).result_value;
-    ASTNode* r_node = newASTIDReference("r", st).result_value;
+    ASTNode* n_node = newASTID(n_var);
+    ASTNode* m_node = newASTID(m_var);
+    ASTNode* r_node = newASTID(r_var);
     ASTNode* cond = newASTParentheses(newASTTernaryCond(newASTBool(true), n_node, m_node).result_value);
 
     ASTNode* ast = newASTAssignment(r_node, newASTLogicalToggle(copyAST(cond), true).result_value).result_value;
@@ -465,7 +468,7 @@ void evalConditionalLogicalToggle() {
     deleteFrame(&frame);
     deleteASTNode(&ast);
 
-    r_node = newASTIDReference("r", st).result_value;
+    r_node = newASTID(r_var);
     ast = newASTAssignment(r_node, newASTLogicalToggle(cond, false).result_value).result_value;
 
     frame = newFrame(getMaxOffset(st) + 1);
@@ -486,16 +489,16 @@ void evalConditionalLogicalToggle() {
 
 void evalConditionalBitwiseToggle() {
     SymbolTable* st = newSymbolTable(1, 2);
-    defineVar(st, AST_TYPE_BOOL, "n", false);
+    Symbol* n_var = defineVar(st, AST_TYPE_BOOL, "n", false).result_value;
     unsigned int n_index = getVarOffset(lookupVar(st, "n"));
-    defineVar(st, AST_TYPE_BOOL, "m", false);
+    Symbol* m_var = defineVar(st, AST_TYPE_BOOL, "m", false).result_value;
     unsigned int m_index = getVarOffset(lookupVar(st, "m"));
-    defineVar(st, AST_TYPE_BOOL, "r", false);
+    Symbol* r_var = defineVar(st, AST_TYPE_BOOL, "r", false).result_value;
     unsigned int r_index = getVarOffset(lookupVar(st, "r"));
 
-    ASTNode* n_node = newASTIDReference("n", st).result_value;
-    ASTNode* m_node = newASTIDReference("m", st).result_value;
-    ASTNode* r_node = newASTIDReference("r", st).result_value;
+    ASTNode* n_node = newASTID(n_var);
+    ASTNode* m_node = newASTID(m_var);
+    ASTNode* r_node = newASTID(r_var);
     ASTNode* cond = newASTParentheses(newASTTernaryCond(newASTBool(true), n_node, m_node).result_value);
 
     ASTNode* ast = newASTAssignment(r_node, newASTBitwiseToggle(copyAST(cond), true).result_value).result_value;
@@ -514,7 +517,7 @@ void evalConditionalBitwiseToggle() {
     deleteFrame(&frame);
     deleteASTNode(&ast);
 
-    r_node = newASTIDReference("r", st).result_value;
+    r_node = newASTID(r_var);
     ast = newASTAssignment(r_node, newASTBitwiseToggle(cond, false).result_value).result_value;
 
     frame = newFrame(getMaxOffset(st) + 1);
@@ -535,13 +538,13 @@ void evalConditionalBitwiseToggle() {
 
 void evalConditionalCompoundAssignmentAdd() {
     SymbolTable* st = newSymbolTable(1, 2);
-    defineVar(st, AST_TYPE_INT, "n", false);
+    Symbol* n_var = defineVar(st, AST_TYPE_INT, "n", false).result_value;
     unsigned int n_index = getVarOffset(lookupVar(st, "n"));
-    defineVar(st, AST_TYPE_INT, "m", false);
+    Symbol* m_var = defineVar(st, AST_TYPE_INT, "m", false).result_value;
     unsigned int m_index = getVarOffset(lookupVar(st, "m"));
 
-    ASTNode* n_node = newASTIDReference("n", st).result_value;
-    ASTNode* m_node = newASTIDReference("m", st).result_value;
+    ASTNode* n_node = newASTID(n_var);
+    ASTNode* m_node = newASTID(m_var);
     ASTNode* ast = newASTTernaryCond(newASTBool(true), n_node, m_node).result_value;
     ast = newASTCompoundAssignment(AST_ADD, newASTParentheses(ast), newASTInt(2)).result_value;
 
@@ -561,13 +564,13 @@ void evalConditionalCompoundAssignmentAdd() {
 
 void evalConditionalCompoundAssignmentLogicalAnd() {
     SymbolTable* st = newSymbolTable(1, 2);
-    defineVar(st, AST_TYPE_BOOL, "n", false);
+    Symbol* n_var = defineVar(st, AST_TYPE_BOOL, "n", false).result_value;
     unsigned int n_index = getVarOffset(lookupVar(st, "n"));
-    defineVar(st, AST_TYPE_BOOL, "m", false);
+    Symbol* m_var = defineVar(st, AST_TYPE_BOOL, "m", false).result_value;
     unsigned int m_index = getVarOffset(lookupVar(st, "m"));
 
-    ASTNode* n_node = newASTIDReference("n", st).result_value;
-    ASTNode* m_node = newASTIDReference("m", st).result_value;
+    ASTNode* n_node = newASTID(n_var);
+    ASTNode* m_node = newASTID(m_var);
     ASTNode* ast = newASTTernaryCond(newASTBool(true), n_node, m_node).result_value;
     ast = newASTCompoundAssignment(AST_LOGICAL_AND, newASTParentheses(ast), newASTBool(false)).result_value;
 

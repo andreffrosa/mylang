@@ -13,7 +13,7 @@ void tearDown(void) { deleteSymbolTable(&st); }
 #define VALUE 1
 
 void idReferenceOfUndefinedVarReturnsErr() {
-    ASTResult res = newASTIDReference(ID, st);
+    ASTResult res = getVarReference(st, ID);
     ASSERT_IS_ERR(res, AST_RES_ERR_ID_NOT_DEFINED);
 }
 
@@ -32,9 +32,9 @@ void idReferenceOfInitiliazedVarReturnsOk() {
     ASSERT_IS_OK(res);
     Symbol* var = res.result_value;
 
-    res = newASTIDReference(ID, st);
+    res = getVarReference(st, ID);
     ASSERT_IS_OK(res);
-    ASTNode* ast = (ASTNode*)res.result_value;
+    ASTNode* ast = newASTID(res.result_value);
 
     ASSERT_IS_VALID_AST_NODE(ast, AST_ID, ZEROARY_OP, 1);
     TEST_ASSERT_EQUAL_PTR(var, ast->id);
@@ -103,9 +103,9 @@ void assignmentToVarReturnOk() {
     ASSERT_IS_OK(res);
     Symbol* expected_var = res.result_value;
 
-    res = newASTIDReference(ID, st);
+    res = getVarReference(st, ID);
     ASSERT_IS_OK(res);
-    ASTNode* lval = res.result_value;
+    ASTNode* lval = newASTID(res.result_value);
 
     res = newASTAssignment(lval, newASTInt(VALUE));
     ASSERT_IS_OK(res);
@@ -127,9 +127,9 @@ void rvalInAssignmentMustNotHaveVoidType() {
     ASTResult res = defineVar(st, AST_TYPE_INT, ID, false);
     ASSERT_IS_OK(res);
 
-    res = newASTIDReference(ID, st);
+    res = getVarReference(st, ID);
     ASSERT_IS_OK(res);
-    ASTNode* lval = res.result_value;
+    ASTNode* lval = newASTID(res.result_value);
     ASTNode* rval = newASTNoOp();
 
     res = newASTAssignment(lval, rval);
@@ -144,9 +144,9 @@ void lvalAndRvalInAssignmentMustHaveSameType() {
     ASTResult res = defineVar(st, AST_TYPE_INT, ID, false);
     ASSERT_IS_OK(res);
 
-    res = newASTIDReference(ID, st);
+    res = getVarReference(st, ID);
     ASSERT_IS_OK(res);
-    ASTNode* lval = res.result_value;
+    ASTNode* lval = newASTID(res.result_value);
     ASTNode* rval = newASTBool(true);
 
     res = newASTAssignment(lval, rval);
@@ -160,15 +160,15 @@ void lvalAndRvalInAssignmentMustHaveSameType() {
 void conditionalAssignmentsReturnsOK() {
     ASTResult res = defineVar(st, AST_TYPE_INT, ID, false);
     ASSERT_IS_OK(res);
-    res = newASTIDReference(ID, st);
+    res = getVarReference(st, ID);
     ASSERT_IS_OK(res);
-    ASTNode* lval1 = res.result_value;
+    ASTNode* lval1 = newASTID(res.result_value);
 
     res = defineVar(st, AST_TYPE_INT, "m", false);
     ASSERT_IS_OK(res);
-    res = newASTIDReference("m", st);
+    res = getVarReference(st, "m");
     ASSERT_IS_OK(res);
-    ASTNode* lval2 = res.result_value;
+    ASTNode* lval2 = newASTID(res.result_value);
 
     res = newASTTernaryCond(newASTBool(true), lval1, lval2);
     ASSERT_IS_OK(res);
@@ -189,9 +189,9 @@ void conditionalAssignmentsReturnsOK() {
 void invalidLvalInAssignmentReturnsError() {
     ASTResult res = defineVar(st, AST_TYPE_INT, ID, false);
     ASSERT_IS_OK(res);
-    res = newASTIDReference(ID, st);
+    res = getVarReference(st, ID);
     ASSERT_IS_OK(res);
-    ASTNode* n_node = res.result_value;
+    ASTNode* n_node = newASTID(res.result_value);
     ASTNode* v_node = newASTInt(1);
 
     res = newASTAdd(n_node, v_node);
@@ -216,9 +216,10 @@ void newASTStatementListWithNull() {
 
 void newASTStatementListWithAnotherStatement() {
     ASTNode* stmt1 = newASTIDDeclaration(AST_TYPE_INT, ID, NULL, false, st).result_value;
-    ASTResult res = newASTIDReference(ID, st);
+    ASTResult res = getVarReference(st, ID);
     ASSERT_IS_OK(res);
-    ASTNode* stmt2 = newASTAssignment(res.result_value, newASTInt(VALUE)).result_value;
+    ASTNode* id_node = newASTID(res.result_value);
+    ASTNode* stmt2 = newASTAssignment(id_node, newASTInt(VALUE)).result_value;
     ASTNode* ast = newASTStatementList(stmt1, stmt2);
 
     ASSERT_IS_VALID_AST_NODE(ast, AST_STATEMENT_SEQ, BINARY_OP, stmt1->size + stmt2->size + 1);
@@ -230,9 +231,10 @@ void newASTStatementListWithAnotherStatement() {
 
 void newASTStatementListWithStatementList() {
     ASTNode* stmt1 = newASTIDDeclaration(AST_TYPE_INT, "n", NULL, false, st).result_value;
-    ASTResult res = newASTIDReference(ID, st);
+    ASTResult res = getVarReference(st, ID);
     ASSERT_IS_OK(res);
-    ASTNode* stmt2 = newASTAssignment(res.result_value, newASTInt(1)).result_value;
+    ASTNode* id_node = newASTID(res.result_value);
+    ASTNode* stmt2 = newASTAssignment(id_node, newASTInt(1)).result_value;
     ASTNode* stmt3 = newASTIDDeclaration(AST_TYPE_INT, "m", newASTInt(2), false, st).result_value;
 
     ASTNode* list = newASTStatementList(stmt2, stmt3);
@@ -244,8 +246,6 @@ void newASTStatementListWithStatementList() {
 
     deleteASTNode(&ast);
 }
-
-extern ASTNode* newASTID(const Symbol* id);
 
 void testEqualASTLeafs() {
     ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
@@ -264,9 +264,10 @@ void prefixIncOfLvalReturnsOk() {
     ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     ASSERT_IS_OK(res);
 
-    res = newASTIDReference("n", st);
+    res = getVarReference(st, "n");
     ASSERT_IS_OK(res);
-    res = newASTInc(res.result_value, true);
+    ASTNode* id_node = newASTID(res.result_value);
+    res = newASTInc(id_node, true);
 
     ASSERT_IS_OK(res);
     ASTNode* ast = res.result_value;
@@ -288,9 +289,10 @@ void postfixIncOfLvalReturnsOk() {
     ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     ASSERT_IS_OK(res);
 
-    res = newASTIDReference("n", st);
+    res = getVarReference(st, "n");
     ASSERT_IS_OK(res);
-    res = newASTInc(res.result_value, false);
+    ASTNode* id_node = newASTID(res.result_value);
+    res = newASTInc(id_node, false);
 
     ASSERT_IS_OK(res);
     ASTNode* ast = res.result_value;
@@ -312,9 +314,10 @@ void prefixIncOfNonIntReturnsErr() {
     ASTResult res = defineVar(st, AST_TYPE_BOOL, "z", false);
     ASSERT_IS_OK(res);
 
-    res = newASTIDReference("z", st);
+    res = getVarReference(st, "z");
     ASSERT_IS_OK(res);
-    res = newASTInc(res.result_value, true);
+    ASTNode* id_node = newASTID(res.result_value);
+    res = newASTInc(id_node, true);
     ASSERT_IS_ERR(res, AST_RES_ERR_INVALID_CHILD_TYPE);
 
     ASTNode* ast = res.result_value;
@@ -325,9 +328,10 @@ void postfixIncOfNonIntReturnsErr() {
     ASTResult res = defineVar(st, AST_TYPE_BOOL, "z", false);
     ASSERT_IS_OK(res);
 
-    res = newASTIDReference("z", st);
+    res = getVarReference(st, "z");
     ASSERT_IS_OK(res);
-    res = newASTInc(res.result_value, false);
+    ASTNode* id_node = newASTID(res.result_value);
+    res = newASTInc(id_node, false);
     ASSERT_IS_ERR(res, AST_RES_ERR_INVALID_CHILD_TYPE);
 
     ASTNode* ast = res.result_value;
@@ -338,9 +342,10 @@ void prefixLogicalToggleOfLvalReturnsOk() {
     ASTResult res = defineVar(st, AST_TYPE_BOOL, "z", false);
     ASSERT_IS_OK(res);
 
-    res = newASTIDReference("z", st);
+    res = getVarReference(st, "z");
     ASSERT_IS_OK(res);
-    res = newASTLogicalToggle(res.result_value, true);
+    ASTNode* id_node = newASTID(res.result_value);
+    res = newASTLogicalToggle(id_node, true);
 
     ASSERT_IS_OK(res);
     ASTNode* ast = res.result_value;
@@ -362,9 +367,10 @@ void postfixLogicalToggleOfLvalReturnsOk() {
     ASTResult res = defineVar(st, AST_TYPE_BOOL, "z", false);
     ASSERT_IS_OK(res);
 
-    res = newASTIDReference("z", st);
+    res = getVarReference(st, "z");
     ASSERT_IS_OK(res);
-    res = newASTLogicalToggle(res.result_value, false);
+    ASTNode* id_node = newASTID(res.result_value);
+    res = newASTLogicalToggle(id_node, false);
 
     ASSERT_IS_OK(res);
     ASTNode* ast = res.result_value;
@@ -386,9 +392,10 @@ void prefixLogicalToggleOfNonBoolReturnsErr() {
     ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     ASSERT_IS_OK(res);
 
-    res = newASTIDReference("n", st);
+    res = getVarReference(st, "n");
     ASSERT_IS_OK(res);
-    res = newASTLogicalToggle(res.result_value, true);
+    ASTNode* id_node = newASTID(res.result_value);
+    res = newASTLogicalToggle(id_node, true);
     ASSERT_IS_ERR(res, AST_RES_ERR_INVALID_CHILD_TYPE);
 
     ASTNode* ast = res.result_value;
@@ -399,9 +406,10 @@ void postfixLogicalToggleOfNonBoolReturnsErr() {
     ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     ASSERT_IS_OK(res);
 
-    res = newASTIDReference("n", st);
+    res = getVarReference(st, "n");
     ASSERT_IS_OK(res);
-    res = newASTLogicalToggle(res.result_value, true);
+    ASTNode* id_node = newASTID(res.result_value);
+    res = newASTLogicalToggle(id_node, true);
     ASSERT_IS_ERR(res, AST_RES_ERR_INVALID_CHILD_TYPE);
 
     ASTNode* ast = res.result_value;
@@ -412,9 +420,10 @@ void prefixBitwiseToggleOfLvalReturnsOk() {
     ASTResult res = defineVar(st, AST_TYPE_BOOL, "z", false);
     ASSERT_IS_OK(res);
 
-    res = newASTIDReference("z", st);
+    res = getVarReference(st, "z");
     ASSERT_IS_OK(res);
-    res = newASTBitwiseToggle(res.result_value, true);
+    ASTNode* id_node = newASTID(res.result_value);
+    res = newASTBitwiseToggle(id_node, true);
 
     ASSERT_IS_OK(res);
     ASTNode* ast = res.result_value;
@@ -436,9 +445,10 @@ void postfixBitwiseToggleOfLvalReturnsOk() {
     ASTResult res = defineVar(st, AST_TYPE_BOOL, "z", false);
     ASSERT_IS_OK(res);
 
-    res = newASTIDReference("z", st);
+    res = getVarReference(st, "z");
     ASSERT_IS_OK(res);
-    res = newASTBitwiseToggle(res.result_value, false);
+    ASTNode* id_node = newASTID(res.result_value);
+    res = newASTBitwiseToggle(id_node, false);
 
     ASSERT_IS_OK(res);
     ASTNode* ast = res.result_value;
@@ -460,9 +470,10 @@ void bitwiseToggleOfIntReturnsOK() {
     ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     ASSERT_IS_OK(res);
 
-    res = newASTIDReference("n", st);
+    res = getVarReference(st, "n");
     ASSERT_IS_OK(res);
-    res = newASTBitwiseToggle(res.result_value, false);
+    ASTNode* id_node = newASTID(res.result_value);
+    res = newASTBitwiseToggle(id_node, false);
 
     ASSERT_IS_OK(res);
     ASTNode* ast = res.result_value;
@@ -484,9 +495,10 @@ void compoundAssignmentAddOfIntReturnsOK() {
     ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     ASSERT_IS_OK(res);
 
-    res = newASTIDReference("n", st);
+    res = getVarReference(st, "n");
     ASSERT_IS_OK(res);
-    res = newASTCompoundAssignment(AST_ADD, res.result_value, newASTInt(2));
+    ASTNode* id_node = newASTID(res.result_value);
+    res = newASTCompoundAssignment(AST_ADD, id_node, newASTInt(2));
 
     ASSERT_IS_OK(res);
     ASTNode* ast = res.result_value;
@@ -499,9 +511,10 @@ void compoundAssignmentAddOfNonIntVarReturnsErr() {
     ASTResult res = defineVar(st, AST_TYPE_BOOL, "z", false);
     ASSERT_IS_OK(res);
 
-    res = newASTIDReference("z", st);
+    res = getVarReference(st, "z");
     ASSERT_IS_OK(res);
-    res = newASTCompoundAssignment(AST_ADD, res.result_value, newASTInt(1));
+    ASTNode* id_node = newASTID(res.result_value);
+    res = newASTCompoundAssignment(AST_ADD, id_node, newASTInt(1));
 
     ASSERT_IS_ERR(res, AST_RES_ERR_INVALID_LEFT_TYPE);
 
@@ -513,9 +526,10 @@ void compoundAssignmentAddOfNonIntValueReturnsErr() {
     ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     ASSERT_IS_OK(res);
 
-    res = newASTIDReference("n", st);
+    res = getVarReference(st, "n");
     ASSERT_IS_OK(res);
-    res = newASTCompoundAssignment(AST_ADD, res.result_value, newASTBool(true));
+    ASTNode* id_node = newASTID(res.result_value);
+    res = newASTCompoundAssignment(AST_ADD, id_node, newASTBool(true));
 
     ASSERT_IS_ERR(res, AST_RES_ERR_INVALID_RIGHT_TYPE);
 
@@ -527,9 +541,10 @@ void compoundAssignmentLogicalAndOfBoolReturnsOK() {
     ASTResult res = defineVar(st, AST_TYPE_BOOL, "z", false);
     ASSERT_IS_OK(res);
 
-    res = newASTIDReference("z", st);
+    res = getVarReference(st, "z");
     ASSERT_IS_OK(res);
-    res = newASTCompoundAssignment(AST_LOGICAL_AND, res.result_value, newASTBool(true));
+    ASTNode* id_node = newASTID(res.result_value);
+    res = newASTCompoundAssignment(AST_LOGICAL_AND, id_node, newASTBool(true));
 
     ASSERT_IS_OK(res);
     ASTNode* ast = res.result_value;
@@ -542,9 +557,10 @@ void compoundAssignmentLogicalAndOfNonBoolVarReturnsErr() {
     ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     ASSERT_IS_OK(res);
 
-    res = newASTIDReference("n", st);
+    res = getVarReference(st, "n");
     ASSERT_IS_OK(res);
-    res = newASTCompoundAssignment(AST_LOGICAL_AND, res.result_value, newASTBool(true));
+    ASTNode* id_node = newASTID(res.result_value);
+    res = newASTCompoundAssignment(AST_LOGICAL_AND, id_node, newASTBool(true));
 
     ASSERT_IS_ERR(res, AST_RES_ERR_INVALID_LEFT_TYPE);
 
@@ -556,9 +572,10 @@ void compoundAssignmentLogicalAndOfNonBoolValueReturnsErr() {
     ASTResult res = defineVar(st, AST_TYPE_BOOL, "z", false);
     ASSERT_IS_OK(res);
 
-    res = newASTIDReference("z", st);
+    res = getVarReference(st, "z");
     ASSERT_IS_OK(res);
-    res = newASTCompoundAssignment(AST_LOGICAL_AND, res.result_value, newASTInt(1));
+    ASTNode* id_node = newASTID(res.result_value);
+    res = newASTCompoundAssignment(AST_LOGICAL_AND, id_node, newASTInt(1));
 
     ASSERT_IS_ERR(res, AST_RES_ERR_INVALID_RIGHT_TYPE);
 

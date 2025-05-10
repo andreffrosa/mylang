@@ -207,9 +207,9 @@ const_exp
 primitive_exp
    : INT_LITERAL                       { $$ = newASTInt($1); }
    | BOOL_LITERAL                      { $$ = newASTBool($1); }
-   | TYPE                              { TRY($$, typeFromStr($1)) }
-   | ID                                { TRY($$, newASTIDReference($1, ctx->st)); }
-   | '(' const_exp ')'                 { $$ = requireParentheses($2) ? newASTParentheses($2) : $2; }
+   | TYPE                              { TRY($$, parseType($1)); }
+   | ID                                { TRY($$, parseIDReference(ctx->st, $1)); }
+   | '(' const_exp ')'                 { $$ = newASTParentheses($2); }
    | OPEN_ABS const_exp CLOSE_ABS      { TRY($$, newASTAbs($2)); }
    | VALUE_OF '(' exp ')'              { $$ = $3; }
    | TYPE_OF  '(' exp ')'              { $$ = newASTTypeOf($3); }

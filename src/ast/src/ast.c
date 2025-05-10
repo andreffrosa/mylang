@@ -486,18 +486,6 @@ ASTNode* newASTID(Symbol* id) {
     return node;
 }
 
-ASTResult newASTIDReference(const char* id, const SymbolTable* st) {
-    assert(id != NULL);
-    assert(st != NULL);
-
-    ASTResult res = getVarReference(st, id);
-    if (isERR(res)) {
-        return res;
-    }
-    Symbol* var = res.result_value;
-    return OK(newASTID(var));
-}
-
 ASTResult newASTIDDeclaration(ASTType type, const char* id, const ASTNode* value, bool redef, SymbolTable* st) {
     assert(id != NULL);
     assert(st != NULL);
@@ -740,9 +728,13 @@ bool isExp(const ASTNode* ast) {
     return !ASTNodeTable[ast->node_type].is_stmt;
 }
 
-bool requireParentheses(const ASTNode* ast) {
+ASTNode* newASTParentheses(ASTNode* ast) {
     assert(ast != NULL);
-    return isCmpExp(ast) || (ast->node_type == AST_TERNARY_COND && ast->allowed_lval);
+
+    bool requireParentheses = isCmpExp(ast) 
+        || (ast->node_type == AST_TERNARY_COND && ast->allowed_lval);
+
+    return requireParentheses ? newASTUnaryOP(AST_PARENTHESES, ast).result_value : ast;
 }
 
 ASTNode* copyAST(const ASTNode* src_ast) {

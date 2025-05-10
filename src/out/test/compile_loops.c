@@ -13,8 +13,9 @@ static ASTNode* n_node = NULL;
 
 void setUp (void) {
     st = newSymbolTable(2, 2);
-    defineVar(st, AST_TYPE_INT, "n", false);
-    n_node = newASTIDReference("n", st).result_value;
+    ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
+    TEST_ASSERT_TRUE(isOK(res));
+    n_node = newASTID(res.result_value);
 }
 
 void tearDown (void) {
@@ -54,7 +55,9 @@ void compileDoWhileLoopWithEmptyBody() {
 
 void compileForLoop() {
     ASTNode* init = newASTIDDeclaration(AST_TYPE_INT, "i", newASTInt(0), false, st).result_value;
-    ASTNode* i_node = newASTIDReference("i", st).result_value;
+    ASTResult res = getVarReference(st, "i");
+    TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* i_node = newASTID(res.result_value);
     ASTNode* cond = newASTCmpLT(i_node, newASTInt(ITERATION_COUNT)).result_value;
     ASTNode* update = newASTInc(copyAST(i_node), false).result_value;
     ASTNode* body = newASTScope(newASTAssignment(n_node, copyAST(i_node)).result_value);
@@ -65,7 +68,9 @@ void compileForLoop() {
 
 void compileForLoopWithEmptyBody() {
     ASTNode* init = newASTIDDeclaration(AST_TYPE_INT, "i", newASTInt(0), false, st).result_value;
-    ASTNode* i_node = newASTIDReference("i", st).result_value;
+    ASTResult res = getVarReference(st, "i");
+    TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* i_node = newASTID(res.result_value);
     ASTNode* cond = newASTCmpLT(i_node, newASTInt(ITERATION_COUNT)).result_value;
     ASTNode* update = newASTInc(copyAST(i_node), false).result_value;
     ASTNode* body = newASTNoOp();
@@ -87,7 +92,9 @@ void compileBreakWhileLoop() {
 
 void compileContinueWhileLoop() {
     ASTNode* init = newASTIDDeclaration(AST_TYPE_INT, "i", newASTInt(0), false, st).result_value;
-    ASTNode* i_node = newASTIDReference("i", st).result_value;
+    ASTResult res = getVarReference(st, "i");
+    TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* i_node = newASTID(res.result_value);
     ASTNode* cond = newASTCmpLT(newASTInc(copyAST(i_node), false).result_value, newASTInt(ITERATION_COUNT)).result_value;
     ASTNode* body = newASTCmpGTE(copyAST(i_node), newASTInt(ITERATION_COUNT / 2)).result_value;
     body = newASTIf(body, newASTContinue()).result_value;
@@ -112,7 +119,9 @@ void compileBreakDoWhileLoop() {
 
 void compileContinueDoWhileLoop() {
     ASTNode* init = newASTIDDeclaration(AST_TYPE_INT, "i", newASTInt(0), false, st).result_value;
-    ASTNode* i_node = newASTIDReference("i", st).result_value;
+    ASTResult res = getVarReference(st, "i");
+    TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* i_node = newASTID(res.result_value);
     ASTNode* cond = newASTCmpLT(newASTInc(copyAST(i_node), false).result_value, newASTInt(ITERATION_COUNT)).result_value;
     ASTNode* x = newASTCmpGTE(copyAST(i_node), newASTInt(ITERATION_COUNT / 2)).result_value;
     x = newASTIf(x, newASTContinue()).result_value;
@@ -126,7 +135,9 @@ void compileContinueDoWhileLoop() {
 
 void compileBreakForLoop() {
     ASTNode* init = newASTIDDeclaration(AST_TYPE_INT, "i", newASTInt(0), false, st).result_value;
-    ASTNode* i_node = newASTIDReference("i", st).result_value;
+    ASTResult res = getVarReference(st, "i");
+    TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* i_node = newASTID(res.result_value);
     ASTNode* cond = newASTCmpLT(i_node, newASTInt(ITERATION_COUNT)).result_value;
     ASTNode* update = newASTInc(copyAST(i_node), false).result_value;
     ASTNode* x = newASTCmpEQ(copyAST(i_node), newASTInt(ITERATION_COUNT / 2)).result_value;
@@ -141,7 +152,9 @@ void compileBreakForLoop() {
 
 void compileContinueForLoop() {
     ASTNode* init = newASTIDDeclaration(AST_TYPE_INT, "i", newASTInt(0), false, st).result_value;
-    ASTNode* i_node = newASTIDReference("i", st).result_value;
+    ASTResult res = getVarReference(st, "i");
+    TEST_ASSERT_TRUE(isOK(res));
+    ASTNode* i_node = newASTID(res.result_value);
     ASTNode* cond = newASTCmpLT(i_node, newASTInt(ITERATION_COUNT)).result_value;
     ASTNode* update = newASTInc(copyAST(i_node), false).result_value;
     ASTNode* x = newASTCmpGTE(copyAST(i_node), newASTInt(ITERATION_COUNT / 2)).result_value;

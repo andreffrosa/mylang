@@ -24,9 +24,9 @@ void evalIfStmtTrue() {
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* decl = res.result_value;
 
-    res = newASTIDReference("n", st);
+    res = getVarReference(st, "n");
     TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* id_node = res.result_value;
+    ASTNode* id_node = newASTID(res.result_value);
     res = newASTAssignment(id_node, newASTInt(1));
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* stmt = res.result_value;
@@ -48,9 +48,9 @@ void evalIfStmtFalse() {
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* decl = res.result_value;
 
-    res = newASTIDReference("n", st);
+    res = getVarReference(st, "n");
     TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* id_node = res.result_value;
+    ASTNode* id_node = newASTID(res.result_value);
     res = newASTAssignment(id_node, newASTInt(1));
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* stmt = res.result_value;
@@ -72,16 +72,16 @@ void evalIfElseStmtTrue() {
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* decl = res.result_value;
 
-    res = newASTIDReference("n", st);
+    res = getVarReference(st, "n");
     TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* id_node = res.result_value;
+    ASTNode* id_node = newASTID(res.result_value);
     res = newASTAssignment(id_node, newASTInt(1));
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* stmt1 = res.result_value;
 
-    res = newASTIDReference("n", st);
+    res = getVarReference(st, "n");
     TEST_ASSERT_TRUE(isOK(res));
-    id_node = res.result_value;
+    id_node = newASTID(res.result_value);
     res = newASTAssignment(id_node, newASTInt(-1));
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* stmt2 = res.result_value;
@@ -103,16 +103,16 @@ void evalIfElseStmtFalse() {
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* decl = res.result_value;
 
-    res = newASTIDReference("n", st);
+    res = getVarReference(st, "n");
     TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* id_node = res.result_value;
+    ASTNode* id_node = newASTID(res.result_value);
     res = newASTAssignment(id_node, newASTInt(1));
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* stmt1 = res.result_value;
 
-    res = newASTIDReference("n", st);
+    res = getVarReference(st, "n");
     TEST_ASSERT_TRUE(isOK(res));
-    id_node = res.result_value;
+    id_node = newASTID(res.result_value);
     res = newASTAssignment(id_node, newASTInt(-1));
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* stmt2 = res.result_value;
@@ -133,15 +133,15 @@ void evalTernaryCondExpTrue() {
     ASTResult res = defineVar(st, AST_TYPE_INT, "n", false);
     TEST_ASSERT_TRUE(isOK(res));
 
-    res = newASTIDReference("n", st);
+    res = getVarReference(st, "n");
     TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* id_node = res.result_value;
+    ASTNode* id_node = newASTID(res.result_value);
     res = newASTAssignment(id_node, newASTInt(1));
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* exp1 = res.result_value;
-    res = newASTIDReference("n", st);
+    res = getVarReference(st, "n");
     TEST_ASSERT_TRUE(isOK(res));
-    id_node = res.result_value;
+    id_node = newASTID(res.result_value);
     res = newASTAssignment(id_node, newASTInt(-1));
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* exp2 = res.result_value;
@@ -160,13 +160,13 @@ void evalTernaryCondExpTrue() {
 void evalTernaryCondExpFalse() {
     Symbol* var = defineVar(st, AST_TYPE_INT, "n", false).result_value;
 
-    ASTResult res = newASTIDReference("n", st);
+    ASTResult res = getVarReference(st, "n");
     TEST_ASSERT_TRUE(isOK(res));
-    ASTNode* id_node = res.result_value;
+    ASTNode* id_node = newASTID(res.result_value);
     ASTNode* exp1 = newASTAssignment(id_node, newASTInt(1)).result_value;
-    res = newASTIDReference("n", st);
+    res = getVarReference(st, "n");
     TEST_ASSERT_TRUE(isOK(res));
-    id_node = res.result_value;
+    id_node = newASTID(res.result_value);
     ASTNode* exp2 = newASTAssignment(id_node, newASTInt(-1)).result_value;
     ast = newASTTernaryCond(newASTBool(false), exp1, exp2).result_value;
 
@@ -179,9 +179,9 @@ void evalTernaryCondExpFalse() {
 
 void evalCondAssignment() {
     Symbol* n_var = defineVar(st, AST_TYPE_INT, "n", false).result_value;
+    ASTNode* n_node = newASTID(n_var);
     Symbol* m_var = defineVar(st, AST_TYPE_INT, "m", false).result_value;
-    ASTNode* n_node = newASTIDReference("n", st).result_value;
-    ASTNode* m_node = newASTIDReference("m", st).result_value;
+    ASTNode* m_node = newASTID(m_var);
     ASTNode* cond = newASTTernaryCond(newASTBool(true), n_node, m_node).result_value;
     ast = newASTAssignment(newASTParentheses(cond), newASTInt(2)).result_value;
 
@@ -197,11 +197,11 @@ void evalCondAssignment() {
 
 void evalNestedCondAssignment() {
     Symbol* n_var = defineVar(st, AST_TYPE_INT, "n", false).result_value;
+    ASTNode* n_node = newASTID(n_var);
     Symbol* m_var = defineVar(st, AST_TYPE_INT, "m", false).result_value;
+    ASTNode* m_node = newASTID(m_var);
     Symbol* k_var = defineVar(st, AST_TYPE_INT, "k", false).result_value;
-    ASTNode* n_node = newASTIDReference("n", st).result_value;
-    ASTNode* m_node = newASTIDReference("m", st).result_value;
-    ASTNode* k_node = newASTIDReference("k", st).result_value;
+    ASTNode* k_node = newASTID(k_var);
     ast = newASTTernaryCond(newASTBool(true), m_node, k_node).result_value;
     ast = newASTTernaryCond(newASTBool(false), n_node, newASTParentheses(ast)).result_value;
     ast = newASTAssignment(newASTParentheses(ast), newASTInt(2)).result_value;
@@ -220,11 +220,11 @@ void evalNestedCondAssignment() {
 
 void evalChainedCondAssignment() {
     Symbol* n_var = defineVar(st, AST_TYPE_INT, "n", false).result_value;
+    ASTNode* n_node = newASTID(n_var);
     Symbol* m_var = defineVar(st, AST_TYPE_INT, "m", false).result_value;
+    ASTNode* m_node = newASTID(m_var);
     Symbol* k_var = defineVar(st, AST_TYPE_INT, "k", false).result_value;
-    ASTNode* n_node = newASTIDReference("n", st).result_value;
-    ASTNode* m_node = newASTIDReference("m", st).result_value;
-    ASTNode* k_node = newASTIDReference("k", st).result_value;
+    ASTNode* k_node = newASTID(k_var);
     ast = newASTTernaryCond(newASTBool(true), n_node, m_node).result_value;
     ast = newASTAssignment(newASTParentheses(ast), newASTInt(2)).result_value;
     ast = newASTAssignment(k_node, ast).result_value;
