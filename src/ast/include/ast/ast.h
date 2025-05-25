@@ -129,6 +129,8 @@ const char* nodeTypeToStr(ASTNodeType node_type);
 
 ASTNode* copyAST(const ASTNode* src_ast);
 
+int printAST(const ASTNode* ast, const IOStream* stream, int level);
+
 #define newASTAdd(l, r) newASTBinaryOP(AST_ADD, l, r)
 #define newASTSub(l, r) newASTBinaryOP(AST_SUB, l, r)
 #define newASTMul(l, r) newASTBinaryOP(AST_MUL, l, r)

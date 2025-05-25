@@ -775,3 +775,57 @@ ASTNode* copyAST(const ASTNode* src_ast) {
             assert(false);
     }
 }
+
+int printAST(const ASTNode* ast, const IOStream* stream, int level) {
+    assert(ast != NULL);
+    assert(stream != NULL);
+
+    int n = 0;
+    n += indent(stream, level);
+
+    switch (getNodeOpType(ast->node_type)) {
+        case ZEROARY_OP: {
+            char buffer[TYPE_VALUE_BUFFER_SIZE];
+            const char* val = NULL;
+            switch (ast->node_type) {
+                case AST_INT:
+                case AST_BOOL:
+                case AST_TYPE: {
+                    val = ASTTypeValueToStr(ast->value_type, ast->n, buffer);
+                    break;
+                } case AST_ID:
+                    val = getVarId(ast->id);
+                    break;
+                case AST_NO_OP:
+                    val = "NO_OP";
+                    break;
+                default:
+                    assert(false);
+            }
+            n += IOStreamWritef(stream, "[%s (%d) = %s]\n", nodeTypeToStr(ast->node_type), ast->size, val);
+            break;
+        }
+        case UNARY_OP: {
+            n += IOStreamWritef(stream, "[%s (%d)]\n", nodeTypeToStr(ast->node_type), ast->size);
+            n += printAST(ast->child, stream, level + 1);
+            break;
+        }
+        case BINARY_OP: {
+            n += IOStreamWritef(stream, "[%s (%d)]\n", nodeTypeToStr(ast->node_type), ast->size);
+            n += printAST(ast->left, stream, level + 1);
+            n += printAST(ast->right, stream, level + 1);
+            break;
+        }
+        case TERNARY_OP: {
+            n += IOStreamWritef(stream, "[%s (%d)]\n", nodeTypeToStr(ast->node_type), ast->size);
+            n += printAST(ast->first, stream, level + 1);
+            n += printAST(ast->second, stream, level + 1);
+            n += printAST(ast->third, stream, level + 1);
+            break;
+        }
+        default:
+            assert(false);
+    }
+
+    return n;
+}
