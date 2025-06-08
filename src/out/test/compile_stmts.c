@@ -77,24 +77,24 @@ void testPrintC() {
 
 void testBoolPrintC() {
     ast = newASTPrint(newASTBool(true));
-    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "printf(\"%s\\n\", true ? \"true\" : \"false\");\n");
+    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "printf(\"%s\\n\", (true) ? \"true\" : \"false\");\n");
     deleteASTNode(&ast);
 
     ast = newASTLogicalAnd(newASTBool(true), newASTBool(false)).result_value;
     ast = newASTPrint(ast);
-    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "printf(\"%s\\n\", true && false ? \"true\" : \"false\");\n");
+    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "printf(\"%s\\n\", (true && false) ? \"true\" : \"false\");\n");
     deleteASTNode(&ast);
 
     ASTResult res = defineVar(st, AST_TYPE_BOOL, "z", false);
     TEST_ASSERT_TRUE(isOK(res));
     ASTNode* z_node = newASTID(res.result_value);
     ast = newASTPrint(z_node);
-    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "printf(\"%s\\n\", z ? \"true\" : \"false\");\n");
+    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "printf(\"%s\\n\", (z) ? \"true\" : \"false\");\n");
     deleteASTNode(&ast);
 
     z_node = newASTID(res.result_value);
     ast = newASTPrintVar(z_node);
-    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "printf(\"bool z = %s\\n\", z ? \"true\" : \"false\");\n");
+    ASSERT_COMPILE_STMT_EQUALS(ast, &cSerializer, "printf(\"bool z = %s\\n\", (z) ? \"true\" : \"false\");\n");
 }
 
 void testPrintJava() {

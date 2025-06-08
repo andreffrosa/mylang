@@ -41,7 +41,7 @@ static void print(const char* exp_str, const ASTType type, const char* id_str, c
             IOStreamWritef(stream, "%%d\\n\", %s)", exp_str);
             break;
         case AST_TYPE_BOOL:
-            IOStreamWritef(stream, "%%s\\n\", %s ? \"true\" : \"false\")", exp_str);
+            IOStreamWritef(stream, "%%s\\n\", (%s) ? \"true\" : \"false\")", exp_str);
             break;
         default:
             assert(false);
