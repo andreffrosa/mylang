@@ -710,7 +710,7 @@ bool equalAST(const ASTNode* ast1, const ASTNode* ast2) {
                     assert(false);
             }
         } case UNARY_OP:
-            return equalAST(ast1->child, ast2->child);
+            return equalAST(ast1->child, ast2->child) && ast1->is_prefix == ast2->is_prefix;
         case BINARY_OP:
             return equalAST(ast1->left, ast2->left) && equalAST(ast1->right, ast2->right);
         case TERNARY_OP:
@@ -740,40 +740,54 @@ ASTNode* newASTParentheses(ASTNode* ast) {
 ASTNode* copyAST(const ASTNode* src_ast) {
     assert(src_ast != NULL);
 
+    ASTNode* cp_ast = NULL;
     switch(getNodeOpType(src_ast->node_type)) {
         case ZEROARY_OP: {
             switch (src_ast->node_type) {
                 case AST_INT:
-                    return newASTInt(src_ast->n);
+                    cp_ast = newASTInt(src_ast->n);
+                    break;
                 case AST_BOOL:
-                    return newASTBool(src_ast->z);
+                    cp_ast = newASTBool(src_ast->z);
+                    break;
                 case AST_TYPE:
-                    return newASTType(src_ast->t);
+                    cp_ast = newASTType(src_ast->t);
+                    break;
                 case AST_ID:
-                    return newASTID(src_ast->id);
+                    cp_ast = newASTID(src_ast->id);
+                    break;
                 case AST_NO_OP:
-                    return newASTNoOp();
+                    cp_ast = newASTNoOp();
+                    break;
                 default:
                     assert(false);
             }
+            break;
         } case UNARY_OP: {
             ASTResult res = newASTUnaryOP(src_ast->node_type, copyAST(src_ast->child));
             assert(isOK(res));
-            return res.result_value;
+            cp_ast = res.result_value;
+            cp_ast->is_prefix = src_ast->is_prefix;
+            break;
         }
         case BINARY_OP: {
             ASTResult res = newASTBinaryOP(src_ast->node_type, copyAST(src_ast->left), copyAST(src_ast->right));
             assert(isOK(res));
-            return res.result_value;
+            cp_ast = res.result_value;
+            break;
         }
         case TERNARY_OP: {
             ASTResult res = newASTTernaryOP(src_ast->node_type, copyAST(src_ast->first), copyAST(src_ast->second), copyAST(src_ast->third));
             assert(isOK(res));
-            return res.result_value;
+            cp_ast = res.result_value;
+            break;
         }
         default:
             assert(false);
     }
+
+    assert(equalAST(src_ast, cp_ast));
+    return cp_ast;
 }
 
 int printAST(const ASTNode* ast, const IOStream* stream, int level) {
