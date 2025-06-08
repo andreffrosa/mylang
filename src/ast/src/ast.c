@@ -296,14 +296,8 @@ ASTResult ternaryCondLvalChecker(ASTNode* node) {
 }
 
 ASTResult assignmentLvalChecker(ASTNode* node) {
+    assert(getNodeOpType(node->node_type) == BINARY_OP);
     if (!node->left->allowed_lval) {
-        return ERR(AST_RES_ERR_INVALID_LVAL);
-    }
-    return OK(boolToPTR(false));
-}
-
-ASTResult unaryAssignmentLvalChecker(ASTNode* node) {
-    if (!node->child->allowed_lval) {
         return ERR(AST_RES_ERR_INVALID_LVAL);
     }
     return OK(boolToPTR(false));
